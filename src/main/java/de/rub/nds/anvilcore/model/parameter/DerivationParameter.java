@@ -34,6 +34,10 @@ public abstract class DerivationParameter<ConfigType extends AnvilConfig, ValueT
         return selectedValue;
     }
 
+    protected void setSelectedValue(ValueType selectedValue) {
+        this.selectedValue = selectedValue;
+    }
+
     public Class<ValueType> getValueClass() {
         return valueClass;
     }
