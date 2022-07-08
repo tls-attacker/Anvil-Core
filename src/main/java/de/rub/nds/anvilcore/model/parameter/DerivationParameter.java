@@ -32,7 +32,19 @@ public abstract class DerivationParameter<ConfigType, ValueType> {
         return selectedValue;
     }
 
+    public Class<ValueType> getValueClass() {
+        return valueClass;
+    }
+
+    public ParameterIdentifier getParameterIdentifier() {
+        return parameterIdentifier;
+    }
+
+    public void preProcessConfig(ConfigType config) {};
+
     public abstract void applyToConfig(ConfigType config);
+
+    public void postProcessConfig(ConfigType config) {};
 
     public abstract List<DerivationParameter<ConfigType, ValueType>> getParameterValues(DerivationScope derivationScope);
 
