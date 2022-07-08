@@ -32,6 +32,18 @@ public class DerivationScope {
         this.testStrength = resolveTestStrength(extensionContext);
     }
 
+    // TODO Remove constructor, only for testing purposes
+    public DerivationScope() {
+        this.ipmLimitations = Collections.emptyList();
+        this.ipmExtensions = Collections.emptyList();
+        this.valueConstraints = Collections.emptyList();
+        this.explicitValues = Collections.emptyMap();
+        this.explicitModelingConstraints = Collections.emptyMap();
+        this.extensionContext = null;
+        this.manualConfigTypes = Collections.emptySet();
+        this.testStrength = 3;
+    }
+
     public List<ParameterIdentifier> getIpmLimitations() {
         return ipmLimitations;
     }
