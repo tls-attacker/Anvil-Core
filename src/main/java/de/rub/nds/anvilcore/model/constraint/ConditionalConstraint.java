@@ -3,6 +3,7 @@ package de.rub.nds.anvilcore.model.constraint;
 import de.rub.nds.anvilcore.context.TestContext;
 import de.rub.nds.anvilcore.model.DerivationScope;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
+import de.rub.nds.anvilcore.model.parameter.ParameterFactory;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import de.rwth.swc.coffee4j.model.constraints.Constraint;
 
@@ -23,8 +24,7 @@ public class ConditionalConstraint {
 
     public boolean isApplicableTo(List<ParameterIdentifier> modeledParameters, DerivationScope derivationScope) {
         for (ParameterIdentifier required: requiredParameters) {
-            DerivationParameter parameterInstance = TestContext.getInstance().getParameterFactory(required.getParameterType()).getInstance(required);
-            if (!modeledParameters.contains(required) || !parameterInstance.canBeModeled(derivationScope)) {
+            if (!modeledParameters.contains(required) || !ParameterFactory.getInstanceFromIdentifier(required).canBeModeled(derivationScope)) {
                 return false;
             }
         }
