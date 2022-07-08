@@ -64,6 +64,15 @@ public class DerivationScope {
         return testStrength;
     }
 
+    public boolean hasExplicitValues(ParameterIdentifier parameterIdentifier) {
+        return explicitValues.containsKey(parameterIdentifier);
+    }
+
+    public boolean hasExplicitModelingConstraints(ParameterIdentifier parameterIdentifier) {
+        return explicitModelingConstraints.containsKey(parameterIdentifier);
+    }
+
+
     private static List<ParameterIdentifier> resolveIpmLimitations(ExtensionContext extensionContext) {
         List<ParameterIdentifier> limitations = new ArrayList<>();
         Method testMethod = extensionContext.getRequiredTestMethod();
