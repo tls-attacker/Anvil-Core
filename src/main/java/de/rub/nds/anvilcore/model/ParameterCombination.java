@@ -1,5 +1,6 @@
 package de.rub.nds.anvilcore.model;
 
+import de.rub.nds.anvilcore.model.config.ConfigContainer;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import de.rwth.swc.coffee4j.model.Combination;
@@ -11,17 +12,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
 
-public class ParameterCombination<ConfigType> {
+public class ParameterCombination {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private final List<DerivationParameter<ConfigType, ?>> parameters;
+    private final List<DerivationParameter> parameters;
     private DerivationScope derivationScope;
 
-    public ParameterCombination(List<DerivationParameter<ConfigType, ?>> parameters) {
+    public ParameterCombination(List<DerivationParameter> parameters) {
         this.parameters = parameters;
     }
 
-    public ParameterCombination(List<DerivationParameter<ConfigType, ?>> parameters, DerivationScope derivationScope) {
+    public ParameterCombination(List<DerivationParameter> parameters, DerivationScope derivationScope) {
         this.parameters = parameters;
         this.derivationScope = derivationScope;
     }
@@ -51,8 +52,8 @@ public class ParameterCombination<ConfigType> {
         return new ParameterCombination(parameters, derivationScope);
     }
 
-    public DerivationParameter<ConfigType, ?> getParameter(ParameterIdentifier parameterIdentifier) {
-        for (DerivationParameter<ConfigType, ?> parameter : parameters) {
+    public DerivationParameter getParameter(ParameterIdentifier parameterIdentifier) {
+        for (DerivationParameter parameter : parameters) {
             if (parameter.getParameterIdentifier().equals(parameterIdentifier)) {
                 return parameter;
             }
@@ -60,27 +61,27 @@ public class ParameterCombination<ConfigType> {
         return null;
     }
 
-    public void applyToConfig(ConfigType config) {
-        for (DerivationParameter<ConfigType, ?> parameter : parameters) {
+    public void applyToConfig(ConfigContainer configContainer) {
+        for (DerivationParameter parameter : parameters) {
             if (!derivationScope.getManualConfigTypes().contains(parameter.getParameterIdentifier())) {
-                parameter.preProcessConfig(config);
+                parameter.preProcessConfig(configContainer.getConfig(parameter.getConfigClass()));
             }
         }
-        for (DerivationParameter<ConfigType, ?> parameter : parameters) {
+        for (DerivationParameter parameter : parameters) {
             if (!derivationScope.getManualConfigTypes().contains(parameter.getParameterIdentifier())) {
-                parameter.applyToConfig(config);
+                parameter.applyToConfig(configContainer.getConfig(parameter.getConfigClass()));
             }
         }
-        for (DerivationParameter<ConfigType, ?> parameter : parameters) {
+        for (DerivationParameter parameter : parameters) {
             if (!derivationScope.getManualConfigTypes().contains(parameter.getParameterIdentifier())) {
-                parameter.postProcessConfig(config);
+                parameter.postProcessConfig(configContainer.getConfig(parameter.getConfigClass()));
             }
         }
     }
 
     public String toString() {
         StringJoiner joiner = new StringJoiner(", ");
-        for (DerivationParameter<ConfigType, ?> derivationParameter : parameters) {
+        for (DerivationParameter derivationParameter : parameters) {
             joiner.add(derivationParameter.toString());
         }
         return joiner.toString();

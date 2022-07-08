@@ -1,6 +1,7 @@
 package de.rub.nds.anvilcore.model.parameter;
 
 import de.rub.nds.anvilcore.model.DerivationScope;
+import de.rub.nds.anvilcore.model.config.AnvilConfig;
 import de.rub.nds.anvilcore.model.constraint.ConditionalConstraint;
 import de.rub.nds.anvilcore.model.constraint.ValueConstraint;
 import de.rwth.swc.coffee4j.model.Parameter;
@@ -12,19 +13,20 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public abstract class DerivationParameter<ConfigType, ValueType> {
+public abstract class DerivationParameter<ConfigType extends AnvilConfig, ValueType> {
     private static final Logger LOGGER = LogManager.getLogger();
 
     private ValueType selectedValue;
     private final Class<ValueType> valueClass;
+    private final Class<ConfigType> configClass;
     private final ParameterIdentifier parameterIdentifier;
 
-    public DerivationParameter(Class<ValueType> valueClass, ParameterIdentifier parameterIdentifier) {
+    public DerivationParameter(Class<ValueType> valueClass, Class<ConfigType> configClass, ParameterIdentifier parameterIdentifier) {
         this.valueClass = valueClass;
+        this.configClass = configClass;
         this.parameterIdentifier = parameterIdentifier;
     }
 
@@ -34,6 +36,10 @@ public abstract class DerivationParameter<ConfigType, ValueType> {
 
     public Class<ValueType> getValueClass() {
         return valueClass;
+    }
+
+    public Class<? extends AnvilConfig> getConfigClass() {
+        return configClass;
     }
 
     public ParameterIdentifier getParameterIdentifier() {
