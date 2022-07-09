@@ -1,7 +1,7 @@
 package de.rub.nds.anvilcore.model;
 
 import de.rub.nds.anvilcore.annotation.*;
-import de.rub.nds.anvilcore.context.TestContext;
+import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.model.constraint.ValueConstraint;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import de.rub.nds.anvilcore.model.parameter.ParameterScope;
@@ -12,6 +12,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 public class DerivationScope {
+    private ModelType modelType = DefaultModelType.ALL_PARAMETERS;
     private final List<ParameterIdentifier> ipmLimitations;
     private final List<ParameterIdentifier> ipmExtensions;
     private final List<ValueConstraint> valueConstraints;
@@ -32,6 +33,11 @@ public class DerivationScope {
         this.testStrength = resolveTestStrength(extensionContext);
     }
 
+    public DerivationScope(ExtensionContext extensionContext, ModelType modelType) {
+        this(extensionContext);
+        this.modelType = modelType;
+    }
+
     // TODO Remove constructor, only for testing purposes
     public DerivationScope() {
         this.ipmLimitations = Collections.emptyList();
@@ -42,6 +48,14 @@ public class DerivationScope {
         this.extensionContext = null;
         this.manualConfigTypes = Collections.emptySet();
         this.testStrength = 3;
+    }
+
+    public ModelType getModelType() {
+        return modelType;
+    }
+
+    public void setModelType(ModelType modelType) {
+        this.modelType = modelType;
     }
 
     public List<ParameterIdentifier> getIpmLimitations() {
@@ -211,14 +225,14 @@ public class DerivationScope {
             TestStrength testStrength = testMethod.getAnnotation(TestStrength.class);
             return testStrength.value();
         }
-        return TestContext.getInstance().getTestStrength();
+        return AnvilContext.getInstance().getTestStrength();
     }
 
     private static ParameterIdentifier resolveParameterIdentifier(String[] types, String[] scopes, int index) {
         ParameterType parameterType = ParameterType.resolveParameterType(types[index]);
         ParameterScope parameterScope = ParameterScope.NO_SCOPE;
         if (index < scopes.length) {
-            parameterScope = TestContext.getInstance().getParameterFactory(parameterType).resolveParameterScope(scopes[index]);
+            parameterScope = AnvilContext.getInstance().getParameterFactory(parameterType).resolveParameterScope(scopes[index]);
         }
         return new ParameterIdentifier(parameterType, parameterScope);
     }
