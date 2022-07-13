@@ -62,6 +62,15 @@ public class AnvilContext {
         return knownParameters;
     }
 
+    public void addParameterTypes(ParameterType[] parameterTypes, ParameterFactory associatedFactory) {
+        for (ParameterType parameterType : parameterTypes) {
+            if (knownParameters.containsKey(parameterType)) {
+                LOGGER.warn("Parameter type " + parameterType.toString() + " already exists");
+            }
+            knownParameters.put(parameterType, associatedFactory);
+        }
+    }
+
     public ParameterFactory getParameterFactory(ParameterType parameterType) {
         if (!knownParameters.containsKey(parameterType)) {
             throw new IllegalArgumentException("Parameter " + parameterType + " is not known");
