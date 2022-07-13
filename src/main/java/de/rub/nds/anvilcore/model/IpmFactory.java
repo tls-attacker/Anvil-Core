@@ -31,12 +31,12 @@ public class IpmFactory {
         return builders.length == 1;
     }
 
-    public static List<? extends DerivationParameter<?,?>> getSimpleModelVariations(DerivationScope derivationScope) {
+    public static List<DerivationParameter> getSimpleModelVariations(DerivationScope derivationScope) {
         List<ParameterIdentifier> parameterIdentifiers = getParameterIdentifiersForScope(derivationScope);
         for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
             DerivationParameter<?,?> parameter = ParameterFactory.getInstanceFromIdentifier(parameterIdentifier);
             if (parameter.canBeModeled(derivationScope)) {
-                return parameter.getConstrainedParameterValues(derivationScope);
+                List<DerivationParameter> parameters = parameter.getConstrainedParameterValues(derivationScope);
             }
         }
         return null;
