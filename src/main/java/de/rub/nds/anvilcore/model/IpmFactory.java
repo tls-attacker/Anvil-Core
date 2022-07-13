@@ -15,7 +15,7 @@ import java.util.List;
 public class IpmFactory {
     public static InputParameterModel generateIpm(DerivationScope derivationScope) {
         List<ParameterIdentifier> parameterIdentifiers = getParameterIdentifiersForScope(derivationScope);
-        Parameter.Builder[] builders = getParameterBuilder(parameterIdentifiers, derivationScope);
+        Parameter.Builder[] builders = getParameterBuilders(parameterIdentifiers, derivationScope);
         Constraint[] constraints = getConstraintsForScope(parameterIdentifiers, derivationScope);
 
         return InputParameterModel.inputParameterModel("dynamic-model")
@@ -23,6 +23,23 @@ public class IpmFactory {
                 .parameters(builders)
                 .exclusionConstraints(constraints)
                 .build();
+    }
+
+    public static boolean mustUseSimpleModel(DerivationScope scope) {
+        List<ParameterIdentifier> parameterIdentifiers = getParameterIdentifiersForScope(scope);
+        Parameter.Builder[] builders = getParameterBuilders(parameterIdentifiers, scope);
+        return builders.length == 1;
+    }
+
+    public static List<? extends DerivationParameter<?,?>> getSimpleModelVariations(DerivationScope derivationScope) {
+        List<ParameterIdentifier> parameterIdentifiers = getParameterIdentifiersForScope(derivationScope);
+        for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
+            DerivationParameter<?,?> parameter = ParameterFactory.getInstanceFromIdentifier(parameterIdentifier);
+            if (parameter.canBeModeled(derivationScope)) {
+                return parameter.getConstrainedParameterValues(derivationScope);
+            }
+        }
+        return null;
     }
 
     private static List<ParameterIdentifier> getParameterIdentifiersForScope(DerivationScope derivationScope) {
@@ -36,7 +53,7 @@ public class IpmFactory {
         return parameterIdentifiers;
     }
 
-    private static Parameter.Builder[] getParameterBuilder(List<ParameterIdentifier> parameterIdentifiers, DerivationScope derivationScope) {
+    private static Parameter.Builder[] getParameterBuilders(List<ParameterIdentifier> parameterIdentifiers, DerivationScope derivationScope) {
         List<Parameter.Builder> parameterBuilders = new ArrayList<>();
         for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
             DerivationParameter<?,?> parameter = ParameterFactory.getInstanceFromIdentifier(parameterIdentifier);

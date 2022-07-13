@@ -1,6 +1,5 @@
 package de.rub.nds.anvilcore.coffee4j.model;
 
-import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.model.DerivationScope;
 import de.rub.nds.anvilcore.model.IpmFactory;
 import de.rub.nds.anvilcore.model.ModelType;

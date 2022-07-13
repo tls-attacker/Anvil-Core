@@ -5,6 +5,8 @@ import de.rub.nds.anvilcore.model.ModelBasedIpmFactory;
 import de.rub.nds.anvilcore.model.ModelType;
 import de.rub.nds.anvilcore.model.parameter.ParameterFactory;
 import de.rub.nds.anvilcore.model.parameter.ParameterType;
+import de.rub.nds.anvilcore.teststate.AnvilTestStateContainer;
+import de.rub.nds.anvilcore.teststate.ScoreContainerFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,7 +23,15 @@ public class AnvilContext {
     private final Map<ParameterType, ParameterFactory> knownParameters = new HashMap<>();
     private final List<ModelType> knownModelTypes;
     private ModelBasedIpmFactory modelBasedIpmFactory;
+    private ScoreContainerFactory scoreContainerFactory;
 
+    private long totalTests = 0;
+    private long testsDone = 0;
+    private long testsDisabled = 0;
+    private long testsFailed = 0;
+    private long testsSucceeded = 0;
+
+    private final Map<String, AnvilTestStateContainer> testResults = new HashMap<>();
     private final Map<String, Boolean> finishedTests = new HashMap<>();
 
     synchronized public static AnvilContext getInstance() {
@@ -71,19 +81,48 @@ public class AnvilContext {
         this.modelBasedIpmFactory = modelBasedIpmFactory;
     }
 
-    public Map<String, Boolean> getFinishedTests() {
+    public ScoreContainerFactory getScoreContainerFactory() {
+        return scoreContainerFactory;
+    }
+
+    public synchronized void setScoreContainerFactory(ScoreContainerFactory scoreContainerFactory) {
+        this.scoreContainerFactory = scoreContainerFactory;
+    }
+
+    public synchronized Map<String, AnvilTestStateContainer> getTestResults() {
+        return testResults;
+    }
+
+    synchronized public AnvilTestStateContainer getTestResult(String uniqueId) {
+        return testResults.get(uniqueId);
+    }
+
+    synchronized public void addTestResult(AnvilTestStateContainer testResult) {
+        testResults.put(testResult.getUniqueId(), testResult);
+    }
+
+    synchronized public void testFinished(String uniqueId) {
+        finishedTests.put(uniqueId, true);
+        // TODO score container
+        testResults.remove(uniqueId);
+        testsDone++;
+
+        applicationSpecificContextDelegate.onTestFinished(uniqueId);
+    }
+
+    public synchronized Map<String, Boolean> getFinishedTests() {
         return finishedTests;
     }
 
-    public int getTestStrength() {
+    public synchronized int getTestStrength() {
         return testStrength;
     }
 
-    public void setTestStrength(int testStrength) {
+    public synchronized void setTestStrength(int testStrength) {
         this.testStrength = testStrength;
     }
 
-    public boolean testIsFinished(String uniqueId) {
+    public synchronized boolean testIsFinished(String uniqueId) {
         return finishedTests.containsKey(uniqueId);
     }
 }
