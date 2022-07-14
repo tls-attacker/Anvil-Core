@@ -11,6 +11,11 @@ public class ParameterIdentifier {
         this.parameterScope = parameterScope;
     }
 
+    public ParameterIdentifier(ParameterType parameterType) {
+        this.parameterType = parameterType;
+        this.parameterScope = ParameterScope.NO_SCOPE;
+    }
+
     public ParameterType getParameterType() {
         return parameterType;
     }
