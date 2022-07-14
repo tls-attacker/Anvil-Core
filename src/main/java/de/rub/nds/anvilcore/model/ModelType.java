@@ -9,7 +9,7 @@ public interface ModelType {
     static ModelType resolveModelType(String type) {
         List<ModelType> knownModelTypes = AnvilContext.getInstance().getKnownModelTypes();
         List<ModelType> result = knownModelTypes.stream()
-                .filter(modelType -> modelType.toString().equals(type))
+                .filter(modelType -> modelType.toString().toLowerCase().equals(type))
                 .collect(Collectors.toList());
         if (result.size() == 0) {
             throw new IllegalArgumentException("ModelType " + type + " is not known");
