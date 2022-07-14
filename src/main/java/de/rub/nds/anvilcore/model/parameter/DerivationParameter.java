@@ -91,7 +91,9 @@ public abstract class DerivationParameter<ConfigType extends AnvilConfig, ValueT
         return getConstrainedParameterValues(derivationScope).size() > 1;
     }
 
-
+    public boolean hasNoApplicableValues(DerivationScope derivationScope) {
+        return getConstrainedParameterValues(derivationScope).isEmpty();
+    }
 
     protected abstract DerivationParameter<ConfigType, ValueType> generateValue(ValueType selectedValue);
 

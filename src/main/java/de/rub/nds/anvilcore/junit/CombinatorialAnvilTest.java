@@ -2,6 +2,7 @@ package de.rub.nds.anvilcore.junit;
 
 import de.rub.nds.anvilcore.junit.extension.AnvilTestWatcher;
 import de.rub.nds.anvilcore.junit.extension.MethodConditionExtension;
+import de.rub.nds.anvilcore.junit.extension.ValueConstraintsConditionExtension;
 import de.rub.nds.anvilcore.model.DerivationScope;
 import de.rub.nds.anvilcore.model.ParameterCombination;
 import org.apache.logging.log4j.LogManager;
@@ -14,6 +15,7 @@ import org.junit.jupiter.params.aggregator.ArgumentsAccessor;
 @ExtendWith({
         AnvilTestWatcher.class,
         MethodConditionExtension.class,
+        ValueConstraintsConditionExtension.class,
         ExtensionContextParameterResolver.class
 })
 public abstract class CombinatorialAnvilTest {
