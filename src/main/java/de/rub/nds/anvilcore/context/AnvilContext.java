@@ -6,6 +6,7 @@ import de.rub.nds.anvilcore.model.ModelType;
 import de.rub.nds.anvilcore.model.parameter.ParameterFactory;
 import de.rub.nds.anvilcore.model.parameter.ParameterType;
 import de.rub.nds.anvilcore.teststate.AnvilTestStateContainer;
+import de.rub.nds.anvilcore.teststate.DefaultScoreContainerFactory;
 import de.rub.nds.anvilcore.teststate.ScoreContainerFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,7 +24,7 @@ public class AnvilContext {
     private final Map<ParameterType, ParameterFactory> knownParameters = new HashMap<>();
     private final List<ModelType> knownModelTypes;
     private ModelBasedIpmFactory modelBasedIpmFactory;
-    private ScoreContainerFactory scoreContainerFactory;
+    private ScoreContainerFactory scoreContainerFactory = new DefaultScoreContainerFactory();
 
     private long totalTests = 0;
     private long testsDone = 0;
