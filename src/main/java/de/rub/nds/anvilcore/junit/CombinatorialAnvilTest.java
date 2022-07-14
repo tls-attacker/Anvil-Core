@@ -1,5 +1,6 @@
 package de.rub.nds.anvilcore.junit;
 
+import de.rub.nds.anvilcore.junit.extension.AnvilTestWatcher;
 import de.rub.nds.anvilcore.model.DerivationScope;
 import de.rub.nds.anvilcore.model.ParameterCombination;
 import org.apache.logging.log4j.LogManager;
@@ -9,7 +10,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.aggregator.ArgumentsAccessor;
 
-@ExtendWith(ExtensionContextParameterResolver.class)
+@ExtendWith({
+        AnvilTestWatcher.class,
+        ExtensionContextParameterResolver.class
+})
 public abstract class CombinatorialAnvilTest {
     protected static final Logger LOGGER = LogManager.getLogger();
 

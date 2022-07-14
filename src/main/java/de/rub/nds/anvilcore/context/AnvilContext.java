@@ -134,4 +134,17 @@ public class AnvilContext {
     public synchronized boolean testIsFinished(String uniqueId) {
         return finishedTests.containsKey(uniqueId);
     }
+
+    public synchronized void testSucceeded() {
+        testsSucceeded++;
+    }
+
+    public synchronized void testFailed() {
+        testsFailed++;
+    }
+
+    synchronized public void testDisabled() {
+        testsDisabled++;
+    }
+
 }

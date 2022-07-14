@@ -73,6 +73,12 @@ public class AnvilTestStateContainer {
         return container;
     }
 
+    public void setResultRaw(int resultRaw) {
+        this.resultRaw = resultRaw;
+        result = TestResult.resultForBitmask(resultRaw);
+        scoreContainer.updateForResult(result);
+    }
+
     public void finished() {
         AnvilContext.getInstance().testFinished(uniqueId);
     }
@@ -121,8 +127,16 @@ public class AnvilTestStateContainer {
         return disabledReason;
     }
 
+    public void setDisabledReason(String disabledReason) {
+        this.disabledReason = disabledReason;
+    }
+
     public String getFailedReason() {
         return failedReason;
+    }
+
+    public void setFailedReason(String failedReason) {
+        this.failedReason = failedReason;
     }
 
     public long getElapsedTime() {
