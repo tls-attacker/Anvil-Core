@@ -22,4 +22,10 @@ public class ConfigContainer {
         }
         configs.put(configClass, config);
     }
+
+    public static ConfigContainer fromConfig(Class<? extends AnvilConfig> configClass, AnvilConfig config) {
+        ConfigContainer configContainer = new ConfigContainer();
+        configContainer.addConfig(configClass, config);
+        return configContainer;
+    }
 }
