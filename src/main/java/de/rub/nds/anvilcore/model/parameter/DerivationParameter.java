@@ -50,11 +50,11 @@ public abstract class DerivationParameter<ConfigType extends AnvilConfig, ValueT
         return parameterIdentifier;
     }
 
-    public void preProcessConfig(ConfigType config) {};
+    public void preProcessConfig(ConfigType config, DerivationScope derivationScope) {};
 
-    public abstract void applyToConfig(ConfigType config);
+    public abstract void applyToConfig(ConfigType config, DerivationScope derivationScope);
 
-    public void postProcessConfig(ConfigType config) {};
+    public void postProcessConfig(ConfigType config, DerivationScope derivationScope) {};
 
     public abstract List<DerivationParameter> getParameterValues(DerivationScope derivationScope);
 

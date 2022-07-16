@@ -64,17 +64,17 @@ public class ParameterCombination {
     public void applyToConfig(ConfigContainer configContainer) {
         for (DerivationParameter parameter : parameters) {
             if (!derivationScope.getManualConfigTypes().contains(parameter.getParameterIdentifier())) {
-                parameter.preProcessConfig(configContainer.getConfig(parameter.getConfigClass()));
+                parameter.preProcessConfig(configContainer.getConfig(parameter.getConfigClass()), derivationScope);
             }
         }
         for (DerivationParameter parameter : parameters) {
             if (!derivationScope.getManualConfigTypes().contains(parameter.getParameterIdentifier())) {
-                parameter.applyToConfig(configContainer.getConfig(parameter.getConfigClass()));
+                parameter.applyToConfig(configContainer.getConfig(parameter.getConfigClass()), derivationScope);
             }
         }
         for (DerivationParameter parameter : parameters) {
             if (!derivationScope.getManualConfigTypes().contains(parameter.getParameterIdentifier())) {
-                parameter.postProcessConfig(configContainer.getConfig(parameter.getConfigClass()));
+                parameter.postProcessConfig(configContainer.getConfig(parameter.getConfigClass()), derivationScope);
             }
         }
     }
