@@ -150,4 +150,9 @@ public class AnvilTestStateContainer {
     public ScoreContainer getScoreContainer() {
         return scoreContainer;
     }
+
+    public void add(AnvilTestState testState) {
+        testState.setAssociatedContainer(this);
+        this.states.add(testState);
+    }
 }

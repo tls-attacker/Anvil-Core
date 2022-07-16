@@ -24,7 +24,7 @@ public class AnvilTestState {
     private List<String> additionalResultInformation;
     private List<String> additionalTestInformation;
     private ExtensionContext extensionContext;
-    // TODO private AnnotatedTestResultContainer associatedContainer;
+    private AnvilTestStateContainer associatedContainer;
 
 
     public AnvilTestState() {}
@@ -33,7 +33,8 @@ public class AnvilTestState {
         this.parameterCombination = parameterCombination;
         this.extensionContext = extensionContext;
         this.displayName = extensionContext.getDisplayName();
-        // TODO associatedCOntainer
+        this.associatedContainer = AnvilTestStateContainer.forExtensionContext(extensionContext);
+        this.associatedContainer.add(this);
     }
 
     public TestResult getTestResult() {
@@ -90,5 +91,13 @@ public class AnvilTestState {
 
     public void setExtensionContext(ExtensionContext extensionContext) {
         this.extensionContext = extensionContext;
+    }
+
+    public AnvilTestStateContainer getAssociatedContainer() {
+        return associatedContainer;
+    }
+
+    public void setAssociatedContainer(AnvilTestStateContainer associatedContainer) {
+        this.associatedContainer = associatedContainer;
     }
 }
