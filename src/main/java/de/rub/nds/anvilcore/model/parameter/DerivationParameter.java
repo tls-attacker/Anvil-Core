@@ -150,4 +150,9 @@ public abstract class DerivationParameter<ConfigType extends AnvilConfig, ValueT
             return new ArrayList<>();
         }
     }
+
+    @Override
+    public String toString() {
+        return parameterIdentifier.toString() + " = " + (getSelectedValue() != null ? getSelectedValue().toString() : "null");
+    }
 }
