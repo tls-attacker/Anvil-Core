@@ -80,4 +80,17 @@ public class IpmFactory {
         }
         return applicableConstraints.toArray(new Constraint[]{});
     }
+
+    public static List<DerivationParameter> getStaticParameterValues(DerivationScope derivationScope) {
+        List<DerivationParameter> staticParameterValues = new ArrayList<>();
+        List<ParameterIdentifier> parameterIdentifiers = getParameterIdentifiersForScope(derivationScope);
+        for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
+            List<DerivationParameter> parameterValues =
+                    ParameterFactory.getInstanceFromIdentifier(parameterIdentifier).getConstrainedParameterValues(derivationScope);
+            if (parameterValues.size() == 1) {
+                staticParameterValues.add(parameterValues.get(0));
+            }
+        }
+        return staticParameterValues;
+    }
 }

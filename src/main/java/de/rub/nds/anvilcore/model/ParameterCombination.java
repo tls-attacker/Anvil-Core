@@ -15,15 +15,16 @@ import java.util.StringJoiner;
 public class ParameterCombination {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private final List<DerivationParameter> parameters;
+    private final List<DerivationParameter> parameterValues;
     private DerivationScope derivationScope;
 
     public ParameterCombination(List<DerivationParameter> parameters) {
-        this.parameters = parameters;
+        this.parameterValues = parameters;
     }
 
     public ParameterCombination(List<DerivationParameter> parameters, DerivationScope derivationScope) {
-        this.parameters = parameters;
+        this.parameterValues = parameters;
+        this.parameterValues.addAll(IpmFactory.getStaticParameterValues(derivationScope));
         this.derivationScope = derivationScope;
     }
 
@@ -53,7 +54,7 @@ public class ParameterCombination {
     }
 
     public DerivationParameter getParameter(ParameterIdentifier parameterIdentifier) {
-        for (DerivationParameter parameter : parameters) {
+        for (DerivationParameter parameter : parameterValues) {
             if (parameter.getParameterIdentifier().equals(parameterIdentifier)) {
                 return parameter;
             }
@@ -62,17 +63,17 @@ public class ParameterCombination {
     }
 
     public void applyToConfig(ConfigContainer configContainer) {
-        for (DerivationParameter parameter : parameters) {
+        for (DerivationParameter parameter : parameterValues) {
             if (!derivationScope.getManualConfigTypes().contains(parameter.getParameterIdentifier())) {
                 parameter.preProcessConfig(configContainer.getConfig(parameter.getConfigClass()), derivationScope);
             }
         }
-        for (DerivationParameter parameter : parameters) {
+        for (DerivationParameter parameter : parameterValues) {
             if (!derivationScope.getManualConfigTypes().contains(parameter.getParameterIdentifier())) {
                 parameter.applyToConfig(configContainer.getConfig(parameter.getConfigClass()), derivationScope);
             }
         }
-        for (DerivationParameter parameter : parameters) {
+        for (DerivationParameter parameter : parameterValues) {
             if (!derivationScope.getManualConfigTypes().contains(parameter.getParameterIdentifier())) {
                 parameter.postProcessConfig(configContainer.getConfig(parameter.getConfigClass()), derivationScope);
             }
@@ -81,7 +82,7 @@ public class ParameterCombination {
 
     public String toString() {
         StringJoiner joiner = new StringJoiner(", ");
-        for (DerivationParameter derivationParameter : parameters) {
+        for (DerivationParameter derivationParameter : parameterValues) {
             joiner.add(derivationParameter.toString());
         }
         return joiner.toString();
