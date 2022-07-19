@@ -6,14 +6,17 @@ import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 @SuppressWarnings("rawtypes")
 public class AggregatedEnableConstraintBuilder {
     private final DerivationScope derivationScope;
 
-    public AggregatedEnableConstraintBuilder(DerivationScope derivationScope) {
+    public static AggregatedEnableConstraintBuilder init(DerivationScope derivationScope) {
+        return new AggregatedEnableConstraintBuilder(derivationScope);
+    }
+
+    private AggregatedEnableConstraintBuilder(DerivationScope derivationScope) {
         this.derivationScope = derivationScope;
     }
 
@@ -35,6 +38,11 @@ public class AggregatedEnableConstraintBuilder {
         public AggregatedEnableConstraintBuilder1 condition(ParameterIdentifier subject,
                                                             Predicate<DerivationParameter> condition) {
             conditions.put(subject, condition);
+            return this;
+        }
+
+        public AggregatedEnableConstraintBuilder1 conditions(Map<ParameterIdentifier, Predicate<DerivationParameter>> conditions) {
+            this.conditions.putAll(conditions);
             return this;
         }
 
