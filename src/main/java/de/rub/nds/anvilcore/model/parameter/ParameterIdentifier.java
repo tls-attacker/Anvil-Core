@@ -24,12 +24,16 @@ public class ParameterIdentifier {
         return parameterScope;
     }
 
-    @Override
-    public String toString() {
+    public String name() {
         if (parameterScope == ParameterScope.NO_SCOPE || parameterScope == null) {
             return parameterType.toString().toLowerCase();
         }
         return parameterScope + "." + parameterType.toString().toLowerCase();
+    }
+
+    @Override
+    public String toString() {
+        return name();
     }
 
     @Override
