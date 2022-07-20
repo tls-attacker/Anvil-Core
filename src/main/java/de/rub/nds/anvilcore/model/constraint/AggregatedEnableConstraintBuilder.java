@@ -30,7 +30,7 @@ public class AggregatedEnableConstraintBuilder {
         private final DerivationParameter target;
         private final Map<ParameterIdentifier, Predicate<DerivationParameter>> conditions = new HashMap<>();
 
-        public AggregatedEnableConstraintBuilder1(DerivationScope derivationScope, DerivationParameter target) {
+        private AggregatedEnableConstraintBuilder1(DerivationScope derivationScope, DerivationParameter target) {
             this.derivationScope = derivationScope;
             this.target = target;
         }
