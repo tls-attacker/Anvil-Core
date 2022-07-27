@@ -19,7 +19,7 @@ public class IpmFactory {
         Constraint[] constraints = getConstraintsForScope(parameterIdentifiers, derivationScope);
 
         return InputParameterModel.inputParameterModel("dynamic-model")
-                .strength(AnvilContext.getInstance().getTestStrength())
+                .strength(derivationScope.getTestStrength())
                 .parameters(builders)
                 .exclusionConstraints(constraints)
                 .build();
