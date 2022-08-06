@@ -9,45 +9,51 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 @SuppressWarnings("rawtypes")
-public class AggregatedEnableConstraintBuilder {
+public class AggregatedEnableConstraintBuilder<T> {
     private final DerivationScope derivationScope;
 
-    public static AggregatedEnableConstraintBuilder init(DerivationScope derivationScope) {
-        return new AggregatedEnableConstraintBuilder(derivationScope);
+    public static <T> AggregatedEnableConstraintBuilder<T> init(DerivationScope derivationScope) {
+        return new AggregatedEnableConstraintBuilder<>(derivationScope);
     }
 
     private AggregatedEnableConstraintBuilder(DerivationScope derivationScope) {
         this.derivationScope = derivationScope;
     }
 
-    public AggregatedEnableConstraintBuilder1 constrain(DerivationParameter target) {
-        return new AggregatedEnableConstraintBuilder1(derivationScope, target);
+    public AggregatedEnableConstraintBuilder1<T> constrain(DerivationParameter target) {
+        return new AggregatedEnableConstraintBuilder1<>(derivationScope, target);
     }
 
     @SuppressWarnings("rawtypes")
-    public static final class AggregatedEnableConstraintBuilder1 {
+    public static final class AggregatedEnableConstraintBuilder1<T> {
         private final DerivationScope derivationScope;
         private final DerivationParameter target;
         private final Map<ParameterIdentifier, Predicate<DerivationParameter>> conditions = new HashMap<>();
+        private T defaultValue = null;
 
         private AggregatedEnableConstraintBuilder1(DerivationScope derivationScope, DerivationParameter target) {
             this.derivationScope = derivationScope;
             this.target = target;
         }
 
-        public AggregatedEnableConstraintBuilder1 condition(ParameterIdentifier subject,
+        public AggregatedEnableConstraintBuilder1<T> condition(ParameterIdentifier subject,
                                                             Predicate<DerivationParameter> condition) {
             conditions.put(subject, condition);
             return this;
         }
 
-        public AggregatedEnableConstraintBuilder1 conditions(Map<ParameterIdentifier, Predicate<DerivationParameter>> conditions) {
+        public AggregatedEnableConstraintBuilder1<T> conditions(Map<ParameterIdentifier, Predicate<DerivationParameter>> conditions) {
             this.conditions.putAll(conditions);
             return this;
         }
 
-        public AggregatedEnableConstraint get() {
-            return new AggregatedEnableConstraint(derivationScope, target, conditions);
+        public AggregatedEnableConstraintBuilder1<T> defaultValue(T defaultValue) {
+            this.defaultValue = defaultValue;
+            return this;
+        }
+
+        public AggregatedEnableConstraint<T> get() {
+            return new AggregatedEnableConstraint<T>(derivationScope, target, defaultValue, conditions);
         }
     }
 }

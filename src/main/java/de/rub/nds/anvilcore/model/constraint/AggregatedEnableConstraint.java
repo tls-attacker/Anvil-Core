@@ -10,17 +10,19 @@ import java.util.*;
 import java.util.function.Predicate;
 
 @SuppressWarnings("rawtypes")
-public class AggregatedEnableConstraint extends ConditionalConstraint {
+public class AggregatedEnableConstraint<T> extends ConditionalConstraint {
     private final DerivationScope derivationScope;
     private final DerivationParameter target;
+    private final T defaultValue;
     private final Map<ParameterIdentifier, Predicate<DerivationParameter>> conditions;
     private final Set<ParameterIdentifier> dynamicParameters = new HashSet<>();
     private final Set<ParameterIdentifier> staticParameters = new HashSet<>();
 
-    public AggregatedEnableConstraint(DerivationScope derivationScope, DerivationParameter target,
+    public AggregatedEnableConstraint(DerivationScope derivationScope, DerivationParameter target, T defaultValue,
                                       Map<ParameterIdentifier, Predicate<DerivationParameter>> conditions) {
         this.derivationScope = derivationScope;
         this.target = target;
+        this.defaultValue = defaultValue;
         this.conditions = conditions;
 
         // Partition required parameters into static and dynamic parameter
@@ -96,7 +98,13 @@ public class AggregatedEnableConstraint extends ConditionalConstraint {
             }
         }
 
-        // The target values must be null if and only if the target is disabled by the sub constraints
-        return enabled ^ targetValue.getSelectedValue() == null;
+        // If no defaultValue is specified, the parameter is set to null IF AND ONLY IF it is disabled
+        if (defaultValue == null) {
+            return enabled ^ targetValue.getSelectedValue() == null;
+        }
+        // If defaultValue is specified, the parameter is set to that value IF it is disabled
+        else {
+            return enabled || Objects.equals(targetValue.getSelectedValue(), defaultValue);
+        }
     }
 }
