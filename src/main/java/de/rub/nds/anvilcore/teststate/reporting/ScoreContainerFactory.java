@@ -1,4 +1,4 @@
-package de.rub.nds.anvilcore.teststate;
+package de.rub.nds.anvilcore.teststate.reporting;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 

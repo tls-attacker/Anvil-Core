@@ -76,6 +76,7 @@ public abstract class DerivationParameter<ConfigType extends AnvilConfig, ValueT
         if(derivationScope.hasExplicitModelingConstraints(parameterIdentifier)) {
             return getExplicitModelingConstraints(derivationScope);
         } else {
+            //return Collections.emptyList();
             return getDefaultConditionalConstraints(derivationScope);
         }
     }

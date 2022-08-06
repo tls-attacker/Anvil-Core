@@ -6,8 +6,8 @@ import de.rub.nds.anvilcore.model.ModelType;
 import de.rub.nds.anvilcore.model.parameter.ParameterFactory;
 import de.rub.nds.anvilcore.model.parameter.ParameterType;
 import de.rub.nds.anvilcore.teststate.AnvilTestStateContainer;
-import de.rub.nds.anvilcore.teststate.DefaultScoreContainerFactory;
-import de.rub.nds.anvilcore.teststate.ScoreContainerFactory;
+import de.rub.nds.anvilcore.teststate.reporting.DefaultScoreContainerFactory;
+import de.rub.nds.anvilcore.teststate.reporting.ScoreContainerFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
