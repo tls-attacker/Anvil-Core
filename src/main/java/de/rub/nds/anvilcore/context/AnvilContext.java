@@ -114,6 +114,10 @@ public class AnvilContext {
         return totalTests;
     }
 
+    public void setTotalTests(long totalTests) {
+        this.totalTests = totalTests;
+    }
+
     public long getTestsDone() {
         return testsDone;
     }
