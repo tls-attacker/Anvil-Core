@@ -10,7 +10,7 @@ public interface ParameterType {
      static ParameterType resolveParameterType(String type) {
          Map<ParameterType, ParameterFactory> knownParameters = AnvilFactoryRegistry.get().getKnownParameters();
          List<ParameterType> result = knownParameters.keySet().stream()
-                .filter(parameterType -> parameterType.toString().equals(type))
+                .filter(parameterType -> parameterType.toString().equalsIgnoreCase(type))
                 .collect(Collectors.toList());
          if (result.size() == 0) {
             throw new IllegalArgumentException("Parameter " + type + " is not known");
