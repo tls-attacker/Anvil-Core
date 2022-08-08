@@ -21,7 +21,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 public @interface ExplicitModelingConstraints {
     Class<?> clazz() default Object.class;
-    String[] affectedTypes();
-    String[] affectedScopes();
+    String[] affectedIdentifiers();
     String[] methods();
 }

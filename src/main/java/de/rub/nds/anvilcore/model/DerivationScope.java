@@ -2,11 +2,8 @@ package de.rub.nds.anvilcore.model;
 
 import de.rub.nds.anvilcore.annotation.*;
 import de.rub.nds.anvilcore.context.AnvilContext;
-import de.rub.nds.anvilcore.context.AnvilFactoryRegistry;
 import de.rub.nds.anvilcore.model.constraint.ValueConstraint;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
-import de.rub.nds.anvilcore.model.parameter.ParameterScope;
-import de.rub.nds.anvilcore.model.parameter.ParameterType;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 import java.lang.reflect.Method;
@@ -105,10 +102,8 @@ public class DerivationScope {
         Method testMethod = extensionContext.getRequiredTestMethod();
         if (testMethod.isAnnotationPresent(IpmLimitations.class)) {
             IpmLimitations ipmLimitations = testMethod.getAnnotation(IpmLimitations.class);
-            String[] types = ipmLimitations.types();
-            String[] scopes = ipmLimitations.scopes();
-            for (int i=0; i < types.length; i++) {
-                limitations.add(resolveParameterIdentifier(types, scopes, i));
+            for (String identifier : ipmLimitations.identifiers()) {
+                limitations.add(ParameterIdentifier.fromName(identifier));
             }
         }
         return limitations;
@@ -119,10 +114,8 @@ public class DerivationScope {
         Method testMethod = extensionContext.getRequiredTestMethod();
         if (testMethod.isAnnotationPresent(IpmExtensions.class)) {
             IpmExtensions ipmExtensions = testMethod.getAnnotation(IpmExtensions.class);
-            String[] types = ipmExtensions.types();
-            String[] scopes = ipmExtensions.scopes();
-            for (int i=0; i < types.length; i++) {
-                extensions.add(resolveParameterIdentifier(types, scopes, i));
+            for (String identifier : ipmExtensions.identifiers()) {
+                extensions.add(ParameterIdentifier.fromName(identifier));
             }
         }
         return extensions;
@@ -133,29 +126,27 @@ public class DerivationScope {
         Method testMethod = extensionContext.getRequiredTestMethod();
         if (testMethod.isAnnotationPresent(ValueConstraints.class)) {
             ValueConstraints valueConstraints = testMethod.getAnnotation(ValueConstraints.class);
-            String[] types = valueConstraints.affectedTypes();
-            String[] scopes = valueConstraints.affectedScopes();
+            String[] identifiers = valueConstraints.affectedIdentifiers();
             String[] methods = valueConstraints.methods();
-            if(methods.length != types.length) {
+            if(methods.length != identifiers.length) {
                 throw new IllegalArgumentException("Unable to resolve ValueConstraints - argument count mismatch");
             }
 
-            for (int i = 0; i < types.length; i++) {
-                ParameterIdentifier parameterIdentifier = resolveParameterIdentifier(types, scopes, i);
+            for (int i = 0; i < identifiers.length; i++) {
+                ParameterIdentifier parameterIdentifier = ParameterIdentifier.fromName(identifiers[i]);
                 constraints.add(new ValueConstraint(parameterIdentifier, methods[i], extensionContext.getRequiredTestClass(), false));
             }
         }
         if (testMethod.isAnnotationPresent(DynamicValueConstraints.class)) {
             DynamicValueConstraints valueConstraints = testMethod.getAnnotation(DynamicValueConstraints.class);
-            String[] types = valueConstraints.affectedTypes();
-            String[] scopes = valueConstraints.affectedScopes();
+            String[] identifiers = valueConstraints.affectedIdentifiers();
             String[] methods = valueConstraints.methods();
-            if(methods.length != types.length) {
+            if(methods.length != identifiers.length) {
                 throw new IllegalArgumentException("Unable to resolve ValueConstraints - argument count mismatch");
             }
 
-            for (int i = 0; i < types.length; i++) {
-                ParameterIdentifier parameterIdentifier = resolveParameterIdentifier(types, scopes, i);
+            for (int i = 0; i < identifiers.length; i++) {
+                ParameterIdentifier parameterIdentifier = ParameterIdentifier.fromName(identifiers[i]);
                 constraints.add(new ValueConstraint(parameterIdentifier, methods[i], extensionContext.getRequiredTestClass(), true));
             }
         }
@@ -167,16 +158,15 @@ public class DerivationScope {
         Method testMethod = extensionContext.getRequiredTestMethod();
         if (testMethod.isAnnotationPresent(ExplicitValues.class)) {
             ExplicitValues explicitValues = testMethod.getAnnotation(ExplicitValues.class);
-            String[] types = explicitValues.affectedTypes();
-            String[] scopes = explicitValues.affectedScopes();
+            String[] identifiers = explicitValues.affectedIdentifiers();
             String[] methods = explicitValues.methods();
-            if(methods.length != types.length) {
+            if(methods.length != identifiers.length) {
                 throw new IllegalArgumentException("Unable to resolve ExplicitValues - argument count mismatch");
             }
-            for (int i = 0; i < types.length; i++) {
-                ParameterIdentifier parameterIdentifier = resolveParameterIdentifier(types, scopes, i);
+            for (int i = 0; i < identifiers.length; i++) {
+                ParameterIdentifier parameterIdentifier = ParameterIdentifier.fromName(identifiers[i]);
                 if (valueMap.containsKey(parameterIdentifier)) {
-                    throw new IllegalArgumentException("Unable to resolve ExplicitValues - multiple explicit values defined for " + types[i]);
+                    throw new IllegalArgumentException("Unable to resolve ExplicitValues - multiple explicit values defined for " + identifiers[i]);
                 }
                 valueMap.put(parameterIdentifier, methods[i]);
             }
@@ -189,16 +179,15 @@ public class DerivationScope {
         Method testMethod = extensionContext.getRequiredTestMethod();
         if(testMethod.isAnnotationPresent(ExplicitModelingConstraints.class)) {
             ExplicitModelingConstraints explicitConstraints = testMethod.getAnnotation(ExplicitModelingConstraints.class);
-            String[] types = explicitConstraints.affectedTypes();
-            String[] scopes = explicitConstraints.affectedScopes();
+            String[] identifiers = explicitConstraints.affectedIdentifiers();
             String[] methods = explicitConstraints.methods();
-            if(methods.length != types.length) {
+            if(methods.length != identifiers.length) {
                 throw new IllegalArgumentException("Unable to resolve ExplicitModelParameterConstraints - argument count mismatch");
             }
-            for (int i = 0; i < types.length; i++) {
-                ParameterIdentifier parameterIdentifier = resolveParameterIdentifier(types, scopes, i);
+            for (int i = 0; i < identifiers.length; i++) {
+                ParameterIdentifier parameterIdentifier = ParameterIdentifier.fromName(identifiers[i]);
                 if (constraintsMap.containsKey(parameterIdentifier)) {
-                    throw new IllegalArgumentException("Unable to resolve ExplicitModelParameterConstraints - multiple explicit constraints defined for " + types[i]);
+                    throw new IllegalArgumentException("Unable to resolve ExplicitModelParameterConstraints - multiple explicit constraints defined for " + identifiers[i]);
                 }
                 constraintsMap.put(parameterIdentifier, methods[i]);
             }
@@ -211,10 +200,8 @@ public class DerivationScope {
         Method testMethod = extensionContext.getRequiredTestMethod();
         if(testMethod.isAnnotationPresent(ManualConfig.class)) {
             ManualConfig manualConfig = testMethod.getAnnotation(ManualConfig.class);
-            String[] types = manualConfig.types();
-            String[] scopes = manualConfig.scopes();
-            for (int i = 0; i < types.length; i++) {
-                manualConfigTypes.add(resolveParameterIdentifier(types, scopes, i));
+            for (String identifier : manualConfig.identifiers()) {
+                manualConfigTypes.add(ParameterIdentifier.fromName(identifier));
             }
         }
         return manualConfigTypes;
@@ -227,14 +214,5 @@ public class DerivationScope {
             return testStrength.value();
         }
         return AnvilContext.getInstance().getTestStrength();
-    }
-
-    private static ParameterIdentifier resolveParameterIdentifier(String[] types, String[] scopes, int index) {
-        ParameterType parameterType = ParameterType.resolveParameterType(types[index]);
-        ParameterScope parameterScope = ParameterScope.NO_SCOPE;
-        if (index < scopes.length) {
-            parameterScope = AnvilFactoryRegistry.get().getParameterFactory(parameterType).resolveParameterScope(scopes[index]);
-        }
-        return new ParameterIdentifier(parameterType, parameterScope);
     }
 }

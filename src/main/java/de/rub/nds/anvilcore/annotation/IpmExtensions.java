@@ -22,7 +22,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE})
 public @interface IpmExtensions {
-    String[] types();
-    String[] scopes() default {};
+    String[] identifiers();
 };
 

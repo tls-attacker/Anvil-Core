@@ -27,7 +27,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 public @interface DynamicValueConstraints {
     Class<?> clazz() default Object.class;
-    String[] affectedTypes();
-    String[] affectedScopes() default {};
+    String[] affectedIdentifiers();
     String[] methods();
 }

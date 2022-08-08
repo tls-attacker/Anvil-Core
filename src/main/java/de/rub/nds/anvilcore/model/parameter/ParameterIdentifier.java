@@ -1,5 +1,7 @@
 package de.rub.nds.anvilcore.model.parameter;
 
+import de.rub.nds.anvilcore.context.AnvilFactoryRegistry;
+
 import java.util.Objects;
 
 public class ParameterIdentifier {
@@ -29,6 +31,19 @@ public class ParameterIdentifier {
             return parameterType.toString().toLowerCase();
         }
         return parameterScope + "." + parameterType.toString().toLowerCase();
+    }
+
+    public static ParameterIdentifier fromName(String name) {
+        if (!name.contains(".")) {
+            // No parameter scope
+            return new ParameterIdentifier(ParameterType.resolveParameterType(name));
+        } else {
+            String scopeName = name.substring(0, name.lastIndexOf("."));
+            String typeName = name.substring(name.lastIndexOf(".") + 1);
+            ParameterType parameterType = ParameterType.resolveParameterType(typeName);
+            ParameterScope parameterScope = AnvilFactoryRegistry.get().getParameterFactory(parameterType).resolveParameterScope(scopeName);
+            return new ParameterIdentifier(parameterType, parameterScope);
+        }
     }
 
     @Override
