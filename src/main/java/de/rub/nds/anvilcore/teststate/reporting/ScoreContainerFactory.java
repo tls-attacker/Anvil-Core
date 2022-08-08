@@ -4,4 +4,5 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 
 public interface ScoreContainerFactory {
     ScoreContainer getInstance(ExtensionContext extensionContext);
+    ScoreContainer getInstance();
 }

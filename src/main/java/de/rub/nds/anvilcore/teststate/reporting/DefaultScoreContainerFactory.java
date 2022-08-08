@@ -7,4 +7,9 @@ public class DefaultScoreContainerFactory implements ScoreContainerFactory {
     public ScoreContainer getInstance(ExtensionContext extensionContext) {
         return new DefaultScoreContainer();
     }
+
+    @Override
+    public ScoreContainer getInstance() {
+        return new DefaultScoreContainer();
+    }
 }

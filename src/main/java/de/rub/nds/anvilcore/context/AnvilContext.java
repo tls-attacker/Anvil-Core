@@ -3,6 +3,7 @@ package de.rub.nds.anvilcore.context;
 import de.rub.nds.anvilcore.model.DefaultModelType;
 import de.rub.nds.anvilcore.model.ModelType;
 import de.rub.nds.anvilcore.teststate.AnvilTestStateContainer;
+import de.rub.nds.anvilcore.teststate.reporting.ScoreContainer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -22,6 +23,8 @@ public class AnvilContext {
     private long testsDisabled = 0;
     private long testsFailed = 0;
     private long testsSucceeded = 0;
+    private final Date startTime = new Date();
+    private final ScoreContainer scoreContainer = AnvilFactoryRegistry.get().getScoreContainerFactory().getInstance();
 
     private final Map<String, AnvilTestStateContainer> testResults = new HashMap<>();
     private final Map<String, Boolean> finishedTests = new HashMap<>();
@@ -68,7 +71,7 @@ public class AnvilContext {
 
     synchronized public void testFinished(String uniqueId) {
         finishedTests.put(uniqueId, true);
-        // TODO score container
+        scoreContainer.merge(testResults.get(uniqueId).getScoreContainer());
         testResults.remove(uniqueId);
         testsDone++;
 
@@ -99,8 +102,35 @@ public class AnvilContext {
         testsFailed++;
     }
 
-    synchronized public void testDisabled() {
+    public synchronized void testDisabled() {
         testsDisabled++;
     }
 
+    public synchronized Date getStartTime() {
+        return startTime;
+    }
+
+    public long getTotalTests() {
+        return totalTests;
+    }
+
+    public long getTestsDone() {
+        return testsDone;
+    }
+
+    public long getTestsDisabled() {
+        return testsDisabled;
+    }
+
+    public long getTestsFailed() {
+        return testsFailed;
+    }
+
+    public long getTestsSucceeded() {
+        return testsSucceeded;
+    }
+
+    public ScoreContainer getScoreContainer() {
+        return scoreContainer;
+    }
 }
