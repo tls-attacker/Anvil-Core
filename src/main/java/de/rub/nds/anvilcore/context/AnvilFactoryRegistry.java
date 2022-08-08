@@ -4,7 +4,9 @@ import de.rub.nds.anvilcore.model.ParameterIdentifierProvider;
 import de.rub.nds.anvilcore.model.parameter.ParameterFactory;
 import de.rub.nds.anvilcore.model.parameter.ParameterType;
 import de.rub.nds.anvilcore.teststate.reporting.DefaultScoreContainerFactory;
+import de.rub.nds.anvilcore.teststate.reporting.DefaultTestSummaryFactory;
 import de.rub.nds.anvilcore.teststate.reporting.ScoreContainerFactory;
+import de.rub.nds.anvilcore.teststate.reporting.TestSummaryFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -17,6 +19,7 @@ public class AnvilFactoryRegistry {
 
     private ParameterIdentifierProvider parameterIdentifierProvider;
     private ScoreContainerFactory scoreContainerFactory = new DefaultScoreContainerFactory();
+    private TestSummaryFactory testSummaryFactory = new DefaultTestSummaryFactory();
     private final Map<ParameterType, ParameterFactory> knownParameters = new HashMap<>();
 
     private AnvilFactoryRegistry() {}
@@ -45,6 +48,14 @@ public class AnvilFactoryRegistry {
 
     public void setScoreContainerFactory(ScoreContainerFactory scoreContainerFactory) {
         this.scoreContainerFactory = scoreContainerFactory;
+    }
+
+    public TestSummaryFactory getTestSummaryFactory() {
+        return testSummaryFactory;
+    }
+
+    public void setTestSummaryFactory(TestSummaryFactory testSummaryFactory) {
+        this.testSummaryFactory = testSummaryFactory;
     }
 
     public Map<ParameterType, ParameterFactory> getKnownParameters() {
