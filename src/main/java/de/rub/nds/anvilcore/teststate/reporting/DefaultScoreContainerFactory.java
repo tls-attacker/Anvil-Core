@@ -2,7 +2,7 @@ package de.rub.nds.anvilcore.teststate.reporting;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-public class DefaultScoreContainerFactory extends ScoreContainerFactory {
+public class DefaultScoreContainerFactory implements ScoreContainerFactory {
     @Override
     public ScoreContainer getInstance(ExtensionContext extensionContext) {
         return new DefaultScoreContainer();
