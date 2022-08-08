@@ -1,6 +1,6 @@
 package de.rub.nds.anvilcore.model;
 
-import de.rub.nds.anvilcore.context.AnvilContext;
+import de.rub.nds.anvilcore.context.AnvilFactoryRegistry;
 import de.rub.nds.anvilcore.model.constraint.ConditionalConstraint;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
 import de.rub.nds.anvilcore.model.parameter.ParameterFactory;
@@ -12,7 +12,7 @@ import de.rwth.swc.coffee4j.model.constraints.Constraint;
 import java.util.ArrayList;
 import java.util.List;
 
-public class IpmFactory {
+public class IpmProvider {
     public static InputParameterModel generateIpm(DerivationScope derivationScope) {
         List<ParameterIdentifier> parameterIdentifiers = getParameterIdentifiersForScope(derivationScope);
         Parameter.Builder[] builders = getParameterBuilders(parameterIdentifiers, derivationScope);
@@ -44,7 +44,7 @@ public class IpmFactory {
 
     private static List<ParameterIdentifier> getParameterIdentifiersForScope(DerivationScope derivationScope) {
         // Get base parameters of model
-        List<ParameterIdentifier> parameterIdentifiers = AnvilContext.getInstance().getModelBasedIpmFactory().getModelParameterIdentifiers(derivationScope);
+        List<ParameterIdentifier> parameterIdentifiers = AnvilFactoryRegistry.get().getParameterIdentifierProvider().getModelParameterIdentifiers(derivationScope);
         // Add explicit extensions
         parameterIdentifiers.addAll(derivationScope.getIpmExtensions());
         // Remove explicit limitations

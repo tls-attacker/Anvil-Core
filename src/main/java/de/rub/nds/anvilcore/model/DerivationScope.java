@@ -2,6 +2,7 @@ package de.rub.nds.anvilcore.model;
 
 import de.rub.nds.anvilcore.annotation.*;
 import de.rub.nds.anvilcore.context.AnvilContext;
+import de.rub.nds.anvilcore.context.AnvilFactoryRegistry;
 import de.rub.nds.anvilcore.model.constraint.ValueConstraint;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import de.rub.nds.anvilcore.model.parameter.ParameterScope;
@@ -232,7 +233,7 @@ public class DerivationScope {
         ParameterType parameterType = ParameterType.resolveParameterType(types[index]);
         ParameterScope parameterScope = ParameterScope.NO_SCOPE;
         if (index < scopes.length) {
-            parameterScope = AnvilContext.getInstance().getParameterFactory(parameterType).resolveParameterScope(scopes[index]);
+            parameterScope = AnvilFactoryRegistry.get().getParameterFactory(parameterType).resolveParameterScope(scopes[index]);
         }
         return new ParameterIdentifier(parameterType, parameterScope);
     }

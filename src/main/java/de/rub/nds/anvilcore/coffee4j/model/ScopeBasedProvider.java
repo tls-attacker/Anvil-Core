@@ -1,7 +1,7 @@
 package de.rub.nds.anvilcore.coffee4j.model;
 
 import de.rub.nds.anvilcore.model.DerivationScope;
-import de.rub.nds.anvilcore.model.IpmFactory;
+import de.rub.nds.anvilcore.model.IpmProvider;
 import de.rub.nds.anvilcore.model.ModelType;
 import de.rwth.swc.coffee4j.junit.provider.model.ModelProvider;
 import de.rwth.swc.coffee4j.model.InputParameterModel;
@@ -26,7 +26,7 @@ public class ScopeBasedProvider implements ModelProvider, AnnotationConsumer<Mod
     public InputParameterModel provide(ExtensionContext extensionContext) {
         ModelType modelType = ModelType.resolveModelType(modelFromScope.modelType());
         DerivationScope derivationScope = new DerivationScope(extensionContext, modelType);
-        final Object providedObject = IpmFactory.generateIpm(derivationScope);
+        final Object providedObject = IpmProvider.generateIpm(derivationScope);
         return toInputParameterModel(providedObject);
     }
     

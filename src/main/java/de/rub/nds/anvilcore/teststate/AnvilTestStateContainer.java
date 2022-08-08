@@ -3,6 +3,7 @@ package de.rub.nds.anvilcore.teststate;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import de.rub.nds.anvilcore.context.AnvilContext;
+import de.rub.nds.anvilcore.context.AnvilFactoryRegistry;
 import de.rub.nds.anvilcore.junit.Utils;
 import de.rub.nds.anvilcore.model.ParameterCombination;
 import de.rub.nds.anvilcore.teststate.reporting.ScoreContainer;
@@ -57,7 +58,7 @@ public class AnvilTestStateContainer {
 
     private AnvilTestStateContainer(ExtensionContext extensionContext) {
         this.uniqueId = extensionContext.getUniqueId();
-        this.scoreContainer = AnvilContext.getInstance().getScoreContainerFactory().getInstance(extensionContext);
+        this.scoreContainer = AnvilFactoryRegistry.get().getScoreContainerFactory().getInstance(extensionContext);
     }
 
     synchronized public static AnvilTestStateContainer forExtensionContext(ExtensionContext extensionContext) {

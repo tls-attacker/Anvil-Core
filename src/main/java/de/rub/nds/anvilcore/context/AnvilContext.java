@@ -1,13 +1,8 @@
 package de.rub.nds.anvilcore.context;
 
 import de.rub.nds.anvilcore.model.DefaultModelType;
-import de.rub.nds.anvilcore.model.ModelBasedIpmFactory;
 import de.rub.nds.anvilcore.model.ModelType;
-import de.rub.nds.anvilcore.model.parameter.ParameterFactory;
-import de.rub.nds.anvilcore.model.parameter.ParameterType;
 import de.rub.nds.anvilcore.teststate.AnvilTestStateContainer;
-import de.rub.nds.anvilcore.teststate.reporting.DefaultScoreContainerFactory;
-import de.rub.nds.anvilcore.teststate.reporting.ScoreContainerFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,11 +15,7 @@ public class AnvilContext {
 
     private ApplicationSpecificContextDelegate applicationSpecificContextDelegate;
     private int testStrength = 2;
-
-    private final Map<ParameterType, ParameterFactory> knownParameters = new HashMap<>();
     private final List<ModelType> knownModelTypes;
-    private ModelBasedIpmFactory modelBasedIpmFactory;
-    private ScoreContainerFactory scoreContainerFactory = new DefaultScoreContainerFactory();
 
     private long totalTests = 0;
     private long testsDone = 0;
@@ -59,44 +50,8 @@ public class AnvilContext {
         this.applicationSpecificContextDelegate = applicationSpecificContextDelegate;
     }
 
-    public Map<ParameterType, ParameterFactory> getKnownParameters() {
-        return knownParameters;
-    }
-
-    public void addParameterTypes(ParameterType[] parameterTypes, ParameterFactory associatedFactory) {
-        for (ParameterType parameterType : parameterTypes) {
-            if (knownParameters.containsKey(parameterType)) {
-                LOGGER.warn("Parameter type " + parameterType.toString() + " already exists");
-            }
-            knownParameters.put(parameterType, associatedFactory);
-        }
-    }
-
-    public ParameterFactory getParameterFactory(ParameterType parameterType) {
-        if (!knownParameters.containsKey(parameterType)) {
-            throw new IllegalArgumentException("Parameter " + parameterType + " is not known");
-        }
-        return knownParameters.get(parameterType);
-    }
-
     public List<ModelType> getKnownModelTypes() {
         return knownModelTypes;
-    }
-
-    public ModelBasedIpmFactory getModelBasedIpmFactory() {
-        return modelBasedIpmFactory;
-    }
-
-    public void setModelBasedIpmFactory(ModelBasedIpmFactory modelBasedIpmFactory) {
-        this.modelBasedIpmFactory = modelBasedIpmFactory;
-    }
-
-    public ScoreContainerFactory getScoreContainerFactory() {
-        return scoreContainerFactory;
-    }
-
-    public synchronized void setScoreContainerFactory(ScoreContainerFactory scoreContainerFactory) {
-        this.scoreContainerFactory = scoreContainerFactory;
     }
 
     public synchronized Map<String, AnvilTestStateContainer> getTestResults() {

@@ -2,7 +2,7 @@ package de.rub.nds.anvilcore.junit.simpletest;
 
 import de.rub.nds.anvilcore.annotation.TestChooser;
 import de.rub.nds.anvilcore.model.DerivationScope;
-import de.rub.nds.anvilcore.model.IpmFactory;
+import de.rub.nds.anvilcore.model.IpmProvider;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestTemplateInvocationContext;
@@ -27,13 +27,13 @@ public class SimpleTestExtension implements TestTemplateInvocationContextProvide
             return false;
         }
 
-        return IpmFactory.mustUseSimpleModel(new DerivationScope(extensionContext));
+        return IpmProvider.mustUseSimpleModel(new DerivationScope(extensionContext));
     }
 
     @Override
     public Stream<TestTemplateInvocationContext> provideTestTemplateInvocationContexts(ExtensionContext extensionContext) {
         DerivationScope derivationScope = new DerivationScope(extensionContext);
-        List<DerivationParameter> dynamicParameterValues = (List<DerivationParameter>) IpmFactory.getSimpleModelVariations(derivationScope);
+        List<DerivationParameter> dynamicParameterValues = (List<DerivationParameter>) IpmProvider.getSimpleModelVariations(derivationScope);
         SimpleTestManagerContainer managerContainer = SimpleTestManagerContainer.getInstance();
         if(dynamicParameterValues != null) {
             managerContainer.addManagerByExtensionContext(extensionContext, dynamicParameterValues.size());

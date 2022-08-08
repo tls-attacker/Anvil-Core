@@ -3,7 +3,7 @@ package de.rub.nds.anvilcore.junit;
 import de.rub.nds.anvilcore.annotation.TestChooser;
 import de.rub.nds.anvilcore.coffee4j.junit.AnvilCombinatorialTestExtension;
 import de.rub.nds.anvilcore.model.DerivationScope;
-import de.rub.nds.anvilcore.model.IpmFactory;
+import de.rub.nds.anvilcore.model.IpmProvider;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestTemplateInvocationContext;
 import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider;
@@ -26,7 +26,7 @@ public class TestChooserExtension implements TestTemplateInvocationContextProvid
         }
 
         DerivationScope derivationScope = new DerivationScope(extensionContext);
-        if (IpmFactory.mustUseSimpleModel(derivationScope)) {
+        if (IpmProvider.mustUseSimpleModel(derivationScope)) {
             // FIXME
             // return new SimpleTestExtension().supportsTestTemplate(extensionContext);
             return false;
@@ -38,7 +38,7 @@ public class TestChooserExtension implements TestTemplateInvocationContextProvid
     @Override
     public Stream<TestTemplateInvocationContext> provideTestTemplateInvocationContexts(ExtensionContext extensionContext) {
         DerivationScope scope = new DerivationScope(extensionContext);
-        if(IpmFactory.mustUseSimpleModel(scope)) {
+        if(IpmProvider.mustUseSimpleModel(scope)) {
             // FIXME
             //return new SimpleTestExtension().provideTestTemplateInvocationContexts(extensionContext);
             return null;
