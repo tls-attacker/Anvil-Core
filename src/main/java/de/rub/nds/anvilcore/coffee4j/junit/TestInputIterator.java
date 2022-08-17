@@ -43,6 +43,8 @@ class TestInputIterator implements Iterator<Combination> {
                 if (nextTestInput != null) {
                     testInputQueue.addFirst(nextTestInput);
                     return true;
+                } else {
+                    return false;
                 }
             } catch (InterruptedException ignored) {
             }
