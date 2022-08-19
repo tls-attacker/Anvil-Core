@@ -112,7 +112,7 @@ public abstract class DerivationParameter<ConfigType extends AnvilConfig, ValueT
 
     private boolean valueApplicableUnderAllConstraints(List<ValueConstraint> valueConstraints, ValueType value) {
         for (ValueConstraint constraint : valueConstraints) {
-            if (constraint.getAffectedParameter() == parameterIdentifier) {
+            if (constraint.getAffectedParameter().equals(parameterIdentifier)) {
                 if (!valueApplicableUnderConstraint(constraint, value)) {
                     return false;
                 }
@@ -130,8 +130,8 @@ public abstract class DerivationParameter<ConfigType extends AnvilConfig, ValueT
                 constructor = constraint.getClazz().getConstructor();
                 return (Boolean) method.invoke(constructor.newInstance(), value);
             } else {
-                method = valueClass.getMethod(constraint.getEvaluationMethod());
-                return (Boolean) method.invoke(value);
+                method = constraint.getClazz().getMethod(constraint.getEvaluationMethod(), valueClass);
+                return (Boolean) method.invoke(null, value);
             }
         } catch (InvocationTargetException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
             LOGGER.error("Was unable to invoke constraint method for type " + parameterIdentifier, e);
