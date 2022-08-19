@@ -124,19 +124,18 @@ public class DerivationScope {
     private static List<ValueConstraint> resolveValueConstraints(ExtensionContext extensionContext) {
         List<ValueConstraint> constraints = new LinkedList<>();
         Method testMethod = extensionContext.getRequiredTestMethod();
+
         if (testMethod.isAnnotationPresent(ValueConstraints.class)) {
             ValueConstraints valueConstraints = testMethod.getAnnotation(ValueConstraints.class);
-            String[] identifiers = valueConstraints.affectedIdentifiers();
-            String[] methods = valueConstraints.methods();
-            if(methods.length != identifiers.length) {
-                throw new IllegalArgumentException("Unable to resolve ValueConstraints - argument count mismatch");
-            }
+            de.rub.nds.anvilcore.annotation.ValueConstraint[] valueConstraintAnnotations = valueConstraints.value();
 
-            for (int i = 0; i < identifiers.length; i++) {
-                ParameterIdentifier parameterIdentifier = ParameterIdentifier.fromName(identifiers[i]);
-                constraints.add(new ValueConstraint(parameterIdentifier, methods[i], extensionContext.getRequiredTestClass(), false));
+            for (de.rub.nds.anvilcore.annotation.ValueConstraint valueConstraintAnnotation : valueConstraintAnnotations) {
+                ParameterIdentifier parameterIdentifier = ParameterIdentifier.fromName(valueConstraintAnnotation.identifier());
+                Class<?> clazz = valueConstraintAnnotation.clazz().equals(Object.class) ? extensionContext.getRequiredTestClass() : valueConstraintAnnotation.clazz();
+                constraints.add(new ValueConstraint(parameterIdentifier, valueConstraintAnnotation.method(), clazz, false));
             }
         }
+
         if (testMethod.isAnnotationPresent(DynamicValueConstraints.class)) {
             DynamicValueConstraints valueConstraints = testMethod.getAnnotation(DynamicValueConstraints.class);
             String[] identifiers = valueConstraints.affectedIdentifiers();

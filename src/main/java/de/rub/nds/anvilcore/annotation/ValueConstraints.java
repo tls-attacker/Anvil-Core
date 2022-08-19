@@ -26,7 +26,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE})
 public @interface ValueConstraints {
-    Class<?> clazz() default Object.class;
-    String[] affectedIdentifiers();
-    String[] methods();
+    ValueConstraint[] value();
 }
