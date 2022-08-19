@@ -131,7 +131,7 @@ public abstract class DerivationParameter<ConfigType extends AnvilConfig, ValueT
                 return (Boolean) method.invoke(constructor.newInstance(), value);
             } else {
                 method = valueClass.getMethod(constraint.getEvaluationMethod());
-                return (Boolean) method.invoke(constraint);
+                return (Boolean) method.invoke(value);
             }
         } catch (InvocationTargetException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
             LOGGER.error("Was unable to invoke constraint method for type " + parameterIdentifier, e);
