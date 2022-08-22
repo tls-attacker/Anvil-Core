@@ -43,9 +43,16 @@ public class FlexibleConditionalConstraint extends ConditionalConstraint {
             }
         }
 
+        // Add target
+        if (target.canBeModeled(derivationScope)) {
+            dynamicParameters.add(target.getParameterIdentifier());
+        }
+        else {
+            staticParameters.add(target.getParameterIdentifier());
+        }
+
         setRequiredParameters(dynamicParameters);
         List<String> dynamicParameterNames = new ArrayList<>();
-        dynamicParameterNames.add(target.getParameterIdentifier().name());
         for (ParameterIdentifier parameterIdentifier : dynamicParameters) {
             dynamicParameterNames.add(parameterIdentifier.name());
         }
@@ -66,18 +73,29 @@ public class FlexibleConditionalConstraint extends ConditionalConstraint {
         }
 
         // Check dynamic parameter values
-        if (parameterValues.size() == 0 || !parameterValues.get(0).getParameterIdentifier().equals(target.getParameterIdentifier())) {
-            throw new IllegalArgumentException("The first parameter passed to constraint does not match target parameter");
-        }
         for (int i = 1; i < parameterValues.size(); i++) {
             if (!dynamicParameters.contains(parameterValues.get(i).getParameterIdentifier())) {
                 throw new IllegalStateException("Unexpected dynamic parameter: " + parameterValues.get(i).getParameterIdentifier());
             }
         }
 
-        // Remove target values from parameter value list
-        DerivationParameter targetValue = parameterValues.get(0);
-        parameterValues.remove(0);
+        DerivationParameter targetValue;
+        if (dynamicParameters.contains(target.getParameterIdentifier())) {
+            // Get dynamic target value
+            targetValue = parameterValues.stream()
+                    .filter(p -> p.getParameterIdentifier().equals(target.getParameterIdentifier()))
+                    .findFirst().orElseThrow(() -> new RuntimeException("Could not find constraint target in value list"));
+            parameterValues.remove(targetValue);
+        }
+        else {
+            // Get static target value
+            targetValue = ParameterFactory.getInstanceFromIdentifier(target.getParameterIdentifier());
+            List<DerivationParameter> values = targetValue.getConstrainedParameterValues(derivationScope);
+            if (values.size() != 1) {
+                throw new IllegalStateException("Static target parameter does not have exactly 1 value");
+            }
+            targetValue = values.get(0);
+        }
 
         // Add static parameter values manually
         for (ParameterIdentifier staticParameterIdentifier : staticParameters) {

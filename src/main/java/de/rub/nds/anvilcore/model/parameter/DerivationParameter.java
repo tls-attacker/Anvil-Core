@@ -135,7 +135,7 @@ public abstract class DerivationParameter<ConfigType extends AnvilConfig, ValueT
             }
         } catch (InvocationTargetException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
             LOGGER.error("Was unable to invoke constraint method for type " + parameterIdentifier, e);
-            return true;
+            throw new RuntimeException(e);
         }
     }
 

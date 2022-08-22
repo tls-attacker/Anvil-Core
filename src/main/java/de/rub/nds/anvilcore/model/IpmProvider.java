@@ -69,14 +69,14 @@ public class IpmProvider {
         List<Constraint> applicableConstraints = new ArrayList<>();
         for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
             DerivationParameter<?,?> parameter = ParameterFactory.getInstanceFromIdentifier(parameterIdentifier);
-            if (parameter.canBeModeled(derivationScope)) {
+            //if (parameter.canBeModeled(derivationScope)) {
                 List<ConditionalConstraint> conditionalConstraints = parameter.getConditionalConstraints(derivationScope);
                 for (ConditionalConstraint conditionalConstraint : conditionalConstraints) {
                     if (conditionalConstraint.isApplicableTo(parameterIdentifiers, derivationScope)) {
                         applicableConstraints.add(conditionalConstraint.getConstraint());
                     }
                 }
-            }
+            //}
         }
         return applicableConstraints.toArray(new Constraint[]{});
     }
