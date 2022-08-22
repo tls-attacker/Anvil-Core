@@ -17,6 +17,7 @@ public class AggregatedEnableConstraint<T> extends ConditionalConstraint {
     private final Map<ParameterIdentifier, Predicate<DerivationParameter>> conditions;
     private final Set<ParameterIdentifier> dynamicParameters = new HashSet<>();
     private final Set<ParameterIdentifier> staticParameters = new HashSet<>();
+    private final boolean staticTarget;
 
     public AggregatedEnableConstraint(DerivationScope derivationScope, DerivationParameter target, T defaultValue,
                                       Map<ParameterIdentifier, Predicate<DerivationParameter>> conditions) {
@@ -35,12 +36,16 @@ public class AggregatedEnableConstraint<T> extends ConditionalConstraint {
                 staticParameters.add(parameterIdentifier);
             }
         }
-
         setRequiredParameters(dynamicParameters);
+
+        staticTarget = !target.canBeModeled(derivationScope);
+
 
 
         List<String> parameterNames = new ArrayList<>();
-        parameterNames.add(target.getParameterIdentifier().name());
+        if (!staticTarget) {
+            parameterNames.add(target.getParameterIdentifier().name());
+        }
         for (ParameterIdentifier dynamicParameterIdentifier : dynamicParameters) {
             parameterNames.add(dynamicParameterIdentifier.name());
         }
@@ -64,18 +69,30 @@ public class AggregatedEnableConstraint<T> extends ConditionalConstraint {
 
     private boolean aggregatedPredicate(List<DerivationParameter> dynamicParameterValues) {
         // Check dynamic parameter values
-        if (dynamicParameterValues.size() == 0 || !dynamicParameterValues.get(0).getParameterIdentifier().equals(target.getParameterIdentifier())) {
-            throw new IllegalArgumentException("The first parameter passed to constraint does not match target parameter");
-        }
         for (int i = 1; i < dynamicParameterValues.size(); i++) {
             if (!dynamicParameters.contains(dynamicParameterValues.get(i).getParameterIdentifier())) {
                 throw new IllegalStateException("Unexpected dynamic parameter: " + dynamicParameterValues.get(i).getParameterIdentifier());
             }
         }
 
-        // Remove target value from parameter value list
-        DerivationParameter targetValue = dynamicParameterValues.get(0);
-        dynamicParameterValues.remove(0);
+        DerivationParameter targetValue;
+        if (staticTarget) {
+            // Get static target value
+            targetValue = ParameterFactory.getInstanceFromIdentifier(target.getParameterIdentifier());
+            List<DerivationParameter> values = targetValue.getConstrainedParameterValues(derivationScope);
+            if (values.size() != 1) {
+                throw new IllegalStateException("Static target parameter does not have exactly 1 value");
+            }
+            targetValue = values.get(0);
+        }
+        else {
+            if (dynamicParameterValues.size() == 0 || !dynamicParameterValues.get(0).getParameterIdentifier().equals(target.getParameterIdentifier())) {
+                throw new IllegalArgumentException("The first parameter passed to constraint does not match target parameter");
+            }
+            // Remove target value from parameter value list
+            targetValue = dynamicParameterValues.get(0);
+            dynamicParameterValues.remove(0);
+        }
 
         // Add static parameter values
         List<DerivationParameter> allParameterValues = dynamicParameterValues;

@@ -21,6 +21,7 @@ public class FlexibleConditionalConstraint extends ConditionalConstraint {
     private final Set<ParameterIdentifier> dynamicParameters = new HashSet<>();
     private final Set<ParameterIdentifier> staticParameters = new HashSet<>();
     private final BiPredicate<DerivationParameter, List<DerivationParameter>> predicate;
+    private final boolean staticTarget;
 
 
     public FlexibleConditionalConstraint(String constraintName, DerivationScope derivationScope, DerivationParameter target,
@@ -43,16 +44,13 @@ public class FlexibleConditionalConstraint extends ConditionalConstraint {
             }
         }
 
-        // Add target
-        if (target.canBeModeled(derivationScope)) {
-            dynamicParameters.add(target.getParameterIdentifier());
-        }
-        else {
-            staticParameters.add(target.getParameterIdentifier());
-        }
+        staticTarget = !target.canBeModeled(derivationScope);
 
         setRequiredParameters(dynamicParameters);
         List<String> dynamicParameterNames = new ArrayList<>();
+        if (!staticTarget) {
+            dynamicParameterNames.add(target.getParameterIdentifier().name());
+        }
         for (ParameterIdentifier parameterIdentifier : dynamicParameters) {
             dynamicParameterNames.add(parameterIdentifier.name());
         }
@@ -80,14 +78,7 @@ public class FlexibleConditionalConstraint extends ConditionalConstraint {
         }
 
         DerivationParameter targetValue;
-        if (dynamicParameters.contains(target.getParameterIdentifier())) {
-            // Get dynamic target value
-            targetValue = parameterValues.stream()
-                    .filter(p -> p.getParameterIdentifier().equals(target.getParameterIdentifier()))
-                    .findFirst().orElseThrow(() -> new RuntimeException("Could not find constraint target in value list"));
-            parameterValues.remove(targetValue);
-        }
-        else {
+        if (staticTarget) {
             // Get static target value
             targetValue = ParameterFactory.getInstanceFromIdentifier(target.getParameterIdentifier());
             List<DerivationParameter> values = targetValue.getConstrainedParameterValues(derivationScope);
@@ -95,6 +86,16 @@ public class FlexibleConditionalConstraint extends ConditionalConstraint {
                 throw new IllegalStateException("Static target parameter does not have exactly 1 value");
             }
             targetValue = values.get(0);
+        }
+        else {
+            // Check dynamic parameter values
+            if (parameterValues.size() == 0 || !parameterValues.get(0).getParameterIdentifier().equals(target.getParameterIdentifier())) {
+                throw new IllegalArgumentException("The first parameter passed to constraint does not match target parameter");
+            }
+
+            // Remove target values from parameter value list
+            targetValue = parameterValues.get(0);
+            parameterValues.remove(0);
         }
 
         // Add static parameter values manually
