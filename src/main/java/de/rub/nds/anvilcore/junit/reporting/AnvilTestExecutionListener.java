@@ -14,9 +14,8 @@ import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,8 +34,22 @@ public class AnvilTestExecutionListener implements TestExecutionListener {
     @Override
     public void testPlanExecutionFinished(TestPlan testPlan) {
         LOGGER.trace("Execution of " + testPlan.toString() + " finished");
+    }
 
-        TestSummary testSummary = AnvilFactoryRegistry.get().getTestSummaryFactory().getInstance();
+    /**
+     * Generate and return a test summary describing the tests and their status.
+     *
+     * @return a test summary
+     */
+    public TestSummary getTestSummary() {
+        // TODO: Factor out singletons.
+        //
+        // Singletons are an anti-pattern and introduce a global state that
+        // blurs interdependencies between different code fragments and also
+        // makes testing harder. Also, there no reason why this uses singletons
+        // at all, because we could easily pass the approriate `AnvilContext`
+        // object to the constructor or this method.
+        final TestSummary testSummary = AnvilFactoryRegistry.get().getTestSummaryFactory().getInstance();
         testSummary.setElapsedTime(System.currentTimeMillis() - startTime);
         testSummary.setIdentifier("todo");      // TODO
         testSummary.setDate(AnvilContext.getInstance().getStartTime());
@@ -45,24 +58,28 @@ public class AnvilTestExecutionListener implements TestExecutionListener {
         testSummary.setTestsSucceeded(AnvilContext.getInstance().getTestsSucceeded());
         testSummary.setScoreContainer(AnvilContext.getInstance().getScoreContainer());
 
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.setVisibility(objectMapper.getSerializationConfig().getDefaultVisibilityChecker()
-                    .withFieldVisibility(JsonAutoDetect.Visibility.NONE)
-                    .withGetterVisibility(JsonAutoDetect.Visibility.NONE)
-                    .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
-                    .withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
+        return testSummary;
+    }
 
-            objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+    /**
+     * Write {@link TestSummary} to {@code stream}.
+     *
+     * <p>This should be called when execution of test plan has already finished.
+     *
+     * @param stream output stream to write summary to
+     * @throws IOException on stream write failure
+     */
+    public void writeTestSummary(final OutputStream stream) throws IOException {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setVisibility(objectMapper.getSerializationConfig().getDefaultVisibilityChecker()
+                .withFieldVisibility(JsonAutoDetect.Visibility.NONE)
+                .withGetterVisibility(JsonAutoDetect.Visibility.NONE)
+                .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
+                .withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
+        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
 
-            // TODO Make configurable
-            String summaryPath = Paths.get("resources/out", "summary.json").toString();
-            File summaryFile = new File(summaryPath);
-            summaryFile.createNewFile();
-            objectMapper.writeValue(summaryFile, testSummary);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        final TestSummary testSummary = getTestSummary();
+        objectMapper.writeValue(stream, testSummary);
     }
 
     @Override
