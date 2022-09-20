@@ -1,6 +1,7 @@
 package de.rub.nds.anvilcore.model;
 
 import de.rub.nds.anvilcore.context.AnvilFactoryRegistry;
+import de.rub.nds.anvilcore.model.config.AnvilConfig;
 import de.rub.nds.anvilcore.model.constraint.ConditionalConstraint;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
 import de.rub.nds.anvilcore.model.parameter.ParameterFactory;
@@ -31,12 +32,12 @@ public class IpmProvider {
         return builders.length == 1;
     }
 
-    public static List<DerivationParameter> getSimpleModelVariations(DerivationScope derivationScope) {
+    public static List<DerivationParameter<AnvilConfig, Object>> getSimpleModelVariations(DerivationScope derivationScope) {
         List<ParameterIdentifier> parameterIdentifiers = getParameterIdentifiersForScope(derivationScope);
         for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
-            DerivationParameter<?,?> parameter = ParameterFactory.getInstanceFromIdentifier(parameterIdentifier);
+            DerivationParameter<AnvilConfig, Object> parameter = ParameterFactory.getInstanceFromIdentifier(parameterIdentifier);
             if (parameter.canBeModeled(derivationScope)) {
-                List<DerivationParameter> parameters = parameter.getConstrainedParameterValues(derivationScope);
+                List<DerivationParameter<AnvilConfig, Object>> parameters = parameter.getConstrainedParameterValues(derivationScope);
             }
         }
         return null;
@@ -56,7 +57,7 @@ public class IpmProvider {
     private static Parameter.Builder[] getParameterBuilders(List<ParameterIdentifier> parameterIdentifiers, DerivationScope derivationScope) {
         List<Parameter.Builder> parameterBuilders = new ArrayList<>();
         for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
-            DerivationParameter<?,?> parameter = ParameterFactory.getInstanceFromIdentifier(parameterIdentifier);
+            DerivationParameter<AnvilConfig, Object> parameter = ParameterFactory.getInstanceFromIdentifier(parameterIdentifier);
             if (parameter.canBeModeled(derivationScope)) {
                 parameterBuilders.add(parameter.getParameterBuilder(derivationScope));
                 // TODO: How to model bitmask params from tls anvil?
@@ -68,7 +69,7 @@ public class IpmProvider {
     private static Constraint[] getConstraintsForScope(List<ParameterIdentifier> parameterIdentifiers, DerivationScope derivationScope) {
         List<Constraint> applicableConstraints = new ArrayList<>();
         for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
-            DerivationParameter<?,?> parameter = ParameterFactory.getInstanceFromIdentifier(parameterIdentifier);
+            DerivationParameter<AnvilConfig, Object> parameter = ParameterFactory.getInstanceFromIdentifier(parameterIdentifier);
             //if (parameter.canBeModeled(derivationScope)) {
                 List<ConditionalConstraint> conditionalConstraints = parameter.getConditionalConstraints(derivationScope);
                 for (ConditionalConstraint conditionalConstraint : conditionalConstraints) {
@@ -81,11 +82,11 @@ public class IpmProvider {
         return applicableConstraints.toArray(new Constraint[]{});
     }
 
-    public static List<DerivationParameter> getStaticParameterValues(DerivationScope derivationScope) {
-        List<DerivationParameter> staticParameterValues = new ArrayList<>();
+    public static List<DerivationParameter<AnvilConfig, Object>> getStaticParameterValues(DerivationScope derivationScope) {
+        List<DerivationParameter<AnvilConfig, Object>> staticParameterValues = new ArrayList<>();
         List<ParameterIdentifier> parameterIdentifiers = getParameterIdentifiersForScope(derivationScope);
         for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
-            List<DerivationParameter> parameterValues =
+            List<DerivationParameter<AnvilConfig, Object>> parameterValues =
                     ParameterFactory.getInstanceFromIdentifier(parameterIdentifier).getConstrainedParameterValues(derivationScope);
             if (parameterValues.size() == 1) {
                 staticParameterValues.add(parameterValues.get(0));
