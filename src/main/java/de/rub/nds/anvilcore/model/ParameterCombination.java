@@ -1,6 +1,6 @@
 package de.rub.nds.anvilcore.model;
 
-import de.rub.nds.anvilcore.model.config.ConfigContainer;
+import de.rub.nds.anvilcore.model.config.AnvilConfig;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import de.rwth.swc.coffee4j.model.Combination;
@@ -62,20 +62,20 @@ public class ParameterCombination {
         return null;
     }
 
-    public void applyToConfig(ConfigContainer configContainer) {
+    public void applyToConfig(AnvilConfig config) {
         for (DerivationParameter parameter : parameterValues) {
             if (!derivationScope.getManualConfigTypes().contains(parameter.getParameterIdentifier())) {
-                parameter.preProcessConfig(configContainer.getConfig(parameter.getConfigClass()), derivationScope);
+                parameter.preProcessConfig(config, derivationScope);
             }
         }
         for (DerivationParameter parameter : parameterValues) {
             if (!derivationScope.getManualConfigTypes().contains(parameter.getParameterIdentifier())) {
-                parameter.applyToConfig(configContainer.getConfig(parameter.getConfigClass()), derivationScope);
+                parameter.applyToConfig(config, derivationScope);
             }
         }
         for (DerivationParameter parameter : parameterValues) {
             if (!derivationScope.getManualConfigTypes().contains(parameter.getParameterIdentifier())) {
-                parameter.postProcessConfig(configContainer.getConfig(parameter.getConfigClass()), derivationScope);
+                parameter.postProcessConfig(config, derivationScope);
             }
         }
     }
