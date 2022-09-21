@@ -62,6 +62,15 @@ public class ParameterCombination {
         return null;
     }
 
+    /**
+     * Retrieve the parameters for this combination.
+     *
+     * @return a list of parameters and their selected values
+     */
+    public List<DerivationParameter> getParameters() {
+        return this.parameterValues;
+    }
+
     public void applyToConfig(AnvilConfig config) {
         for (DerivationParameter parameter : parameterValues) {
             if (!derivationScope.getManualConfigTypes().contains(parameter.getParameterIdentifier())) {
