@@ -17,7 +17,6 @@ public class AnvilFactoryRegistry {
     private static final Logger LOGGER = LogManager.getLogger();
     private static AnvilFactoryRegistry instance;
 
-    private ParameterIdentifierProvider parameterIdentifierProvider;
     private ScoreContainerFactory scoreContainerFactory = new DefaultScoreContainerFactory();
     private TestSummaryFactory testSummaryFactory = new DefaultTestSummaryFactory();
     private final Map<ParameterType, ParameterFactory> knownParameters = new HashMap<>();
@@ -29,17 +28,6 @@ public class AnvilFactoryRegistry {
             instance = new AnvilFactoryRegistry();
         }
         return instance;
-    }
-
-    public ParameterIdentifierProvider getParameterIdentifierProvider() {
-        if (parameterIdentifierProvider == null) {
-            throw new RuntimeException("No ParameterIdentifierProvider registered");
-        }
-        return parameterIdentifierProvider;
-    }
-
-    public void setParameterIdentifierProvider(ParameterIdentifierProvider parameterIdentifierProvider) {
-        this.parameterIdentifierProvider = parameterIdentifierProvider;
     }
 
     public ScoreContainerFactory getScoreContainerFactory() {
