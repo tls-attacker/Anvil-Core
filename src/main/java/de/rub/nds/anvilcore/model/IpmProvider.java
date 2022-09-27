@@ -43,8 +43,9 @@ public class IpmProvider {
     }
 
     private static List<ParameterIdentifier> getParameterIdentifiersForScope(DerivationScope derivationScope) {
+        final List<ParameterIdentifier> parameterIdentifiers = new ArrayList<>();
         // Get base parameters of model
-        List<ParameterIdentifier> parameterIdentifiers = AnvilFactoryRegistry.get().getParameterIdentifierProvider().getModelParameterIdentifiers(derivationScope);
+        parameterIdentifiers.addAll(AnvilFactoryRegistry.get().getParameterIdentifierProvider().getModelParameterIdentifiers(derivationScope));
         // Add explicit extensions
         parameterIdentifiers.addAll(derivationScope.getIpmExtensions());
         // Remove explicit limitations
