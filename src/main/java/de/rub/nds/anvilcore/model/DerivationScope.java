@@ -130,12 +130,17 @@ public class DerivationScope {
      * @param extensionContext the current extension context
      * @return list of parameters that will be removed from the model
      *
-     * @see IpmLimitations
+     * @see ExcludeParameter
      */
     private static List<ParameterIdentifier> resolveIpmLimitations(final ExtensionContext extensionContext) {
-        return AnnotationSupport.findAnnotation(extensionContext.getRequiredTestMethod(), IpmLimitations.class)
+        return Stream.concat(
+            AnnotationSupport.findAnnotation(extensionContext.getRequiredTestMethod(), IpmLimitations.class)
             .stream()
-            .flatMap(annotation -> Arrays.stream(annotation.identifiers()))
+            .flatMap(annotation -> Arrays.stream(annotation.identifiers())),
+            AnnotationSupport.findRepeatableAnnotations(extensionContext.getRequiredTestMethod(), ExcludeParameter.class)
+                .stream()
+                .map(ExcludeParameter::value))
+            .distinct()
             .map(ParameterIdentifier::fromName)
             .collect(Collectors.toList());
     }
@@ -146,12 +151,17 @@ public class DerivationScope {
      * @param extensionContext the current extension context
      * @return list of parameters that will be added to the model
      *
-     * @see IpmExtensions
+     * @see IncludeParameter
      */
     private static List<ParameterIdentifier> resolveIpmExtensions(final ExtensionContext extensionContext) {
-        return AnnotationSupport.findAnnotation(extensionContext.getRequiredTestMethod(), IpmExtensions.class)
-            .stream()
-            .flatMap(annotation -> Arrays.stream(annotation.identifiers()))
+        return Stream.concat(
+            AnnotationSupport.findAnnotation(extensionContext.getRequiredTestMethod(), IpmExtensions.class)
+                .stream()
+                .flatMap(annotation -> Arrays.stream(annotation.identifiers())),
+            AnnotationSupport.findRepeatableAnnotations(extensionContext.getRequiredTestMethod(), IncludeParameter.class)
+                .stream()
+                .map(IncludeParameter::value))
+            .distinct()
             .map(ParameterIdentifier::fromName)
             .collect(Collectors.toList());
     }
