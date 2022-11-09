@@ -178,25 +178,34 @@ public class DerivationScope {
      */
     private static List<ValueConstraint> resolveValueConstraints(final ExtensionContext extensionContext) {
         return Stream.concat(
-            AnnotationSupport.findAnnotation(extensionContext.getRequiredTestMethod(), ValueConstraints.class)
+            AnnotationSupport.findRepeatableAnnotations(extensionContext.getRequiredTestMethod(), de.rub.nds.anvilcore.annotation.ValueConstraint.class)
                 .stream()
-                .flatMap(annotation -> Arrays.stream(annotation.value()))
                 .map(annotation -> new ValueConstraint(
                     ParameterIdentifier.fromName(annotation.identifier()),
                     annotation.method(),
                     annotation.clazz().equals(Object.class) ? extensionContext.getRequiredTestClass() : annotation.clazz(),
                     false
                 )),
-            AnnotationSupport.findAnnotation(extensionContext.getRequiredTestMethod(), DynamicValueConstraints.class)
-                .stream()
-                .flatMap(annotation -> zipArrays(annotation.affectedIdentifiers(), annotation.methods()))
-                .map(entry -> new ValueConstraint(
-                    ParameterIdentifier.fromName(entry.getKey()),
-                    entry.getValue(),
-                    extensionContext.getRequiredTestClass(),
-                    true
-                ))
-            ).collect(Collectors.toList());
+            Stream.concat(
+                AnnotationSupport.findAnnotation(extensionContext.getRequiredTestMethod(), ValueConstraints.class)
+                    .stream()
+                    .flatMap(annotation -> Arrays.stream(annotation.value()))
+                    .map(annotation -> new ValueConstraint(
+                        ParameterIdentifier.fromName(annotation.identifier()),
+                        annotation.method(),
+                        annotation.clazz().equals(Object.class) ? extensionContext.getRequiredTestClass() : annotation.clazz(),
+                        false
+                    )),
+                AnnotationSupport.findAnnotation(extensionContext.getRequiredTestMethod(), DynamicValueConstraints.class)
+                    .stream()
+                    .flatMap(annotation -> zipArrays(annotation.affectedIdentifiers(), annotation.methods()))
+                    .map(entry -> new ValueConstraint(
+                        ParameterIdentifier.fromName(entry.getKey()),
+                        entry.getValue(),
+                        extensionContext.getRequiredTestClass(),
+                        true
+                    ))
+                )).collect(Collectors.toList());
     }
 
     /**
