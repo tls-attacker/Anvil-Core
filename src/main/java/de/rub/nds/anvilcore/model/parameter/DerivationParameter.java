@@ -56,9 +56,9 @@ public abstract class DerivationParameter<ConfigType extends AnvilConfig, ValueT
 
     public void postProcessConfig(ConfigType config, DerivationScope derivationScope) {};
 
-    public abstract List<DerivationParameter> getParameterValues(DerivationScope derivationScope);
+    public abstract List<DerivationParameter<ConfigType, ValueType>> getParameterValues(DerivationScope derivationScope);
 
-    public List<DerivationParameter> getConstrainedParameterValues(DerivationScope derivationScope) {
+    public List<DerivationParameter<ConfigType, ValueType>> getConstrainedParameterValues(DerivationScope derivationScope) {
         if (derivationScope.hasExplicitValues(parameterIdentifier)) {
             return getExplicitValues(derivationScope);
         } else {
@@ -82,7 +82,7 @@ public abstract class DerivationParameter<ConfigType extends AnvilConfig, ValueT
     }
 
     public Parameter.Builder getParameterBuilder(DerivationScope derivationScope) {
-        List<DerivationParameter> parameterValues = getConstrainedParameterValues(derivationScope);
+        List<DerivationParameter<ConfigType, ValueType>> parameterValues = getConstrainedParameterValues(derivationScope);
         return Parameter
                 .parameter(parameterIdentifier.toString())
                 .values(parameterValues.toArray());
@@ -98,12 +98,12 @@ public abstract class DerivationParameter<ConfigType extends AnvilConfig, ValueT
 
     protected abstract DerivationParameter<ConfigType, ValueType> generateValue(ValueType selectedValue);
 
-    private List<DerivationParameter> getExplicitValues(DerivationScope derivationScope) {
+    private List<DerivationParameter<ConfigType, ValueType>> getExplicitValues(DerivationScope derivationScope) {
         try {
             String methodName = derivationScope.getExplicitValues().get(parameterIdentifier);
             Method method = derivationScope.getExtensionContext().getRequiredTestClass().getMethod(methodName, DerivationScope.class);
             Constructor constructor = derivationScope.getExtensionContext().getRequiredTestClass().getConstructor();
-            return (List<DerivationParameter>) method.invoke(constructor.newInstance(), derivationScope);
+            return (List<DerivationParameter<ConfigType, ValueType>>) method.invoke(constructor.newInstance(), derivationScope);
         } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException | InstantiationException e) {
             LOGGER.error("Was unable to fetch explicit values for type " + parameterIdentifier, e);
             return Collections.emptyList();
