@@ -25,6 +25,10 @@
         <junit.minor-version>7.0</junit.minor-version>
         <junit.jupiter.version>5.${junit.minor-version}</junit.jupiter.version>
         <junit.platform.version>1.${junit.minor-version}</junit.platform.version>
+        <!-- The following variables are required for Jenkins CI -->
+        <skipTests>false</skipTests>
+        <skip.surefire.tests>${skipTests}</skip.surefire.tests>
+        <skip.failsafe.tests>${skipTests}</skip.failsafe.tests>
     </properties>
 
     <dependencies>
