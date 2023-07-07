@@ -6,8 +6,8 @@ import java.util.Objects;
 public class ParameterIdentifier {
     private final ParameterType parameterType;
     private final ParameterScope parameterScope;
-    
-    //references another parameter that *must* be modeled along with this one
+
+    // references another parameter that *must* be modeled along with this one
     private ParameterIdentifier linkedParameterIdentifier;
 
     public ParameterIdentifier(ParameterType parameterType, ParameterScope parameterScope) {
@@ -81,8 +81,8 @@ public class ParameterIdentifier {
     public void setLinkedParameterIdentifier(ParameterIdentifier linkedParameterIdentifier) {
         this.linkedParameterIdentifier = linkedParameterIdentifier;
     }
-    
+
     public boolean hasLinkedParameterIdentifier() {
-        return linkedParameterIdentifier == null;
+        return linkedParameterIdentifier != null;
     }
 }
