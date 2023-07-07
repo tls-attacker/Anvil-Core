@@ -85,10 +85,18 @@ public class IpmProvider {
                     ParameterFactory.getInstanceFromIdentifier(parameterIdentifier);
             if (parameter.canBeModeled(derivationScope)) {
                 parameterBuilders.add(parameter.getParameterBuilder(derivationScope));
-                // TODO: How to model bitmask params from tls anvil?
+                if (parameter.getParameterIdentifier().hasLinkedParameterIdentifier()) {
+                    DerivationParameter linkedDerivaitonParameter =
+                            ParameterFactory.getInstanceFromIdentifier(
+                                    parameter
+                                            .getParameterIdentifier()
+                                            .getLinkedParameterIdentifier());
+                    parameterBuilders.add(
+                            linkedDerivaitonParameter.getParameterBuilder(derivationScope));
+                }
             }
         }
-        return parameterBuilders.toArray(new Parameter.Builder[] {});
+        return parameterBuilders.toArray(Parameter.Builder[]::new);
     }
 
     private static Constraint[] getConstraintsForScope(
@@ -107,7 +115,7 @@ public class IpmProvider {
             }
             // }
         }
-        return applicableConstraints.toArray(new Constraint[] {});
+        return applicableConstraints.toArray(Constraint[]::new);
     }
 
     public static List<DerivationParameter<AnvilConfig, Object>> getStaticParameterValues(
