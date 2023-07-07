@@ -1,12 +1,14 @@
 package de.rub.nds.anvilcore.model.parameter;
 
 import de.rub.nds.anvilcore.context.AnvilFactoryRegistry;
-
 import java.util.Objects;
 
 public class ParameterIdentifier {
     private final ParameterType parameterType;
     private final ParameterScope parameterScope;
+    
+    //references another parameter that *must* be modeled along with this one
+    private ParameterIdentifier linkedParameterIdentifier;
 
     public ParameterIdentifier(ParameterType parameterType, ParameterScope parameterScope) {
         this.parameterType = parameterType;
@@ -28,9 +30,9 @@ public class ParameterIdentifier {
 
     public String name() {
         if (parameterScope == ParameterScope.NO_SCOPE || parameterScope == null) {
-            return parameterType.toString().toLowerCase();
+            return parameterType.toString();
         }
-        return parameterScope + "." + parameterType.toString().toLowerCase();
+        return parameterScope + "." + parameterType.toString();
     }
 
     public static ParameterIdentifier fromName(String name) {
@@ -41,7 +43,10 @@ public class ParameterIdentifier {
             String scopeName = name.substring(0, name.lastIndexOf("."));
             String typeName = name.substring(name.lastIndexOf(".") + 1);
             ParameterType parameterType = ParameterType.resolveParameterType(typeName);
-            ParameterScope parameterScope = AnvilFactoryRegistry.get().getParameterFactory(parameterType).resolveParameterScope(scopeName);
+            ParameterScope parameterScope =
+                    AnvilFactoryRegistry.get()
+                            .getParameterFactory(parameterType)
+                            .resolveParameterScope(scopeName);
             return new ParameterIdentifier(parameterType, parameterScope);
         }
     }
@@ -60,11 +65,24 @@ public class ParameterIdentifier {
             return false;
         }
         ParameterIdentifier other = (ParameterIdentifier) obj;
-        return this.parameterType.equals(other.parameterType) && this.parameterScope.equals(other.parameterScope);
+        return this.parameterType.equals(other.parameterType)
+                && this.parameterScope.equals(other.parameterScope);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(this.parameterScope, this.parameterType);
+    }
+
+    public ParameterIdentifier getLinkedParameterIdentifier() {
+        return linkedParameterIdentifier;
+    }
+
+    public void setLinkedParameterIdentifier(ParameterIdentifier linkedParameterIdentifier) {
+        this.linkedParameterIdentifier = linkedParameterIdentifier;
+    }
+    
+    public boolean hasLinkedParameterIdentifier() {
+        return linkedParameterIdentifier == null;
     }
 }
