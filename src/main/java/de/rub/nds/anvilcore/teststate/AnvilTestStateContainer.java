@@ -7,13 +7,12 @@ import de.rub.nds.anvilcore.context.AnvilFactoryRegistry;
 import de.rub.nds.anvilcore.junit.Utils;
 import de.rub.nds.anvilcore.model.ParameterCombination;
 import de.rub.nds.anvilcore.teststate.reporting.ScoreContainer;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.extension.ExtensionContext;
-
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 public class AnvilTestStateContainer {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -41,28 +40,29 @@ public class AnvilTestStateContainer {
     private long elapsedTime = 0;
 
     @JsonProperty("FailureInducingCombinations")
-    List<ParameterCombination> failureInducingCombinations;
+    private List<ParameterCombination> failureInducingCombinations;
 
-    @JsonUnwrapped
-    private ScoreContainer scoreContainer;
-
+    @JsonUnwrapped private ScoreContainer scoreContainer;
 
     @Override
     public String toString() {
-        return String.format("AnnotatedStateContainer{displayName = %s.%s, result = %s}",
+        return String.format(
+                "AnnotatedStateContainer{displayName = %s.%s, result = %s}",
                 testClass != null ? testClass.getName() : "undefined",
                 testMethod != null ? testMethod.getName() : "undefined",
-                result != null ? result.name() : "undefined"
-        );
+                result != null ? result.name() : "undefined");
     }
 
     private AnvilTestStateContainer(ExtensionContext extensionContext) {
         this.uniqueId = extensionContext.getUniqueId();
-        this.scoreContainer = AnvilFactoryRegistry.get().getScoreContainerFactory().getInstance(extensionContext);
+        this.scoreContainer =
+                AnvilFactoryRegistry.get().getScoreContainerFactory().getInstance(extensionContext);
     }
 
-    synchronized public static AnvilTestStateContainer forExtensionContext(ExtensionContext extensionContext) {
-        ExtensionContext resolvedContext = Utils.getTemplateContainerExtensionContext(extensionContext);
+    public static synchronized AnvilTestStateContainer forExtensionContext(
+            ExtensionContext extensionContext) {
+        ExtensionContext resolvedContext =
+                Utils.getTemplateContainerExtensionContext(extensionContext);
 
         if (AnvilContext.getInstance().getTestResult(resolvedContext.getUniqueId()) != null) {
             return AnvilContext.getInstance().getTestResult(resolvedContext.getUniqueId());
@@ -156,5 +156,10 @@ public class AnvilTestStateContainer {
     public void add(AnvilTestState testState) {
         testState.setAssociatedContainer(this);
         this.states.add(testState);
+    }
+
+    public void setFailureInducingCombinations(
+            List<ParameterCombination> failureInducingCombinations) {
+        this.failureInducingCombinations = failureInducingCombinations;
     }
 }

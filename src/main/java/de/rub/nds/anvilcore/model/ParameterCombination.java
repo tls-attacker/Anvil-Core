@@ -1,12 +1,15 @@
 package de.rub.nds.anvilcore.model;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import de.rub.nds.anvilcore.model.config.AnvilConfig;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import de.rwth.swc.coffee4j.model.Combination;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.StringJoiner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -149,5 +152,14 @@ public class ParameterCombination {
      */
     public DerivationScope getDerivationScope() {
         return derivationScope;
+    }
+
+    @JsonValue
+    public Map<String, DerivationParameter> jsonObject() {
+        Map<String, DerivationParameter> res = new HashMap<>();
+        for (DerivationParameter i : getParameterValues()) {
+            res.put(i.getParameterIdentifier().name(), i);
+        }
+        return res;
     }
 }

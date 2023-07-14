@@ -2,11 +2,11 @@ package de.rub.nds.anvilcore.teststate;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.rub.nds.anvilcore.model.ParameterCombination;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.extension.ExtensionContext;
-
-import java.util.List;
 
 public class AnvilTestState {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -26,10 +26,10 @@ public class AnvilTestState {
     private ExtensionContext extensionContext;
     private AnvilTestStateContainer associatedContainer;
 
-
     public AnvilTestState() {}
 
-    public AnvilTestState(ParameterCombination parameterCombination, ExtensionContext extensionContext) {
+    public AnvilTestState(
+            ParameterCombination parameterCombination, ExtensionContext extensionContext) {
         this.parameterCombination = parameterCombination;
         this.extensionContext = extensionContext;
         this.displayName = extensionContext.getDisplayName();
@@ -99,5 +99,21 @@ public class AnvilTestState {
 
     public void setAssociatedContainer(AnvilTestStateContainer associatedContainer) {
         this.associatedContainer = associatedContainer;
+    }
+
+    public void addAdditionalResultInfo(String info) {
+        if (additionalResultInformation == null) {
+            additionalResultInformation = new ArrayList<>();
+        }
+
+        additionalResultInformation.add(info);
+    }
+
+    public void addAdditionalTestInfo(String info) {
+        if (additionalTestInformation == null) {
+            additionalTestInformation = new ArrayList<>();
+        }
+
+        additionalTestInformation.add(info);
     }
 }

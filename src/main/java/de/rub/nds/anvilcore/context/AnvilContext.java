@@ -4,10 +4,9 @@ import de.rub.nds.anvilcore.model.DefaultModelType;
 import de.rub.nds.anvilcore.model.ModelType;
 import de.rub.nds.anvilcore.teststate.AnvilTestStateContainer;
 import de.rub.nds.anvilcore.teststate.reporting.ScoreContainer;
+import java.util.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.util.*;
 
 public class AnvilContext {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -24,12 +23,13 @@ public class AnvilContext {
     private long testsFailed = 0;
     private long testsSucceeded = 0;
     private final Date startTime = new Date();
-    private final ScoreContainer scoreContainer = AnvilFactoryRegistry.get().getScoreContainerFactory().getInstance();
+    private final ScoreContainer scoreContainer =
+            AnvilFactoryRegistry.get().getScoreContainerFactory().getInstance();
 
     private final Map<String, AnvilTestStateContainer> testResults = new HashMap<>();
     private final Map<String, Boolean> finishedTests = new HashMap<>();
 
-    synchronized public static AnvilContext getInstance() {
+    public static synchronized AnvilContext getInstance() {
         if (AnvilContext.instance == null) {
             AnvilContext.instance = new AnvilContext();
         }
@@ -49,7 +49,8 @@ public class AnvilContext {
         return applicationSpecificContextDelegate;
     }
 
-    public void setApplicationSpecificContextDelegate(ApplicationSpecificContextDelegate applicationSpecificContextDelegate) {
+    public void setApplicationSpecificContextDelegate(
+            ApplicationSpecificContextDelegate applicationSpecificContextDelegate) {
         this.applicationSpecificContextDelegate = applicationSpecificContextDelegate;
     }
 
@@ -61,21 +62,21 @@ public class AnvilContext {
         return testResults;
     }
 
-    synchronized public AnvilTestStateContainer getTestResult(String uniqueId) {
+    public synchronized AnvilTestStateContainer getTestResult(String uniqueId) {
         return testResults.get(uniqueId);
     }
 
-    synchronized public void addTestResult(AnvilTestStateContainer testResult) {
+    public synchronized void addTestResult(AnvilTestStateContainer testResult) {
         testResults.put(testResult.getUniqueId(), testResult);
     }
 
-    synchronized public void testFinished(String uniqueId) {
+    public synchronized void testFinished(String uniqueId) {
         finishedTests.put(uniqueId, true);
         scoreContainer.merge(testResults.get(uniqueId).getScoreContainer());
-        testResults.remove(uniqueId);
+        AnvilTestStateContainer finishedContainer = testResults.remove(uniqueId);
         testsDone++;
 
-        applicationSpecificContextDelegate.onTestFinished(uniqueId);
+        applicationSpecificContextDelegate.onTestFinished(uniqueId, finishedContainer);
     }
 
     public synchronized Map<String, Boolean> getFinishedTests() {
