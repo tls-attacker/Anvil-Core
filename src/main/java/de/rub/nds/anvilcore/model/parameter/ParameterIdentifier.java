@@ -83,6 +83,6 @@ public class ParameterIdentifier {
     }
 
     public boolean hasLinkedParameterIdentifier() {
-        return linkedParameterIdentifier == null;
+        return linkedParameterIdentifier != null;
     }
 }

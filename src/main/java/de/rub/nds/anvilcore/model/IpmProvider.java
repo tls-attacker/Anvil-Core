@@ -61,7 +61,7 @@ public class IpmProvider {
         return null;
     }
 
-    private static List<ParameterIdentifier> getParameterIdentifiersForScope(
+    public static List<ParameterIdentifier> getParameterIdentifiersForScope(
             DerivationScope derivationScope) {
         final List<ParameterIdentifier> parameterIdentifiers = new ArrayList<>();
         // Get base parameters of model
