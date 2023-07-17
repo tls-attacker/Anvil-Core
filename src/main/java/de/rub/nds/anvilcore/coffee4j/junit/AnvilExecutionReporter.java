@@ -40,6 +40,6 @@ public class AnvilExecutionReporter implements ExecutionReporter {
 
     @Override
     public void testInputGroupFinished(TestInputGroupContext context) {
-        AnvilTestStateContainer.forExtensionContext(extensionContext).finished();
+        AnvilTestStateContainer.forExtensionContext(extensionContext).setReadyForCompletion(true);
     }
 }

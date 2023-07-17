@@ -36,12 +36,33 @@ public class AnvilTestWatcher implements TestWatcher {
         AnvilContext.getInstance().testSucceeded();
         AnvilTestStateContainer testStateContainer =
                 createResult(extensionContext, TestResult.STRICTLY_SUCCEEDED);
+        AnvilTestState testState = getTestState(extensionContext, testStateContainer);
 
         if (!Utils.extensionContextIsBasedOnCombinatorialTesting(
                 extensionContext.getParent().get())) {
-            // AnvilTestStateContainer is never called for simple tests
-            testStateContainer.finished();
+            // Non-combinatorial tests finish immediately
+            testStateContainer.finish();
+        } else {
+            if (testState != null && testState.getTestResult() == null) {
+                // test template did not yield a reason why this test did not succeed
+                testState.setTestResult(TestResult.STRICTLY_SUCCEEDED);
+            }
+            if (testStateContainer.isReadyForCompletion()) {
+                testStateContainer.finish();
+            }
         }
+    }
+
+    private AnvilTestState getTestState(
+            ExtensionContext extensionContext, AnvilTestStateContainer testStateContainer) {
+        return testStateContainer.getStates().stream()
+                .filter(
+                        state ->
+                                state.getExtensionContext()
+                                        .getUniqueId()
+                                        .equals(extensionContext.getUniqueId()))
+                .findFirst()
+                .orElse(null);
     }
 
     @Override
@@ -54,38 +75,27 @@ public class AnvilTestWatcher implements TestWatcher {
                     extensionContext.getDisplayName(),
                     cause);
         }
-
-        String uniqueId =
-                Utils.getTemplateContainerExtensionContext(extensionContext).getUniqueId();
         AnvilTestStateContainer testStateContainer =
                 createResult(extensionContext, TestResult.FULLY_FAILED);
-        if (testStateContainer == null) {
-            if (AnvilContext.getInstance().testIsFinished(uniqueId)) {
-                return;
-            }
-            LOGGER.error(
-                    "Illegal state: AnnotatedStateContainer is null even though test is not finished yet");
-        }
 
-        AnvilTestState testState =
-                testStateContainer.getStates().stream()
-                        .filter(
-                                state ->
-                                        state.getExtensionContext()
-                                                .getUniqueId()
-                                                .equals(extensionContext.getUniqueId()))
-                        .findFirst()
-                        .orElse(null);
+        AnvilTestState testState = getTestState(extensionContext, testStateContainer);
 
-        if (testState == null) {
-            if (Utils.extensionContextIsBasedOnCombinatorialTesting(
-                    extensionContext.getParent().get())) {
+        if (!Utils.extensionContextIsBasedOnCombinatorialTesting(
+                extensionContext.getParent().get())) {
+            // Non-combinatorial tests finish immediately
+            testStateContainer.setFailedReason(cause.toString());
+            testStateContainer.finish();
+        } else {
+            if (testState == null) {
+                // the test did not register a state yet
                 testState = new AnvilTestState(null, extensionContext);
-                testState.setFailedReason(cause);
-            } else {
-                // AnvilTestStateContainer is never called for simple tests
-                testStateContainer.setFailedReason(cause.toString());
-                testStateContainer.finished();
+                testStateContainer.add(testState);
+            }
+            testState.setTestResult(TestResult.FULLY_FAILED);
+            testState.setFailedReason(cause);
+
+            if (testStateContainer.isReadyForCompletion()) {
+                testStateContainer.finish();
             }
         }
     }
@@ -99,7 +109,7 @@ public class AnvilTestWatcher implements TestWatcher {
         if (!Utils.extensionContextIsBasedOnCombinatorialTesting(
                 extensionContext.getParent().get())) {
             // AnvilTestStateContainer is never called for simple tests
-            testStateContainer.finished();
+            testStateContainer.finish();
         }
     }
 }
