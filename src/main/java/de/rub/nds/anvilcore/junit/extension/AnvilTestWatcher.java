@@ -14,43 +14,49 @@ import org.junit.jupiter.api.extension.TestWatcher;
 public class AnvilTestWatcher implements TestWatcher {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private AnvilTestStateContainer createResult(
-            ExtensionContext extensionContext, TestResult testResult) {
-        String uniqueId =
-                Utils.getTemplateContainerExtensionContext(extensionContext).getUniqueId();
-        AnvilTestStateContainer testStateContainer =
-                AnvilContext.getInstance().getTestResult(uniqueId);
-
-        if (testStateContainer != null || AnvilContext.getInstance().testIsFinished(uniqueId)) {
-            return testStateContainer;
-        }
-
-        testStateContainer = AnvilTestStateContainer.forExtensionContext(extensionContext);
-        testStateContainer.setResultRaw(testResult.getValue());
-        AnvilContext.getInstance().addTestResult(testStateContainer);
-        return testStateContainer;
-    }
-
     @Override
     public synchronized void testSuccessful(ExtensionContext extensionContext) {
         AnvilContext.getInstance().testSucceeded();
         AnvilTestStateContainer testStateContainer =
-                createResult(extensionContext, TestResult.STRICTLY_SUCCEEDED);
-        AnvilTestState testState = getTestState(extensionContext, testStateContainer);
-
+                AnvilContext.getInstance()
+                        .getTestResult(
+                                Utils.getTemplateContainerExtensionContext(extensionContext)
+                                        .getUniqueId());
         if (!Utils.extensionContextIsBasedOnCombinatorialTesting(
                 extensionContext.getParent().get())) {
-            // Non-combinatorial tests finish immediately
-            testStateContainer.finish();
+            processNonCombinatorial(
+                    testStateContainer, extensionContext, TestResult.STRICTLY_SUCCEEDED, null);
         } else {
+            AnvilTestState testState = getTestState(extensionContext, testStateContainer);
             if (testState != null && testState.getTestResult() == null) {
                 // test template did not yield a reason why this test did not succeed
                 testState.setTestResult(TestResult.STRICTLY_SUCCEEDED);
             }
+
             if (testStateContainer.isReadyForCompletion()) {
                 testStateContainer.finish();
             }
         }
+    }
+
+    private void processNonCombinatorial(
+            AnvilTestStateContainer testStateContainer,
+            ExtensionContext extensionContext,
+            TestResult defaultResult,
+            Throwable cause) {
+        if (testStateContainer == null) {
+            testStateContainer = new AnvilTestStateContainer(extensionContext);
+            AnvilContext.getInstance().addTestStateContainer(testStateContainer);
+            testStateContainer.setResultRaw(defaultResult.getValue());
+        } else {
+            testStateContainer.setResultRaw(testStateContainer.resolveFinalResult().getValue());
+        }
+
+        if (cause != null) {
+            testStateContainer.setFailedReason(cause.toString());
+        }
+
+        testStateContainer.finish();
     }
 
     private AnvilTestState getTestState(
@@ -76,23 +82,21 @@ public class AnvilTestWatcher implements TestWatcher {
                     cause);
         }
         AnvilTestStateContainer testStateContainer =
-                createResult(extensionContext, TestResult.FULLY_FAILED);
-
-        AnvilTestState testState = getTestState(extensionContext, testStateContainer);
-
+                AnvilContext.getInstance()
+                        .getTestResult(
+                                Utils.getTemplateContainerExtensionContext(extensionContext)
+                                        .getUniqueId());
         if (!Utils.extensionContextIsBasedOnCombinatorialTesting(
                 extensionContext.getParent().get())) {
-            // Non-combinatorial tests finish immediately
-            testStateContainer.setFailedReason(cause.toString());
-            testStateContainer.finish();
+            processNonCombinatorial(
+                    testStateContainer, extensionContext, TestResult.FULLY_FAILED, cause);
         } else {
-            if (testState == null) {
-                // the test did not register a state yet
-                testState = new AnvilTestState(null, extensionContext);
-                testStateContainer.add(testState);
+            AnvilTestState testState = getTestState(extensionContext, testStateContainer);
+            if (testState != null && cause != null && testState.getTestResult() == null) {
+                // default to failed for all thrown exceptions
+                testState.setTestResult(TestResult.FULLY_FAILED);
             }
-            testState.setTestResult(TestResult.FULLY_FAILED);
-            testState.setFailedReason(cause);
+            testStateContainer.setFailedReason(cause.toString());
 
             if (testStateContainer.isReadyForCompletion()) {
                 testStateContainer.finish();
@@ -103,12 +107,14 @@ public class AnvilTestWatcher implements TestWatcher {
     @Override
     public void testDisabled(ExtensionContext extensionContext, Optional<String> reason) {
         AnvilContext.getInstance().testDisabled();
-        AnvilTestStateContainer testStateContainer =
-                createResult(extensionContext, TestResult.DISABLED);
+        AnvilTestStateContainer testStateContainer = new AnvilTestStateContainer(extensionContext);
+        testStateContainer.setResultRaw(TestResult.DISABLED.getValue());
         testStateContainer.setDisabledReason(reason.orElse("No reason specified"));
         if (!Utils.extensionContextIsBasedOnCombinatorialTesting(
                 extensionContext.getParent().get())) {
-            // AnvilTestStateContainer is never called for simple tests
+            // simple tests finish immediately
+            testStateContainer.finish();
+        } else if (testStateContainer.isReadyForCompletion()) {
             testStateContainer.finish();
         }
     }

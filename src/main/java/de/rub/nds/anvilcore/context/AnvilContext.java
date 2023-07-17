@@ -66,7 +66,7 @@ public class AnvilContext {
         return testResults.get(uniqueId);
     }
 
-    public synchronized void addTestResult(AnvilTestStateContainer testResult) {
+    public synchronized void addTestStateContainer(AnvilTestStateContainer testResult) {
         testResults.put(testResult.getUniqueId(), testResult);
     }
 

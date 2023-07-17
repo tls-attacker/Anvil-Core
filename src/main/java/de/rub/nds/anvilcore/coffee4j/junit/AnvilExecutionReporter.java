@@ -1,5 +1,6 @@
 package de.rub.nds.anvilcore.coffee4j.junit;
 
+import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.model.ParameterCombination;
 import de.rub.nds.anvilcore.teststate.AnvilTestStateContainer;
 import de.rwth.swc.coffee4j.model.Combination;
@@ -23,6 +24,8 @@ public class AnvilExecutionReporter implements ExecutionReporter {
     @Override
     public void testInputGroupGenerated(
             TestInputGroupContext context, List<Combination> testInputs) {
+        AnvilTestStateContainer testStateContainer = new AnvilTestStateContainer(extensionContext);
+        AnvilContext.getInstance().addTestStateContainer(testStateContainer);
         LOGGER.trace(
                 "Test Inputs generated for " + extensionContext.getRequiredTestMethod().getName());
     }

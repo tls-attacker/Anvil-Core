@@ -59,7 +59,7 @@ public class AnvilTestStateContainer {
                 result != null ? result.name() : "undefined");
     }
 
-    private AnvilTestStateContainer(ExtensionContext extensionContext) {
+    public AnvilTestStateContainer(ExtensionContext extensionContext) {
         this.uniqueId = extensionContext.getUniqueId();
         this.scoreContainer =
                 AnvilFactoryRegistry.get().getScoreContainerFactory().getInstance(extensionContext);
@@ -77,7 +77,7 @@ public class AnvilTestStateContainer {
         AnvilTestStateContainer container = new AnvilTestStateContainer(resolvedContext);
         container.setTestClass(resolvedContext.getRequiredTestClass());
         container.setTestMethod(resolvedContext.getTestMethod().orElseThrow());
-        AnvilContext.getInstance().addTestResult(container);
+        AnvilContext.getInstance().addTestStateContainer(container);
         return container;
     }
 
@@ -89,11 +89,14 @@ public class AnvilTestStateContainer {
 
     public void finish() {
         finished = true;
-        result = resolveFinalResult();
+        if (result == null) {
+            // only determine result automatically if it has not been set before
+            result = resolveFinalResult();
+        }
         AnvilContext.getInstance().testFinished(uniqueId);
     }
 
-    private TestResult resolveFinalResult() {
+    public TestResult resolveFinalResult() {
         Set<TestResult> uniqueResultTypes =
                 states.stream().map(AnvilTestState::getTestResult).collect(Collectors.toSet());
         if (uniqueResultTypes.contains(TestResult.FULLY_FAILED)
