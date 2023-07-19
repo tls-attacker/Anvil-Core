@@ -1,5 +1,6 @@
 package de.rub.nds.anvilcore.coffee4j.junit;
 
+import de.rub.nds.anvilcore.junit.extension.AnvilTestWatcher;
 import de.rwth.swc.coffee4j.engine.report.ReportLevel;
 import de.rwth.swc.coffee4j.junit.provider.configuration.reporter.ReporterSource;
 import de.rwth.swc.coffee4j.model.report.ExecutionReporter;
@@ -30,7 +31,7 @@ public @interface AnvilReporter {
      *     Either a no-args or constructor needing one {@link ReportLevel} is needed depending on
      *     the setting of {@link #useLevel()} as described in {@link AnvilReporter}
      */
-    Class<? extends AnvilExecutionReporter>[] value();
+    Class<? extends AnvilTestWatcher>[] value();
 
     /**
      * @return at which level the {@link ExecutionReporter}s should listen if {@link #useLevel()} is

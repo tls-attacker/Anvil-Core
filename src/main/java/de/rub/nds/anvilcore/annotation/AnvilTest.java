@@ -8,9 +8,9 @@
 package de.rub.nds.anvilcore.annotation;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import de.rub.nds.anvilcore.coffee4j.junit.AnvilExecutionReporter;
 import de.rub.nds.anvilcore.coffee4j.junit.AnvilReporter;
 import de.rub.nds.anvilcore.coffee4j.model.ModelFromScope;
+import de.rub.nds.anvilcore.junit.extension.AnvilTestWatcher;
 import de.rwth.swc.coffee4j.engine.characterization.ben.Ben;
 import de.rwth.swc.coffee4j.junit.provider.configuration.characterization.EnableFaultCharacterization;
 import java.lang.annotation.ElementType;
@@ -23,7 +23,7 @@ import java.lang.annotation.Target;
 @TestChooser
 @EnableFaultCharacterization(Ben.class)
 @ModelFromScope()
-@AnvilReporter(AnvilExecutionReporter.class)
+@AnvilReporter(AnvilTestWatcher.class)
 public @interface AnvilTest {
     @JsonProperty("Description")
     String description() default "";

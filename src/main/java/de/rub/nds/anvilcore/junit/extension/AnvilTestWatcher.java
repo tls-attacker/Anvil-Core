@@ -2,17 +2,31 @@ package de.rub.nds.anvilcore.junit.extension;
 
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.junit.Utils;
+import de.rub.nds.anvilcore.model.ParameterCombination;
 import de.rub.nds.anvilcore.teststate.AnvilTestState;
 import de.rub.nds.anvilcore.teststate.AnvilTestStateContainer;
 import de.rub.nds.anvilcore.teststate.TestResult;
+import de.rwth.swc.coffee4j.model.Combination;
+import de.rwth.swc.coffee4j.model.TestInputGroupContext;
+import de.rwth.swc.coffee4j.model.report.ExecutionReporter;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestWatcher;
 
-public class AnvilTestWatcher implements TestWatcher {
+public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
     private static final Logger LOGGER = LogManager.getLogger();
+
+    private ExtensionContext extensionContext;
+
+    public AnvilTestWatcher() {}
+
+    public AnvilTestWatcher(ExtensionContext context) {
+        extensionContext = context;
+    }
 
     @Override
     public synchronized void testSuccessful(ExtensionContext extensionContext) {
@@ -117,5 +131,30 @@ public class AnvilTestWatcher implements TestWatcher {
         } else if (testStateContainer.isReadyForCompletion()) {
             testStateContainer.finish();
         }
+    }
+
+    @Override
+    public void testInputGroupGenerated(
+            TestInputGroupContext context, List<Combination> testInputs) {
+        AnvilTestStateContainer testStateContainer = new AnvilTestStateContainer(extensionContext);
+        AnvilContext.getInstance().addTestStateContainer(testStateContainer);
+        LOGGER.trace(
+                "Test Inputs generated for " + extensionContext.getRequiredTestMethod().getName());
+    }
+
+    @Override
+    public void faultCharacterizationFinished(
+            TestInputGroupContext context, List<Combination> failureInducingCombinations) {
+        List<ParameterCombination> failureInducing = new LinkedList<>();
+        failureInducingCombinations.forEach(
+                combination ->
+                        failureInducing.add(ParameterCombination.fromCombination(combination)));
+        AnvilTestStateContainer.forExtensionContext(extensionContext)
+                .setFailureInducingCombinations(failureInducing);
+    }
+
+    @Override
+    public void testInputGroupFinished(TestInputGroupContext context) {
+        AnvilTestStateContainer.forExtensionContext(extensionContext).setReadyForCompletion(true);
     }
 }

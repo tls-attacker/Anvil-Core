@@ -1,5 +1,6 @@
 package de.rub.nds.anvilcore.context;
 
+import de.rub.nds.anvilcore.constants.TestEndpointType;
 import de.rub.nds.anvilcore.model.DefaultModelType;
 import de.rub.nds.anvilcore.model.ModelType;
 import de.rub.nds.anvilcore.teststate.AnvilTestStateContainer;
@@ -17,6 +18,7 @@ public class AnvilContext {
     private int testStrength = 2;
     private final List<ModelType> knownModelTypes;
 
+    private TestEndpointType evaluatedEndpoint = TestEndpointType.BOTH;
     private long totalTests = 0;
     private long testsDone = 0;
     private long testsDisabled = 0;
@@ -137,5 +139,13 @@ public class AnvilContext {
 
     public ScoreContainer getScoreContainer() {
         return scoreContainer;
+    }
+
+    public TestEndpointType getEvaluatedEndpoint() {
+        return evaluatedEndpoint;
+    }
+
+    public void setEvaluatedEndpoint(TestEndpointType evaluatedEndpoint) {
+        this.evaluatedEndpoint = evaluatedEndpoint;
     }
 }

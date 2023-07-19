@@ -63,6 +63,12 @@ public class AnvilTestStateContainer {
         this.uniqueId = extensionContext.getUniqueId();
         this.scoreContainer =
                 AnvilFactoryRegistry.get().getScoreContainerFactory().getInstance(extensionContext);
+        this.testClass =
+                Utils.getTemplateContainerExtensionContext(extensionContext).getRequiredTestClass();
+        this.testMethod =
+                Utils.getTemplateContainerExtensionContext(extensionContext)
+                        .getTestMethod()
+                        .orElseThrow();
     }
 
     public static synchronized AnvilTestStateContainer forExtensionContext(
@@ -75,8 +81,6 @@ public class AnvilTestStateContainer {
         }
 
         AnvilTestStateContainer container = new AnvilTestStateContainer(resolvedContext);
-        container.setTestClass(resolvedContext.getRequiredTestClass());
-        container.setTestMethod(resolvedContext.getTestMethod().orElseThrow());
         AnvilContext.getInstance().addTestStateContainer(container);
         return container;
     }
