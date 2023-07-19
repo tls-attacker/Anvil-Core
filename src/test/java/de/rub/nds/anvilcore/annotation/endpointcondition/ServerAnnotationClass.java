@@ -5,28 +5,31 @@
  *
  * <p>Licensed under Apache License 2.0 http://www.apache.org/licenses/LICENSE-2.0
  */
-package de.rub.nds.anvilcore.annotation;
+package de.rub.nds.anvilcore.annotation.endpointcondition;
 
+import de.rub.nds.anvilcore.annotation.ClientTest;
+import de.rub.nds.anvilcore.annotation.ServerTest;
 import de.rub.nds.anvilcore.constants.TestEndpointType;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.junit.extension.EndpointConditionExtension;
+import de.rub.nds.anvilcore.testhelper.ConditionTest;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-@ClientTest
-public class ClientAnnotationClassServerTest {
+@ServerTest
+public class ServerAnnotationClass {
 
     @RegisterExtension
     static ConditionTest ext = new ConditionTest(EndpointConditionExtension.class);
 
     @BeforeAll
-    public  static void setEvaluatedEndpoint() {
-        AnvilContext.getInstance().setEvaluatedEndpoint(TestEndpointType.SERVER);
+    public static void setEvaluatedEndpoint() {
+        AnvilContext.getInstance().setEvaluatedEndpoint(TestEndpointType.CLIENT);
     }
 
     @ClientTest
-    public void not_execute_unsupportedForConfig() {}
+    public void execute_supportedForConfig() {}
 
     @ServerTest
-    public void execute_supportedModeForConfig() {}
+    public void not_execute_unsupportedModeForConfig() {}
 }

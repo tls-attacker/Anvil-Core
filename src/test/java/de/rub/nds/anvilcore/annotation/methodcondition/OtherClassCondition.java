@@ -5,7 +5,7 @@
  *
  * <p>Licensed under Apache License 2.0 http://www.apache.org/licenses/LICENSE-2.0
  */
-package de.rub.nds.anvilcore.annotation;
+package de.rub.nds.anvilcore.annotation.methodcondition;
 
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
 import org.junit.jupiter.api.extension.ExtensionContext;
