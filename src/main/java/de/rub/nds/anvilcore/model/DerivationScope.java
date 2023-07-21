@@ -50,12 +50,23 @@ public class DerivationScope {
     }
 
     public static ModelType resolveModelType(ExtensionContext extensionContext) {
-        ModelFromScope modelFromScope =
-                AnnotationSupport.findAnnotation(
-                                extensionContext.getRequiredTestMethod(), ModelFromScope.class)
-                        .orElse(null);
-        if (modelFromScope != null) {
-            return ModelType.resolveModelType(modelFromScope.modelType());
+        ModelFromScope closestAnnotation;
+        if (extensionContext.getRequiredTestMethod().getAnnotation(ModelFromScope.class) != null) {
+            closestAnnotation =
+                    extensionContext.getRequiredTestMethod().getAnnotation(ModelFromScope.class);
+        } else if (extensionContext.getRequiredTestClass().getAnnotation(ModelFromScope.class)
+                != null) {
+            closestAnnotation =
+                    extensionContext.getRequiredTestClass().getAnnotation(ModelFromScope.class);
+        } else {
+            closestAnnotation =
+                    AnnotationSupport.findAnnotation(
+                                    extensionContext.getRequiredTestMethod(), ModelFromScope.class)
+                            .orElse(null);
+        }
+
+        if (closestAnnotation != null) {
+            return ModelType.resolveModelType(closestAnnotation.modelType());
         }
         return DefaultModelType.ALL_PARAMETERS;
     }
@@ -105,7 +116,7 @@ public class DerivationScope {
     }
 
     /**
-     * Return a stream of entries where each entry constists of elements with the same index in
+     * Return a stream of entries where each entry consists of elements with the same index in
      * {@code firstArray} and {@code secondArray}.
      *
      * @param firstArray elements to use as entry keys
@@ -186,23 +197,22 @@ public class DerivationScope {
      */
     private static List<ValueConstraint> resolveValueConstraints(
             final ExtensionContext extensionContext) {
-        return Stream.concat(
-                        AnnotationSupport.findRepeatableAnnotations(
-                                        extensionContext.getRequiredTestMethod(),
-                                        de.rub.nds.anvilcore.annotation.ValueConstraint.class)
-                                .stream()
-                                .map(
-                                        annotation ->
-                                                new ValueConstraint(
-                                                        ParameterIdentifier.fromName(
-                                                                annotation.identifier()),
-                                                        annotation.method(),
-                                                        annotation.clazz().equals(Object.class)
-                                                                ? extensionContext
-                                                                        .getRequiredTestClass()
-                                                                : annotation.clazz(),
-                                                        false)),
-                        Stream.concat(
+
+        List<ValueConstraint> staticConstraints =
+                Stream.concat(
+                                AnnotationSupport.findRepeatableAnnotations(
+                                                extensionContext.getRequiredTestMethod(),
+                                                de.rub.nds.anvilcore.annotation.ValueConstraint
+                                                        .class)
+                                        .stream()
+                                        .map(
+                                                annotation ->
+                                                        new ValueConstraint(
+                                                                ParameterIdentifier.fromName(
+                                                                        annotation.identifier()),
+                                                                annotation.method(),
+                                                                null,
+                                                                false)),
                                 AnnotationSupport.findAnnotation(
                                                 extensionContext.getRequiredTestMethod(),
                                                 ValueConstraints.class)
@@ -214,6 +224,29 @@ public class DerivationScope {
                                                                 ParameterIdentifier.fromName(
                                                                         annotation.identifier()),
                                                                 annotation.method(),
+                                                                null,
+                                                                false)))
+                        .collect(Collectors.toList());
+
+        List<ValueConstraint> dynamicConstraints = new LinkedList<>();
+        AnnotationSupport.findAnnotation(
+                        extensionContext.getRequiredTestMethod(), DynamicValueConstraints.class)
+                .stream()
+                .forEach(
+                        annotation -> {
+                            if (annotation.affectedIdentifiers().length
+                                    != annotation.methods().length) {
+                                throw new IllegalArgumentException(
+                                        "Length of affected parameters does not match number of methods");
+                            }
+                            zipArrays(annotation.affectedIdentifiers(), annotation.methods())
+                                    .forEach(
+                                            entry -> {
+                                                dynamicConstraints.add(
+                                                        new ValueConstraint(
+                                                                ParameterIdentifier.fromName(
+                                                                        entry.getKey()),
+                                                                entry.getValue(),
                                                                 annotation
                                                                                 .clazz()
                                                                                 .equals(
@@ -222,26 +255,11 @@ public class DerivationScope {
                                                                         ? extensionContext
                                                                                 .getRequiredTestClass()
                                                                         : annotation.clazz(),
-                                                                false)),
-                                AnnotationSupport.findAnnotation(
-                                                extensionContext.getRequiredTestMethod(),
-                                                DynamicValueConstraints.class)
-                                        .stream()
-                                        .flatMap(
-                                                annotation ->
-                                                        zipArrays(
-                                                                annotation.affectedIdentifiers(),
-                                                                annotation.methods()))
-                                        .map(
-                                                entry ->
-                                                        new ValueConstraint(
-                                                                ParameterIdentifier.fromName(
-                                                                        entry.getKey()),
-                                                                entry.getValue(),
-                                                                extensionContext
-                                                                        .getRequiredTestClass(),
-                                                                true))))
-                .collect(Collectors.toList());
+                                                                true));
+                                            });
+                        });
+        staticConstraints.addAll(dynamicConstraints);
+        return staticConstraints;
     }
 
     /**
