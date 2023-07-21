@@ -7,8 +7,19 @@ public abstract class ParameterFactory {
 
     public abstract ParameterScope resolveParameterScope(String scope);
 
-    public static DerivationParameter getInstanceFromIdentifier(ParameterIdentifier parameterIdentifier) {
-        ParameterFactory parameterFactory = AnvilFactoryRegistry.get().getParameterFactory(parameterIdentifier.getParameterType());
-        return parameterFactory.getInstance(parameterIdentifier);
+    public static DerivationParameter getInstanceFromIdentifier(
+            ParameterIdentifier parameterIdentifier) {
+        ParameterFactory parameterFactory =
+                AnvilFactoryRegistry.get()
+                        .getParameterFactory(parameterIdentifier.getParameterType());
+        DerivationParameter newParameter = parameterFactory.getInstance(parameterIdentifier);
+        if (!newParameter.getParameterIdentifier().hasLinkedParameterIdentifier()
+                && parameterIdentifier.hasLinkedParameterIdentifier()) {
+            newParameter
+                    .getParameterIdentifier()
+                    .setLinkedParameterIdentifier(
+                            parameterIdentifier.getLinkedParameterIdentifier());
+        }
+        return newParameter;
     }
 }

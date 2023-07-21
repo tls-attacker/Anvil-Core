@@ -4,6 +4,7 @@ import de.rub.nds.anvilcore.constants.TestEndpointType;
 import de.rub.nds.anvilcore.model.DefaultModelType;
 import de.rub.nds.anvilcore.model.ModelType;
 import de.rub.nds.anvilcore.teststate.AnvilTestStateContainer;
+import de.rub.nds.anvilcore.teststate.TestResult;
 import de.rub.nds.anvilcore.teststate.reporting.ScoreContainer;
 import java.util.*;
 import org.apache.logging.log4j.LogManager;
@@ -29,6 +30,7 @@ public class AnvilContext {
             AnvilFactoryRegistry.get().getScoreContainerFactory().getInstance();
 
     private final Map<String, AnvilTestStateContainer> testResults = new HashMap<>();
+    private final Map<String, TestResult> aggregatedTestResult = new HashMap<>();
     private final Map<String, Boolean> finishedTests = new HashMap<>();
 
     public static synchronized AnvilContext getInstance() {
@@ -147,5 +149,9 @@ public class AnvilContext {
 
     public void setEvaluatedEndpoint(TestEndpointType evaluatedEndpoint) {
         this.evaluatedEndpoint = evaluatedEndpoint;
+    }
+
+    public Map<String, TestResult> getAggregatedTestResult() {
+        return aggregatedTestResult;
     }
 }

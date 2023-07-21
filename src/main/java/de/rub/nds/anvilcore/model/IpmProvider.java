@@ -8,8 +8,10 @@ import de.rub.nds.anvilcore.model.parameter.ParameterFactory;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import de.rwth.swc.coffee4j.model.InputParameterModel;
 import de.rwth.swc.coffee4j.model.Parameter;
+import de.rwth.swc.coffee4j.model.Value;
 import de.rwth.swc.coffee4j.model.constraints.Constraint;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -73,6 +75,14 @@ public class IpmProvider {
         parameterIdentifiers.addAll(derivationScope.getIpmExtensions());
         // Remove explicit limitations
         parameterIdentifiers.removeAll(derivationScope.getIpmLimitations());
+        // Add all linked
+        List<ParameterIdentifier> linkedToAdd = new LinkedList<>();
+        for (ParameterIdentifier identifier : parameterIdentifiers) {
+            if (identifier.hasLinkedParameterIdentifier()) {
+                linkedToAdd.add(identifier.getLinkedParameterIdentifier());
+            }
+        }
+        parameterIdentifiers.addAll(linkedToAdd);
 
         return parameterIdentifiers;
     }
@@ -84,15 +94,18 @@ public class IpmProvider {
             DerivationParameter<AnvilConfig, Object> parameter =
                     ParameterFactory.getInstanceFromIdentifier(parameterIdentifier);
             if (parameter.canBeModeled(derivationScope)) {
-                parameterBuilders.add(parameter.getParameterBuilder(derivationScope));
-                if (parameter.getParameterIdentifier().hasLinkedParameterIdentifier()) {
-                    DerivationParameter linkedDerivaitonParameter =
-                            ParameterFactory.getInstanceFromIdentifier(
-                                    parameter
-                                            .getParameterIdentifier()
-                                            .getLinkedParameterIdentifier());
-                    parameterBuilders.add(
-                            linkedDerivaitonParameter.getParameterBuilder(derivationScope));
+                Parameter.Builder parameterBuilder = parameter.getParameterBuilder(derivationScope);
+                parameterBuilders.add(parameterBuilder);
+                if (parameterIdentifier.hasLinkedParameterIdentifier()) {
+                    parameterBuilder.build().getValues().stream()
+                            .map(Value::get)
+                            .forEach(
+                                    listedValue ->
+                                            ((DerivationParameter) listedValue)
+                                                    .getParameterIdentifier()
+                                                    .setLinkedParameterIdentifier(
+                                                            parameterIdentifier
+                                                                    .getLinkedParameterIdentifier()));
                 }
             }
         }
@@ -118,6 +131,14 @@ public class IpmProvider {
         return applicableConstraints.toArray(Constraint[]::new);
     }
 
+    /**
+     * Lists the DerivationParameters which do not allow for derivation because only one value can
+     * be selected. This one value will never be given to coffee4j and will be added as a
+     * ParameterValue when creating the ParameterCombination from coffee4j's ArgumentsAccessor.
+     *
+     * @param derivationScope
+     * @return List of parameters modeled with only one possible value
+     */
     public static List<DerivationParameter<AnvilConfig, Object>> getStaticParameterValues(
             DerivationScope derivationScope) {
         List<DerivationParameter<AnvilConfig, Object>> staticParameterValues = new ArrayList<>();

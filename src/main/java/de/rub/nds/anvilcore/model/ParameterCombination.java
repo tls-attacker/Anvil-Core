@@ -154,6 +154,10 @@ public class ParameterCombination {
         return derivationScope;
     }
 
+    public void setDerivationScope(DerivationScope derivationScope) {
+        this.derivationScope = derivationScope;
+    }
+
     @JsonValue
     public Map<String, DerivationParameter> jsonObject() {
         Map<String, DerivationParameter> res = new HashMap<>();

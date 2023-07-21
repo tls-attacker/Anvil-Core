@@ -1,6 +1,7 @@
 package de.rub.nds.anvilcore.model.parameter;
 
 import de.rub.nds.anvilcore.context.AnvilFactoryRegistry;
+import java.util.List;
 import java.util.Objects;
 
 public class ParameterIdentifier {
@@ -36,19 +37,14 @@ public class ParameterIdentifier {
     }
 
     public static ParameterIdentifier fromName(String name) {
-        if (!name.contains(".")) {
-            // No parameter scope
-            return new ParameterIdentifier(ParameterType.resolveParameterType(name));
-        } else {
-            String scopeName = name.substring(0, name.lastIndexOf("."));
-            String typeName = name.substring(name.lastIndexOf(".") + 1);
-            ParameterType parameterType = ParameterType.resolveParameterType(typeName);
-            ParameterScope parameterScope =
-                    AnvilFactoryRegistry.get()
-                            .getParameterFactory(parameterType)
-                            .resolveParameterScope(scopeName);
-            return new ParameterIdentifier(parameterType, parameterScope);
-        }
+        List<ParameterIdentifier> knownIdentifiers =
+                AnvilFactoryRegistry.get()
+                        .getParameterIdentifierProvider()
+                        .getAllParameterIdentifiers();
+        return knownIdentifiers.stream()
+                .filter(known -> known.name().equals(name))
+                .findFirst()
+                .orElseThrow();
     }
 
     @Override
@@ -66,12 +62,15 @@ public class ParameterIdentifier {
         }
         ParameterIdentifier other = (ParameterIdentifier) obj;
         return this.parameterType.equals(other.parameterType)
-                && this.parameterScope.equals(other.parameterScope);
+                && this.parameterScope.equals(other.parameterScope)
+                && Objects.equals(
+                        this.getLinkedParameterIdentifier(), other.getLinkedParameterIdentifier());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.parameterScope, this.parameterType);
+        return Objects.hash(
+                this.parameterScope, this.parameterType, this.linkedParameterIdentifier);
     }
 
     public ParameterIdentifier getLinkedParameterIdentifier() {
