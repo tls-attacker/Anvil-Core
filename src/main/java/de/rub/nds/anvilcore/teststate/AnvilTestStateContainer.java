@@ -97,6 +97,16 @@ public class AnvilTestStateContainer {
             // only determine result automatically if it has not been set before
             result = resolveFinalResult();
         }
+        if (result == TestResult.DISABLED && getDisabledReason() != null) {
+            LOGGER.info(
+                    "{}.{} is disable because ",
+                    testClass.getName(),
+                    testMethod.getName(),
+                    getDisabledReason());
+        }
+        AnvilContext.getInstance()
+                .getAggregatedTestResult()
+                .put(testClass.getName() + "." + testMethod.getName(), result);
         AnvilContext.getInstance().testFinished(uniqueId);
     }
 
