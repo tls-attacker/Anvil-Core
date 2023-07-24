@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
 import java.util.Date;
 
-public class TestSummary {
+public class AnvilReport {
     @JsonProperty("ElapsedTime")
     private long elapsedTime;
     @JsonProperty("Identifier")

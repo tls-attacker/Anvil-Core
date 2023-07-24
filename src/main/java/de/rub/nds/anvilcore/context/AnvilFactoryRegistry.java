@@ -6,12 +6,12 @@ import de.rub.nds.anvilcore.model.parameter.ParameterType;
 import de.rub.nds.anvilcore.teststate.reporting.DefaultScoreContainerFactory;
 import de.rub.nds.anvilcore.teststate.reporting.DefaultTestSummaryFactory;
 import de.rub.nds.anvilcore.teststate.reporting.ScoreContainerFactory;
-import de.rub.nds.anvilcore.teststate.reporting.TestSummaryFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
+import de.rub.nds.anvilcore.teststate.reporting.AnvilReportFactory;
 
 public class AnvilFactoryRegistry {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -19,7 +19,7 @@ public class AnvilFactoryRegistry {
 
     private ParameterIdentifierProvider parameterIdentifierProvider;
     private ScoreContainerFactory scoreContainerFactory = new DefaultScoreContainerFactory();
-    private TestSummaryFactory testSummaryFactory = new DefaultTestSummaryFactory();
+    private AnvilReportFactory testSummaryFactory = new DefaultTestSummaryFactory();
     private final Map<ParameterType, ParameterFactory> knownParameters = new HashMap<>();
 
     private AnvilFactoryRegistry() {}
@@ -50,11 +50,11 @@ public class AnvilFactoryRegistry {
         this.scoreContainerFactory = scoreContainerFactory;
     }
 
-    public TestSummaryFactory getTestSummaryFactory() {
+    public AnvilReportFactory getTestSummaryFactory() {
         return testSummaryFactory;
     }
 
-    public void setTestSummaryFactory(TestSummaryFactory testSummaryFactory) {
+    public void setTestSummaryFactory(AnvilReportFactory testSummaryFactory) {
         this.testSummaryFactory = testSummaryFactory;
     }
 

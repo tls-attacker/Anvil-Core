@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.context.AnvilFactoryRegistry;
-import de.rub.nds.anvilcore.teststate.reporting.TestSummary;
+import de.rub.nds.anvilcore.teststate.reporting.AnvilReport;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.platform.engine.TestExecutionResult;
@@ -41,7 +41,7 @@ public class AnvilTestExecutionListener implements TestExecutionListener {
      *
      * @return a test summary
      */
-    public TestSummary getTestSummary() {
+    public AnvilReport getTestSummary() {
         // TODO: Factor out singletons.
         //
         // Singletons are an anti-pattern and introduce a global state that
@@ -49,7 +49,7 @@ public class AnvilTestExecutionListener implements TestExecutionListener {
         // makes testing harder. Also, there no reason why this uses singletons
         // at all, because we could easily pass the approriate `AnvilContext`
         // object to the constructor or this method.
-        final TestSummary testSummary = AnvilFactoryRegistry.get().getTestSummaryFactory().getInstance();
+        final AnvilReport testSummary = AnvilFactoryRegistry.get().getTestSummaryFactory().getInstance();
         testSummary.setElapsedTime(System.currentTimeMillis() - startTime);
         testSummary.setIdentifier("todo");      // TODO
         testSummary.setDate(AnvilContext.getInstance().getStartTime());
@@ -62,7 +62,7 @@ public class AnvilTestExecutionListener implements TestExecutionListener {
     }
 
     /**
-     * Write {@link TestSummary} to {@code stream}.
+     * Write {@link AnvilReport} to {@code stream}.
      *
      * <p>This should be called when execution of test plan has already finished.
      *
@@ -78,7 +78,7 @@ public class AnvilTestExecutionListener implements TestExecutionListener {
                 .withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
 
-        final TestSummary testSummary = getTestSummary();
+        final AnvilReport testSummary = getTestSummary();
         objectMapper.writeValue(stream, testSummary);
     }
 
