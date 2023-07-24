@@ -2,27 +2,31 @@ package de.rub.nds.anvilcore.teststate.reporting;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
-
 import java.util.Date;
 
 public class AnvilReport {
     @JsonProperty("ElapsedTime")
     private long elapsedTime;
+
     @JsonProperty("Identifier")
     private String identifier;
+
     @JsonProperty("NumberStates")
     private long numStates;
+
     @JsonProperty("Date")
     private Date date;
+
     @JsonProperty("SucceededTests")
     private long testsSucceeded;
+
     @JsonProperty("DisabledTests")
     private long testsDisabled;
+
     @JsonProperty("FailedTests")
     private long testsFailed;
-    @JsonUnwrapped
-    private ScoreContainer scoreContainer;
 
+    @JsonUnwrapped private ScoreContainer scoreContainer;
 
     public long getElapsedTime() {
         return elapsedTime;

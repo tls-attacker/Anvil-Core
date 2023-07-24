@@ -71,8 +71,7 @@ public class AnvilTestRun {
                         .orElseThrow();
     }
 
-    public static synchronized AnvilTestRun forExtensionContext(
-            ExtensionContext extensionContext) {
+    public static synchronized AnvilTestRun forExtensionContext(ExtensionContext extensionContext) {
         ExtensionContext resolvedContext =
                 Utils.getTemplateContainerExtensionContext(extensionContext);
 

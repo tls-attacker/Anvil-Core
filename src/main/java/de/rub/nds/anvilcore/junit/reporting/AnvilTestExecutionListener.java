@@ -4,8 +4,11 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import de.rub.nds.anvilcore.context.AnvilContext;
-import de.rub.nds.anvilcore.context.AnvilFactoryRegistry;
 import de.rub.nds.anvilcore.teststate.reporting.AnvilReport;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.platform.engine.TestExecutionResult;
@@ -13,11 +16,6 @@ import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Map;
 
 public class AnvilTestExecutionListener implements TestExecutionListener {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -41,24 +39,17 @@ public class AnvilTestExecutionListener implements TestExecutionListener {
      *
      * @return a test summary
      */
-    public AnvilReport getTestSummary() {
-        // TODO: Factor out singletons.
-        //
-        // Singletons are an anti-pattern and introduce a global state that
-        // blurs interdependencies between different code fragments and also
-        // makes testing harder. Also, there no reason why this uses singletons
-        // at all, because we could easily pass the approriate `AnvilContext`
-        // object to the constructor or this method.
-        final AnvilReport testSummary = AnvilFactoryRegistry.get().getTestSummaryFactory().getInstance();
-        testSummary.setElapsedTime(System.currentTimeMillis() - startTime);
-        testSummary.setIdentifier("todo");      // TODO
-        testSummary.setDate(AnvilContext.getInstance().getStartTime());
-        testSummary.setTestsDisabled(AnvilContext.getInstance().getTestsDisabled());
-        testSummary.setTestsFailed(AnvilContext.getInstance().getTestsFailed());
-        testSummary.setTestsSucceeded(AnvilContext.getInstance().getTestsSucceeded());
-        testSummary.setScoreContainer(AnvilContext.getInstance().getScoreContainer());
+    public AnvilReport getReport() {
+        final AnvilReport report = new AnvilReport();
+        report.setElapsedTime(System.currentTimeMillis() - startTime);
+        report.setIdentifier("todo"); // TODO
+        report.setDate(AnvilContext.getInstance().getStartTime());
+        report.setTestsDisabled(AnvilContext.getInstance().getTestsDisabled());
+        report.setTestsFailed(AnvilContext.getInstance().getTestsFailed());
+        report.setTestsSucceeded(AnvilContext.getInstance().getTestsSucceeded());
+        report.setScoreContainer(AnvilContext.getInstance().getScoreContainer());
 
-        return testSummary;
+        return report;
     }
 
     /**
@@ -71,15 +62,18 @@ public class AnvilTestExecutionListener implements TestExecutionListener {
      */
     public void writeTestSummary(final OutputStream stream) throws IOException {
         final ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.setVisibility(objectMapper.getSerializationConfig().getDefaultVisibilityChecker()
-                .withFieldVisibility(JsonAutoDetect.Visibility.NONE)
-                .withGetterVisibility(JsonAutoDetect.Visibility.NONE)
-                .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
-                .withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
+        objectMapper.setVisibility(
+                objectMapper
+                        .getSerializationConfig()
+                        .getDefaultVisibilityChecker()
+                        .withFieldVisibility(JsonAutoDetect.Visibility.NONE)
+                        .withGetterVisibility(JsonAutoDetect.Visibility.NONE)
+                        .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
+                        .withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
 
-        final AnvilReport testSummary = getTestSummary();
-        objectMapper.writeValue(stream, testSummary);
+        final AnvilReport report = getReport();
+        objectMapper.writeValue(stream, report);
     }
 
     @Override
@@ -96,8 +90,9 @@ public class AnvilTestExecutionListener implements TestExecutionListener {
     }
 
     @Override
-    public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
-        LOGGER.trace(testIdentifier.getDisplayName() + " finished");
+    public void executionFinished(
+            TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
+        logTestFinished(testExecutionResult, testIdentifier);
         if (testIdentifier.isContainer()) {
             Long startTime = elapsedTimes.get(testIdentifier.getUniqueId());
             if (startTime != null) {
@@ -107,8 +102,18 @@ public class AnvilTestExecutionListener implements TestExecutionListener {
         }
     }
 
-    @Override
-    public void reportingEntryPublished(TestIdentifier testIdentifier, ReportEntry entry) {
-
+    public void logTestFinished(
+            TestExecutionResult testExecutionResult, TestIdentifier testIdentifier) {
+        if (testExecutionResult.getThrowable().isPresent() && testIdentifier.isContainer()) {
+            LOGGER.error(
+                    "Internal exception during execution of test container created for test {}. Exception: ",
+                    testIdentifier.getDisplayName(),
+                    testExecutionResult.getThrowable().get());
+        } else {
+            LOGGER.trace(testIdentifier.getDisplayName() + " finished");
+        }
     }
+
+    @Override
+    public void reportingEntryPublished(TestIdentifier testIdentifier, ReportEntry entry) {}
 }
