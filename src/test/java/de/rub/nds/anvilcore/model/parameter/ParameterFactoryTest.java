@@ -35,7 +35,7 @@ public class ParameterFactoryTest {
     }
 
     private DerivationParameter testWithIdentifier(ParameterIdentifier identifier) {
-        DerivationParameter parameter = parameterFactory.getInstance(identifier);
+        DerivationParameter parameter = ParameterFactory.getInstanceFromIdentifier(identifier);
         Assert.assertNotNull(parameter);
         Assert.assertEquals(identifier, parameter.getParameterIdentifier());
         return parameter;

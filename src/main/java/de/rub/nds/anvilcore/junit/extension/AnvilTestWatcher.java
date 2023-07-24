@@ -3,8 +3,8 @@ package de.rub.nds.anvilcore.junit.extension;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.junit.Utils;
 import de.rub.nds.anvilcore.model.ParameterCombination;
-import de.rub.nds.anvilcore.teststate.AnvilTestState;
-import de.rub.nds.anvilcore.teststate.AnvilTestStateContainer;
+import de.rub.nds.anvilcore.teststate.AnvilTestCase;
+import de.rub.nds.anvilcore.teststate.AnvilTestRun;
 import de.rub.nds.anvilcore.teststate.TestResult;
 import de.rwth.swc.coffee4j.model.Combination;
 import de.rwth.swc.coffee4j.model.TestInputGroupContext;
@@ -31,7 +31,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
     @Override
     public synchronized void testSuccessful(ExtensionContext extensionContext) {
         AnvilContext.getInstance().testSucceeded();
-        AnvilTestStateContainer testStateContainer =
+        AnvilTestRun testStateContainer =
                 AnvilContext.getInstance()
                         .getTestResult(
                                 Utils.getTemplateContainerExtensionContext(extensionContext)
@@ -41,7 +41,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
             processNonCombinatorial(
                     testStateContainer, extensionContext, TestResult.STRICTLY_SUCCEEDED, null);
         } else {
-            AnvilTestState testState = getTestState(extensionContext, testStateContainer);
+            AnvilTestCase testState = getTestState(extensionContext, testStateContainer);
             if (testState != null && testState.getTestResult() == null) {
                 // test template did not yield a reason why this test did not succeed
                 testState.setTestResult(TestResult.STRICTLY_SUCCEEDED);
@@ -54,12 +54,12 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
     }
 
     private void processNonCombinatorial(
-            AnvilTestStateContainer testStateContainer,
+            AnvilTestRun testStateContainer,
             ExtensionContext extensionContext,
             TestResult defaultResult,
             Throwable cause) {
         if (testStateContainer == null) {
-            testStateContainer = new AnvilTestStateContainer(extensionContext);
+            testStateContainer = new AnvilTestRun(extensionContext);
             AnvilContext.getInstance().addTestStateContainer(testStateContainer);
             testStateContainer.setResultRaw(defaultResult.getValue());
         } else {
@@ -73,8 +73,8 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
         testStateContainer.finish();
     }
 
-    private AnvilTestState getTestState(
-            ExtensionContext extensionContext, AnvilTestStateContainer testStateContainer) {
+    private AnvilTestCase getTestState(
+            ExtensionContext extensionContext, AnvilTestRun testStateContainer) {
         return testStateContainer.getStates().stream()
                 .filter(
                         state ->
@@ -95,7 +95,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
                     extensionContext.getDisplayName(),
                     cause);
         }
-        AnvilTestStateContainer testStateContainer =
+        AnvilTestRun testStateContainer =
                 AnvilContext.getInstance()
                         .getTestResult(
                                 Utils.getTemplateContainerExtensionContext(extensionContext)
@@ -105,7 +105,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
             processNonCombinatorial(
                     testStateContainer, extensionContext, TestResult.FULLY_FAILED, cause);
         } else {
-            AnvilTestState testState = getTestState(extensionContext, testStateContainer);
+            AnvilTestCase testState = getTestState(extensionContext, testStateContainer);
             if (testState != null && cause != null && testState.getTestResult() == null) {
                 // default to failed for all thrown exceptions
                 testState.setTestResult(TestResult.FULLY_FAILED);
@@ -121,7 +121,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
     @Override
     public void testDisabled(ExtensionContext extensionContext, Optional<String> reason) {
         AnvilContext.getInstance().testDisabled();
-        AnvilTestStateContainer testStateContainer = new AnvilTestStateContainer(extensionContext);
+        AnvilTestRun testStateContainer = new AnvilTestRun(extensionContext);
         testStateContainer.setResultRaw(TestResult.DISABLED.getValue());
         testStateContainer.setDisabledReason(reason.orElse("No reason specified"));
         if (!Utils.extensionContextIsBasedOnCombinatorialTesting(
@@ -136,7 +136,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
     @Override
     public void testInputGroupGenerated(
             TestInputGroupContext context, List<Combination> testInputs) {
-        AnvilTestStateContainer testStateContainer = new AnvilTestStateContainer(extensionContext);
+        AnvilTestRun testStateContainer = new AnvilTestRun(extensionContext);
         AnvilContext.getInstance().addTestStateContainer(testStateContainer);
         LOGGER.trace(
                 "Test Inputs generated for " + extensionContext.getRequiredTestMethod().getName());
@@ -149,12 +149,12 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
         failureInducingCombinations.forEach(
                 combination ->
                         failureInducing.add(ParameterCombination.fromCombination(combination)));
-        AnvilTestStateContainer.forExtensionContext(extensionContext)
+        AnvilTestRun.forExtensionContext(extensionContext)
                 .setFailureInducingCombinations(failureInducing);
     }
 
     @Override
     public void testInputGroupFinished(TestInputGroupContext context) {
-        AnvilTestStateContainer.forExtensionContext(extensionContext).setReadyForCompletion(true);
+        AnvilTestRun.forExtensionContext(extensionContext).setReadyForCompletion(true);
     }
 }

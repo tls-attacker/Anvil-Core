@@ -7,7 +7,7 @@
  */
 package de.rub.nds.anvilcore.junit.simpletest;
 
-import de.rub.nds.anvilcore.teststate.AnvilTestStateContainer;
+import de.rub.nds.anvilcore.teststate.AnvilTestRun;
 import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -22,7 +22,7 @@ public class SimpleTestExecutionCallback implements AfterTestExecutionCallback {
                 SimpleTestManagerContainer.getInstance().getManagerByExtension(extensionContext);
         testManager.testCompleted();
         if (testManager.allTestsFinished()) {
-            AnvilTestStateContainer.forExtensionContext(extensionContext).finish();
+            AnvilTestRun.forExtensionContext(extensionContext).finish();
         }
     }
 }

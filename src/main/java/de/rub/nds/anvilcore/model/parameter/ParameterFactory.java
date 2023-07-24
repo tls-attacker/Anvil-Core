@@ -3,7 +3,7 @@ package de.rub.nds.anvilcore.model.parameter;
 import de.rub.nds.anvilcore.context.AnvilFactoryRegistry;
 
 public abstract class ParameterFactory {
-    public abstract DerivationParameter getInstance(ParameterIdentifier parameterIdentifier);
+    protected abstract DerivationParameter getInstance(ParameterIdentifier parameterIdentifier);
 
     public abstract ParameterScope resolveParameterScope(String scope);
 

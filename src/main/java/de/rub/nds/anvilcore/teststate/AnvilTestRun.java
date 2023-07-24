@@ -16,7 +16,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-public class AnvilTestStateContainer {
+public class AnvilTestRun {
     private static final Logger LOGGER = LogManager.getLogger();
 
     // set when the last finished has been reported by junit
@@ -31,7 +31,7 @@ public class AnvilTestStateContainer {
     private Class<?> testClass;
 
     @JsonProperty("AnnotatedTestResults")
-    private List<AnvilTestState> states = new ArrayList<>();
+    private List<AnvilTestCase> states = new ArrayList<>();
 
     @JsonProperty("Result")
     private TestResult result;
@@ -59,7 +59,7 @@ public class AnvilTestStateContainer {
                 result != null ? result.name() : "undefined");
     }
 
-    public AnvilTestStateContainer(ExtensionContext extensionContext) {
+    public AnvilTestRun(ExtensionContext extensionContext) {
         this.uniqueId = extensionContext.getUniqueId();
         this.scoreContainer =
                 AnvilFactoryRegistry.get().getScoreContainerFactory().getInstance(extensionContext);
@@ -71,7 +71,7 @@ public class AnvilTestStateContainer {
                         .orElseThrow();
     }
 
-    public static synchronized AnvilTestStateContainer forExtensionContext(
+    public static synchronized AnvilTestRun forExtensionContext(
             ExtensionContext extensionContext) {
         ExtensionContext resolvedContext =
                 Utils.getTemplateContainerExtensionContext(extensionContext);
@@ -80,7 +80,7 @@ public class AnvilTestStateContainer {
             return AnvilContext.getInstance().getTestResult(resolvedContext.getUniqueId());
         }
 
-        AnvilTestStateContainer container = new AnvilTestStateContainer(resolvedContext);
+        AnvilTestRun container = new AnvilTestRun(resolvedContext);
         AnvilContext.getInstance().addTestStateContainer(container);
         return container;
     }
@@ -112,7 +112,7 @@ public class AnvilTestStateContainer {
 
     public TestResult resolveFinalResult() {
         Set<TestResult> uniqueResultTypes =
-                states.stream().map(AnvilTestState::getTestResult).collect(Collectors.toSet());
+                states.stream().map(AnvilTestCase::getTestResult).collect(Collectors.toSet());
         if (uniqueResultTypes.contains(TestResult.FULLY_FAILED)
                 || uniqueResultTypes.contains(TestResult.PARTIALLY_FAILED)) {
             if (uniqueResultTypes.size() > 1) {
@@ -168,7 +168,7 @@ public class AnvilTestStateContainer {
         return uniqueId;
     }
 
-    public List<AnvilTestState> getStates() {
+    public List<AnvilTestCase> getStates() {
         return states;
     }
 
@@ -204,7 +204,7 @@ public class AnvilTestStateContainer {
         return scoreContainer;
     }
 
-    public void add(AnvilTestState testState) {
+    public void add(AnvilTestCase testState) {
         testState.setAssociatedContainer(this);
         this.states.add(testState);
     }

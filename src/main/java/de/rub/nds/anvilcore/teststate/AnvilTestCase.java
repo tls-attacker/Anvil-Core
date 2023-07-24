@@ -8,7 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-public class AnvilTestState {
+public class AnvilTestCase {
     private static final Logger LOGGER = LogManager.getLogger();
 
     @JsonProperty("Result")
@@ -24,16 +24,16 @@ public class AnvilTestState {
     private List<String> additionalResultInformation;
     private List<String> additionalTestInformation;
     private ExtensionContext extensionContext;
-    private AnvilTestStateContainer associatedContainer;
+    private AnvilTestRun associatedContainer;
 
-    public AnvilTestState() {}
+    public AnvilTestCase() {}
 
-    public AnvilTestState(
+    public AnvilTestCase(
             ParameterCombination parameterCombination, ExtensionContext extensionContext) {
         this.parameterCombination = parameterCombination;
         this.extensionContext = extensionContext;
         this.displayName = extensionContext.getDisplayName();
-        this.associatedContainer = AnvilTestStateContainer.forExtensionContext(extensionContext);
+        this.associatedContainer = AnvilTestRun.forExtensionContext(extensionContext);
         this.associatedContainer.add(this);
     }
 
@@ -93,11 +93,11 @@ public class AnvilTestState {
         this.extensionContext = extensionContext;
     }
 
-    public AnvilTestStateContainer getAssociatedContainer() {
+    public AnvilTestRun getAssociatedContainer() {
         return associatedContainer;
     }
 
-    public void setAssociatedContainer(AnvilTestStateContainer associatedContainer) {
+    public void setAssociatedContainer(AnvilTestRun associatedContainer) {
         this.associatedContainer = associatedContainer;
     }
 

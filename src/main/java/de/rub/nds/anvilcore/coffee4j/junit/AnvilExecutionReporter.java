@@ -2,7 +2,7 @@ package de.rub.nds.anvilcore.coffee4j.junit;
 
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.model.ParameterCombination;
-import de.rub.nds.anvilcore.teststate.AnvilTestStateContainer;
+import de.rub.nds.anvilcore.teststate.AnvilTestRun;
 import de.rwth.swc.coffee4j.model.Combination;
 import de.rwth.swc.coffee4j.model.TestInputGroupContext;
 import de.rwth.swc.coffee4j.model.report.ExecutionReporter;
@@ -24,7 +24,7 @@ public class AnvilExecutionReporter implements ExecutionReporter {
     @Override
     public void testInputGroupGenerated(
             TestInputGroupContext context, List<Combination> testInputs) {
-        AnvilTestStateContainer testStateContainer = new AnvilTestStateContainer(extensionContext);
+        AnvilTestRun testStateContainer = new AnvilTestRun(extensionContext);
         AnvilContext.getInstance().addTestStateContainer(testStateContainer);
         LOGGER.trace(
                 "Test Inputs generated for " + extensionContext.getRequiredTestMethod().getName());
@@ -37,12 +37,12 @@ public class AnvilExecutionReporter implements ExecutionReporter {
         failureInducingCombinations.forEach(
                 combination ->
                         failureInducing.add(ParameterCombination.fromCombination(combination)));
-        AnvilTestStateContainer.forExtensionContext(extensionContext)
+        AnvilTestRun.forExtensionContext(extensionContext)
                 .setFailureInducingCombinations(failureInducing);
     }
 
     @Override
     public void testInputGroupFinished(TestInputGroupContext context) {
-        AnvilTestStateContainer.forExtensionContext(extensionContext).setReadyForCompletion(true);
+        AnvilTestRun.forExtensionContext(extensionContext).setReadyForCompletion(true);
     }
 }

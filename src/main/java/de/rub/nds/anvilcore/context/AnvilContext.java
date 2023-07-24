@@ -3,7 +3,7 @@ package de.rub.nds.anvilcore.context;
 import de.rub.nds.anvilcore.constants.TestEndpointType;
 import de.rub.nds.anvilcore.model.DefaultModelType;
 import de.rub.nds.anvilcore.model.ModelType;
-import de.rub.nds.anvilcore.teststate.AnvilTestStateContainer;
+import de.rub.nds.anvilcore.teststate.AnvilTestRun;
 import de.rub.nds.anvilcore.teststate.TestResult;
 import de.rub.nds.anvilcore.teststate.reporting.ScoreContainer;
 import java.util.*;
@@ -29,7 +29,7 @@ public class AnvilContext {
     private final ScoreContainer scoreContainer =
             AnvilFactoryRegistry.get().getScoreContainerFactory().getInstance();
 
-    private final Map<String, AnvilTestStateContainer> testResults = new HashMap<>();
+    private final Map<String, AnvilTestRun> testResults = new HashMap<>();
     private final Map<String, TestResult> aggregatedTestResult = new HashMap<>();
     private final Map<String, Boolean> finishedTests = new HashMap<>();
 
@@ -62,22 +62,22 @@ public class AnvilContext {
         return knownModelTypes;
     }
 
-    public synchronized Map<String, AnvilTestStateContainer> getTestResults() {
+    public synchronized Map<String, AnvilTestRun> getTestResults() {
         return testResults;
     }
 
-    public synchronized AnvilTestStateContainer getTestResult(String uniqueId) {
+    public synchronized AnvilTestRun getTestResult(String uniqueId) {
         return testResults.get(uniqueId);
     }
 
-    public synchronized void addTestStateContainer(AnvilTestStateContainer testResult) {
+    public synchronized void addTestStateContainer(AnvilTestRun testResult) {
         testResults.put(testResult.getUniqueId(), testResult);
     }
 
     public synchronized void testFinished(String uniqueId) {
         finishedTests.put(uniqueId, true);
         scoreContainer.merge(testResults.get(uniqueId).getScoreContainer());
-        AnvilTestStateContainer finishedContainer = testResults.remove(uniqueId);
+        AnvilTestRun finishedContainer = testResults.remove(uniqueId);
         testsDone++;
 
         applicationSpecificContextDelegate.onTestFinished(uniqueId, finishedContainer);
