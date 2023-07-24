@@ -53,7 +53,7 @@ public class AnvilTestRun {
     @Override
     public String toString() {
         return String.format(
-                "AnnotatedStateContainer{displayName = %s.%s, result = %s}",
+                "AnvilTestRun{displayName = %s.%s, result = %s}",
                 testClass != null ? testClass.getName() : "undefined",
                 testMethod != null ? testMethod.getName() : "undefined",
                 result != null ? result.name() : "undefined");

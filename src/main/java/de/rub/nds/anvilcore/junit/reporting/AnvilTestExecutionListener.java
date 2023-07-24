@@ -45,8 +45,8 @@ public class AnvilTestExecutionListener implements TestExecutionListener {
         report.setIdentifier("todo"); // TODO
         report.setDate(AnvilContext.getInstance().getStartTime());
         report.setTestsDisabled(AnvilContext.getInstance().getTestsDisabled());
-        report.setTestsFailed(AnvilContext.getInstance().getTestsFailed());
-        report.setTestsSucceeded(AnvilContext.getInstance().getTestsSucceeded());
+        report.setTestsFullyFailed(AnvilContext.getInstance().getTestsFailed());
+        report.setTestsStrictlySucceeded(AnvilContext.getInstance().getTestsSucceeded());
         report.setScoreContainer(AnvilContext.getInstance().getScoreContainer());
 
         return report;

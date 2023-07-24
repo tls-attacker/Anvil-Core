@@ -11,20 +11,23 @@ public class AnvilReport {
     @JsonProperty("Identifier")
     private String identifier;
 
-    @JsonProperty("NumberStates")
-    private long numStates;
-
     @JsonProperty("Date")
     private Date date;
 
-    @JsonProperty("SucceededTests")
-    private long testsSucceeded;
+    @JsonProperty("StrictlySucceededTests")
+    private long testsStrictlySucceeded;
+
+    @JsonProperty("ConceptuallySucceededTests")
+    private long testsConceptuallySucceeded;
 
     @JsonProperty("DisabledTests")
     private long testsDisabled;
 
-    @JsonProperty("FailedTests")
-    private long testsFailed;
+    @JsonProperty("PartiallyFailedTests")
+    private long testsPartiallyFailed;
+
+    @JsonProperty("FullyFailedTests")
+    private long testsFullyFailed;
 
     @JsonUnwrapped private ScoreContainer scoreContainer;
 
@@ -44,14 +47,6 @@ public class AnvilReport {
         this.identifier = identifier;
     }
 
-    public long getNumStates() {
-        return numStates;
-    }
-
-    public void setNumStates(long numStates) {
-        this.numStates = numStates;
-    }
-
     public Date getDate() {
         return date;
     }
@@ -60,12 +55,12 @@ public class AnvilReport {
         this.date = date;
     }
 
-    public long getTestsSucceeded() {
-        return testsSucceeded;
+    public long getTestsStrictlySucceeded() {
+        return testsStrictlySucceeded;
     }
 
-    public void setTestsSucceeded(long testsSucceeded) {
-        this.testsSucceeded = testsSucceeded;
+    public void setTestsStrictlySucceeded(long testsStrictlySucceeded) {
+        this.testsStrictlySucceeded = testsStrictlySucceeded;
     }
 
     public long getTestsDisabled() {
@@ -76,12 +71,12 @@ public class AnvilReport {
         this.testsDisabled = testsDisabled;
     }
 
-    public long getTestsFailed() {
-        return testsFailed;
+    public long getTestsFullyFailed() {
+        return testsFullyFailed;
     }
 
-    public void setTestsFailed(long testsFailed) {
-        this.testsFailed = testsFailed;
+    public void setTestsFullyFailed(long testsFullyFailed) {
+        this.testsFullyFailed = testsFullyFailed;
     }
 
     public ScoreContainer getScoreContainer() {
@@ -90,5 +85,21 @@ public class AnvilReport {
 
     public void setScoreContainer(ScoreContainer scoreContainer) {
         this.scoreContainer = scoreContainer;
+    }
+
+    public long getTestsConceptuallySucceeded() {
+        return testsConceptuallySucceeded;
+    }
+
+    public void setTestsConceptuallySucceeded(long testsConceptuallySucceeded) {
+        this.testsConceptuallySucceeded = testsConceptuallySucceeded;
+    }
+
+    public long getTestsPartiallyFailed() {
+        return testsPartiallyFailed;
+    }
+
+    public void setTestsPartiallyFailed(long testsPartiallyFailed) {
+        this.testsPartiallyFailed = testsPartiallyFailed;
     }
 }
