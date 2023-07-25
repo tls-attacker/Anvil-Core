@@ -25,7 +25,7 @@ public class AnvilExecutionReporter implements ExecutionReporter {
     public void testInputGroupGenerated(
             TestInputGroupContext context, List<Combination> testInputs) {
         AnvilTestRun testStateContainer = new AnvilTestRun(extensionContext);
-        AnvilContext.getInstance().addTestStateContainer(testStateContainer);
+        AnvilContext.getInstance().addActiveTestRun(testStateContainer);
         LOGGER.trace(
                 "Test Inputs generated for " + extensionContext.getRequiredTestMethod().getName());
     }

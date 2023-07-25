@@ -80,7 +80,7 @@ public class AnvilTestRun {
         }
 
         AnvilTestRun container = new AnvilTestRun(resolvedContext);
-        AnvilContext.getInstance().addTestStateContainer(container);
+        AnvilContext.getInstance().addActiveTestRun(container);
         return container;
     }
 
@@ -104,8 +104,7 @@ public class AnvilTestRun {
                     getDisabledReason());
         }
         AnvilContext.getInstance()
-                .getAggregatedTestResult()
-                .put(testClass.getName() + "." + testMethod.getName(), result);
+                .addTestResult(result, testClass.getName() + "." + testMethod.getName());
         AnvilContext.getInstance().testFinished(uniqueId);
     }
 

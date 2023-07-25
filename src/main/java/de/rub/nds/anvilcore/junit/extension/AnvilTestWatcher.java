@@ -30,7 +30,6 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
 
     @Override
     public synchronized void testSuccessful(ExtensionContext extensionContext) {
-        AnvilContext.getInstance().testSucceeded();
         AnvilTestRun testStateContainer =
                 AnvilContext.getInstance()
                         .getTestResult(
@@ -60,7 +59,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
             Throwable cause) {
         if (testStateContainer == null) {
             testStateContainer = new AnvilTestRun(extensionContext);
-            AnvilContext.getInstance().addTestStateContainer(testStateContainer);
+            AnvilContext.getInstance().addActiveTestRun(testStateContainer);
             testStateContainer.setResultRaw(defaultResult.getValue());
         } else {
             testStateContainer.setResultRaw(testStateContainer.resolveFinalResult().getValue());
@@ -87,8 +86,6 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
 
     @Override
     public synchronized void testFailed(ExtensionContext extensionContext, Throwable cause) {
-        AnvilContext.getInstance().testFailed();
-
         if (!(cause instanceof AssertionError)) {
             LOGGER.error(
                     "Test failed without AssertionError {}\n",
@@ -120,7 +117,6 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
 
     @Override
     public void testDisabled(ExtensionContext extensionContext, Optional<String> reason) {
-        AnvilContext.getInstance().testDisabled();
         AnvilTestRun testStateContainer = new AnvilTestRun(extensionContext);
         testStateContainer.setResultRaw(TestResult.DISABLED.getValue());
         testStateContainer.setDisabledReason(reason.orElse("No reason specified"));
@@ -137,7 +133,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
     public void testInputGroupGenerated(
             TestInputGroupContext context, List<Combination> testInputs) {
         AnvilTestRun testStateContainer = new AnvilTestRun(extensionContext);
-        AnvilContext.getInstance().addTestStateContainer(testStateContainer);
+        AnvilContext.getInstance().addActiveTestRun(testStateContainer);
         LOGGER.trace(
                 "Test Inputs generated for " + extensionContext.getRequiredTestMethod().getName());
     }

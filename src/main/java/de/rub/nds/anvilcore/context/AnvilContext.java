@@ -22,15 +22,12 @@ public class AnvilContext {
     private TestEndpointType evaluatedEndpoint = TestEndpointType.BOTH;
     private long totalTests = 0;
     private long testsDone = 0;
-    private long testsDisabled = 0;
-    private long testsFailed = 0;
-    private long testsSucceeded = 0;
     private final Date startTime = new Date();
     private final ScoreContainer scoreContainer =
             AnvilFactoryRegistry.get().getScoreContainerFactory().getInstance();
 
-    private final Map<String, AnvilTestRun> testResults = new HashMap<>();
-    private final Map<String, TestResult> aggregatedTestResult = new HashMap<>();
+    private final Map<String, AnvilTestRun> activeTestRuns = new HashMap<>();
+    private final Map<TestResult, List<String>> resultTestMap = new HashMap<>();
     private final Map<String, Boolean> finishedTests = new HashMap<>();
 
     public static synchronized AnvilContext getInstance() {
@@ -62,22 +59,22 @@ public class AnvilContext {
         return knownModelTypes;
     }
 
-    public synchronized Map<String, AnvilTestRun> getTestResults() {
-        return testResults;
+    public synchronized Map<String, AnvilTestRun> getActiveTestRuns() {
+        return activeTestRuns;
     }
 
     public synchronized AnvilTestRun getTestResult(String uniqueId) {
-        return testResults.get(uniqueId);
+        return activeTestRuns.get(uniqueId);
     }
 
-    public synchronized void addTestStateContainer(AnvilTestRun testResult) {
-        testResults.put(testResult.getUniqueId(), testResult);
+    public synchronized void addActiveTestRun(AnvilTestRun testResult) {
+        activeTestRuns.put(testResult.getUniqueId(), testResult);
     }
 
     public synchronized void testFinished(String uniqueId) {
         finishedTests.put(uniqueId, true);
-        scoreContainer.merge(testResults.get(uniqueId).getScoreContainer());
-        AnvilTestRun finishedContainer = testResults.remove(uniqueId);
+        scoreContainer.merge(activeTestRuns.get(uniqueId).getScoreContainer());
+        AnvilTestRun finishedContainer = activeTestRuns.remove(uniqueId);
         testsDone++;
 
         applicationSpecificContextDelegate.onTestFinished(uniqueId, finishedContainer);
@@ -99,18 +96,6 @@ public class AnvilContext {
         return finishedTests.containsKey(uniqueId);
     }
 
-    public synchronized void testSucceeded() {
-        testsSucceeded++;
-    }
-
-    public synchronized void testFailed() {
-        testsFailed++;
-    }
-
-    public synchronized void testDisabled() {
-        testsDisabled++;
-    }
-
     public synchronized Date getStartTime() {
         return startTime;
     }
@@ -127,18 +112,6 @@ public class AnvilContext {
         return testsDone;
     }
 
-    public long getTestsDisabled() {
-        return testsDisabled;
-    }
-
-    public long getTestsFailed() {
-        return testsFailed;
-    }
-
-    public long getTestsSucceeded() {
-        return testsSucceeded;
-    }
-
     public ScoreContainer getScoreContainer() {
         return scoreContainer;
     }
@@ -151,7 +124,12 @@ public class AnvilContext {
         this.evaluatedEndpoint = evaluatedEndpoint;
     }
 
-    public Map<String, TestResult> getAggregatedTestResult() {
-        return aggregatedTestResult;
+    public Map<TestResult, List<String>> getResultTestMap() {
+        return resultTestMap;
+    }
+
+    public void addTestResult(TestResult result, String testName) {
+        getResultTestMap().computeIfAbsent(result, k -> new LinkedList<>());
+        getResultTestMap().get(result).add(testName);
     }
 }
