@@ -42,27 +42,6 @@ public class IpmProvider {
                 .build();
     }
 
-    public static boolean mustUseSimpleModel(DerivationScope scope) {
-        List<ParameterIdentifier> parameterIdentifiers = getParameterIdentifiersForScope(scope);
-        Parameter.Builder[] builders = getParameterBuilders(parameterIdentifiers, scope);
-        return builders.length == 1;
-    }
-
-    public static List<DerivationParameter<AnvilConfig, Object>> getSimpleModelVariations(
-            DerivationScope derivationScope) {
-        List<ParameterIdentifier> parameterIdentifiers =
-                getParameterIdentifiersForScope(derivationScope);
-        for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
-            DerivationParameter<AnvilConfig, Object> parameter =
-                    ParameterFactory.getInstanceFromIdentifier(parameterIdentifier);
-            if (parameter.canBeModeled(derivationScope)) {
-                List<DerivationParameter<AnvilConfig, Object>> parameters =
-                        parameter.getConstrainedParameterValues(derivationScope);
-            }
-        }
-        return null;
-    }
-
     public static List<ParameterIdentifier> getParameterIdentifiersForScope(
             DerivationScope derivationScope) {
         final List<ParameterIdentifier> parameterIdentifiers = new ArrayList<>();
@@ -93,7 +72,7 @@ public class IpmProvider {
         for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
             DerivationParameter<AnvilConfig, Object> parameter =
                     ParameterFactory.getInstanceFromIdentifier(parameterIdentifier);
-            if (parameter.canBeModeled(derivationScope)) {
+            if (!parameter.getConstrainedParameterValues(derivationScope).isEmpty()) {
                 Parameter.Builder parameterBuilder = parameter.getParameterBuilder(derivationScope);
                 parameterBuilders.add(parameterBuilder);
                 if (parameterIdentifier.hasLinkedParameterIdentifier()) {

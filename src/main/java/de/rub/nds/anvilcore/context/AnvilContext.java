@@ -73,7 +73,7 @@ public class AnvilContext {
 
     public synchronized void testFinished(String uniqueId) {
         finishedTests.put(uniqueId, true);
-        scoreContainer.merge(activeTestRuns.get(uniqueId).getScoreContainer());
+        // TODO scoreContainer.merge(activeTestRuns.get(uniqueId).getScoreContainer());
         AnvilTestRun finishedContainer = activeTestRuns.remove(uniqueId);
         testsDone++;
 
