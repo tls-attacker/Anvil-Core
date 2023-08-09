@@ -24,7 +24,7 @@ public class ServerAnnotationClass {
 
     @BeforeAll
     public static void setEvaluatedEndpoint() {
-        AnvilContext.getInstance().setEvaluatedEndpoint(TestEndpointType.CLIENT);
+        AnvilContext.getInstance().getConfig().setEnpointMode(TestEndpointType.CLIENT);
     }
 
     @ClientTest

@@ -1,10 +1,17 @@
 package de.rub.nds.anvilcore.context;
 
 import com.beust.jcommander.Parameter;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import de.rub.nds.anvilcore.constants.TestEndpointType;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class AnvilTestConfig {
+    static Logger LOGGER = LogManager.getLogger();
+
     @Parameter(names = "-tags", description = "Run only tests containing on of the specified tags")
     private List<String> tags = new ArrayList<>();
 
@@ -78,6 +85,16 @@ public class AnvilTestConfig {
             names = "-disableTcpDump",
             description = "Disables the packet capturing with tcpdump")
     private boolean disableTcpDump = false;
+
+    private TestEndpointType enpointMode;
+
+    public TestEndpointType getEnpointMode() {
+        return enpointMode;
+    }
+
+    public void setEnpointMode(TestEndpointType enpointMode) {
+        this.enpointMode = enpointMode;
+    }
 
     public List<String> getTags() {
         return tags;
@@ -195,6 +212,26 @@ public class AnvilTestConfig {
         parallelTestCases = Math.min(parallelTestCases, Runtime.getRuntime().availableProcessors());
         if (parallelTests == null) {
             parallelTests = (int) Math.ceil(parallelTestCases * 1.5);
+        }
+    }
+
+    public String toString() {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            return mapper.writeValueAsString(this);
+        } catch (JsonProcessingException e) {
+            LOGGER.error("Error serializing config to string. ", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static AnvilTestConfig fromString(String configString) {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            return mapper.readValue(configString, AnvilTestConfig.class);
+        } catch (JsonProcessingException e) {
+            LOGGER.error("Error deserializing string to config. ", e);
+            throw new RuntimeException(e);
         }
     }
 }

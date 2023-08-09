@@ -1,12 +1,13 @@
 package de.rub.nds.anvilcore.context;
 
-import de.rub.nds.anvilcore.constants.TestEndpointType;
-import de.rub.nds.anvilcore.model.DefaultModelType;
-import de.rub.nds.anvilcore.model.ModelType;
+import de.rub.nds.anvilcore.execution.AnvilListener;
+import de.rub.nds.anvilcore.model.ParameterIdentifierProvider;
 import de.rub.nds.anvilcore.teststate.AnvilTestRun;
 import de.rub.nds.anvilcore.teststate.TestResult;
+import de.rub.nds.anvilcore.teststate.reporting.AnvilJsonMapper;
 import de.rub.nds.anvilcore.teststate.reporting.ScoreContainer;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -15,48 +16,54 @@ public class AnvilContext {
 
     private static AnvilContext instance;
 
-    private ApplicationSpecificContextDelegate applicationSpecificContextDelegate;
-    private int testStrength = 2;
-    private final List<ModelType> knownModelTypes;
+    private final AnvilTestConfig config;
+    private final String configString;
+    private final AnvilJsonMapper mapper;
+    private AnvilListener listener;
 
-    private TestEndpointType evaluatedEndpoint = TestEndpointType.BOTH;
+    private int testStrength = 2;
+    private final ParameterIdentifierProvider parameterIdentifierProvider;
+
     private long totalTests = 0;
     private long testsDone = 0;
-    private final Date startTime = new Date();
-    private final ScoreContainer scoreContainer =
-            AnvilFactoryRegistry.get().getScoreContainerFactory().getInstance();
+    private final Date creationTime = new Date();
+    private Date testStartTime;
+    private final ScoreContainer scoreContainer = null;
 
     private final Map<String, AnvilTestRun> activeTestRuns = new HashMap<>();
     private final Map<TestResult, List<String>> resultTestMap = new HashMap<>();
     private final Map<String, Boolean> finishedTests = new HashMap<>();
+    private boolean aborted = false;
 
     public static synchronized AnvilContext getInstance() {
-        if (AnvilContext.instance == null) {
-            AnvilContext.instance = new AnvilContext();
-        }
-        return AnvilContext.instance;
+        return instance;
     }
 
-    private AnvilContext() {
-        knownModelTypes = new ArrayList<>();
-        knownModelTypes.addAll(Arrays.asList(DefaultModelType.values()));
+    public static AnvilContext createInstance(
+            AnvilTestConfig config, String configString, ParameterIdentifierProvider provider) {
+        AnvilContext newContext = new AnvilContext(config, configString, provider);
+        instance = newContext;
+        return newContext;
     }
 
-    public static void setInstance(AnvilContext instance) {
-        AnvilContext.instance = instance;
+    private AnvilContext(
+            AnvilTestConfig config, String configString, ParameterIdentifierProvider provider) {
+        this.parameterIdentifierProvider = provider;
+        this.config = config;
+        this.configString = configString;
+        this.mapper = new AnvilJsonMapper(config);
     }
 
-    public ApplicationSpecificContextDelegate getApplicationSpecificContextDelegate() {
-        return applicationSpecificContextDelegate;
+    public void abortRemainingTests() {
+        aborted = true;
     }
 
-    public void setApplicationSpecificContextDelegate(
-            ApplicationSpecificContextDelegate applicationSpecificContextDelegate) {
-        this.applicationSpecificContextDelegate = applicationSpecificContextDelegate;
+    public boolean isAborted() {
+        return aborted;
     }
 
-    public List<ModelType> getKnownModelTypes() {
-        return knownModelTypes;
+    public ParameterIdentifierProvider getParameterIdentifierProvider() {
+        return parameterIdentifierProvider;
     }
 
     public synchronized Map<String, AnvilTestRun> getActiveTestRuns() {
@@ -77,7 +84,18 @@ public class AnvilContext {
         AnvilTestRun finishedContainer = activeTestRuns.remove(uniqueId);
         testsDone++;
 
-        applicationSpecificContextDelegate.onTestFinished(uniqueId, finishedContainer);
+        long timediff = new Date().getTime() - creationTime.getTime();
+        long minutes = TimeUnit.MILLISECONDS.toMinutes(timediff);
+        long remainingSecondsInMillis = timediff - TimeUnit.MINUTES.toMillis(minutes);
+        long seconds = TimeUnit.MILLISECONDS.toSeconds(remainingSecondsInMillis);
+        LOGGER.info(
+                String.format(
+                        "%d/%d Tests finished (in %02d:%02d)",
+                        testsDone, totalTests, minutes, seconds));
+
+        if (listener != null) {
+            listener.onTestRunFinished(finishedContainer);
+        }
     }
 
     public synchronized Map<String, Boolean> getFinishedTests() {
@@ -96,8 +114,16 @@ public class AnvilContext {
         return finishedTests.containsKey(uniqueId);
     }
 
-    public synchronized Date getStartTime() {
-        return startTime;
+    public synchronized Date getCreationTime() {
+        return creationTime;
+    }
+
+    public Date getTestStartTime() {
+        return testStartTime;
+    }
+
+    public void setTestStartTime(Date testStartTime) {
+        this.testStartTime = testStartTime;
     }
 
     public long getTotalTests() {
@@ -116,14 +142,6 @@ public class AnvilContext {
         return scoreContainer;
     }
 
-    public TestEndpointType getEvaluatedEndpoint() {
-        return evaluatedEndpoint;
-    }
-
-    public void setEvaluatedEndpoint(TestEndpointType evaluatedEndpoint) {
-        this.evaluatedEndpoint = evaluatedEndpoint;
-    }
-
     public Map<TestResult, List<String>> getResultTestMap() {
         return resultTestMap;
     }
@@ -131,5 +149,25 @@ public class AnvilContext {
     public void addTestResult(TestResult result, String testName) {
         getResultTestMap().computeIfAbsent(result, k -> new LinkedList<>());
         getResultTestMap().get(result).add(testName);
+    }
+
+    public AnvilListener getListener() {
+        return listener;
+    }
+
+    public void setListener(AnvilListener listener) {
+        this.listener = listener;
+    }
+
+    public AnvilTestConfig getConfig() {
+        return config;
+    }
+
+    public AnvilJsonMapper getMapper() {
+        return mapper;
+    }
+
+    public String getConfigString() {
+        return configString;
     }
 }

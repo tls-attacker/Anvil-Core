@@ -19,17 +19,17 @@ public class ParameterCombination {
     private static final Logger LOGGER = LogManager.getLogger();
 
     private final List<DerivationParameter> parameterValues;
-    private DerivationScope derivationScope;
+    private AnvilTestTemplate anvilTestTemplate;
 
     public ParameterCombination(List<DerivationParameter> parameters) {
         this.parameterValues = parameters;
     }
 
     public ParameterCombination(
-            List<DerivationParameter> parameters, DerivationScope derivationScope) {
+            List<DerivationParameter> parameters, AnvilTestTemplate anvilTestTemplate) {
         this.parameterValues = parameters;
-        this.parameterValues.addAll(IpmProvider.getStaticParameterValues(derivationScope));
-        this.derivationScope = derivationScope;
+        this.parameterValues.addAll(IpmProvider.getStaticParameterValues(anvilTestTemplate));
+        this.anvilTestTemplate = anvilTestTemplate;
     }
 
     public static ParameterCombination fromCombination(Combination combination) {
@@ -50,7 +50,7 @@ public class ParameterCombination {
     }
 
     public static ParameterCombination fromArgumentsAccessor(
-            ArgumentsAccessor argumentsAccessor, DerivationScope derivationScope) {
+            ArgumentsAccessor argumentsAccessor, AnvilTestTemplate anvilTestTemplate) {
         List<DerivationParameter> parameters = new ArrayList<>();
         for (Object obj : argumentsAccessor.toList()) {
             if (obj instanceof DerivationParameter) {
@@ -59,7 +59,7 @@ public class ParameterCombination {
                 LOGGER.warn("Unsupported parameter type ignored");
             }
         }
-        return new ParameterCombination(parameters, derivationScope);
+        return new ParameterCombination(parameters, anvilTestTemplate);
     }
 
     public DerivationParameter getParameter(ParameterIdentifier parameterIdentifier) {
@@ -109,21 +109,21 @@ public class ParameterCombination {
 
     public void applyToConfig(AnvilConfig config) {
         for (DerivationParameter parameter : getParameterValues()) {
-            if (!derivationScope
+            if (!anvilTestTemplate
                     .getManualConfigTypes()
                     .contains(parameter.getParameterIdentifier())) {
                 parameter.preProcessConfig(config, getDerivationScope());
             }
         }
         for (DerivationParameter parameter : getParameterValues()) {
-            if (!derivationScope
+            if (!anvilTestTemplate
                     .getManualConfigTypes()
                     .contains(parameter.getParameterIdentifier())) {
                 parameter.applyToConfig(config, getDerivationScope());
             }
         }
         for (DerivationParameter parameter : getParameterValues()) {
-            if (!derivationScope
+            if (!anvilTestTemplate
                     .getManualConfigTypes()
                     .contains(parameter.getParameterIdentifier())) {
                 parameter.postProcessConfig(config, getDerivationScope());
@@ -150,12 +150,12 @@ public class ParameterCombination {
     /**
      * @return the derivationScope
      */
-    public DerivationScope getDerivationScope() {
-        return derivationScope;
+    public AnvilTestTemplate getDerivationScope() {
+        return anvilTestTemplate;
     }
 
-    public void setDerivationScope(DerivationScope derivationScope) {
-        this.derivationScope = derivationScope;
+    public void setDerivationScope(AnvilTestTemplate anvilTestTemplate) {
+        this.anvilTestTemplate = anvilTestTemplate;
     }
 
     @JsonValue

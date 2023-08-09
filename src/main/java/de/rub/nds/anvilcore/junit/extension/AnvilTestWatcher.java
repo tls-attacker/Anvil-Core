@@ -30,6 +30,9 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
 
     @Override
     public synchronized void testSuccessful(ExtensionContext extensionContext) {
+        if (AnvilContext.getInstance().isAborted()) {
+            return;
+        }
         AnvilTestRun testStateContainer =
                 AnvilContext.getInstance()
                         .getTestResult(
@@ -86,6 +89,9 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
 
     @Override
     public synchronized void testFailed(ExtensionContext extensionContext, Throwable cause) {
+        if (AnvilContext.getInstance().isAborted()) {
+            return;
+        }
         if (!(cause instanceof AssertionError)) {
             LOGGER.error(
                     "Test failed without AssertionError {}\n",
@@ -117,6 +123,9 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
 
     @Override
     public void testDisabled(ExtensionContext extensionContext, Optional<String> reason) {
+        if (AnvilContext.getInstance().isAborted()) {
+            return;
+        }
         AnvilTestRun testStateContainer = new AnvilTestRun(extensionContext);
         testStateContainer.setResultRaw(TestResult.DISABLED.getValue());
         testStateContainer.setDisabledReason(reason.orElse("No reason specified"));

@@ -1,6 +1,6 @@
 package de.rub.nds.anvilcore.coffee4j.model;
 
-import de.rub.nds.anvilcore.model.DerivationScope;
+import de.rub.nds.anvilcore.model.AnvilTestTemplate;
 import de.rub.nds.anvilcore.model.IpmProvider;
 import de.rwth.swc.coffee4j.junit.provider.model.ModelProvider;
 import de.rwth.swc.coffee4j.model.InputParameterModel;
@@ -20,8 +20,8 @@ public class ScopeBasedProvider implements ModelProvider, AnnotationConsumer<Mod
 
     @Override
     public InputParameterModel provide(ExtensionContext extensionContext) {
-        DerivationScope derivationScope = new DerivationScope(extensionContext);
-        final Object providedObject = IpmProvider.generateIpm(derivationScope);
+        AnvilTestTemplate anvilTestTemplate = new AnvilTestTemplate(extensionContext);
+        final Object providedObject = IpmProvider.generateIpm(anvilTestTemplate);
         return toInputParameterModel(providedObject);
     }
 

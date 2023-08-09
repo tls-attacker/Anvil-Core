@@ -3,7 +3,6 @@ package de.rub.nds.anvilcore.teststate;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import de.rub.nds.anvilcore.context.AnvilContext;
-import de.rub.nds.anvilcore.context.AnvilFactoryRegistry;
 import de.rub.nds.anvilcore.junit.Utils;
 import de.rub.nds.anvilcore.model.ParameterCombination;
 import de.rub.nds.anvilcore.teststate.reporting.ScoreContainer;
@@ -59,10 +58,13 @@ public class AnvilTestRun {
                 result != null ? result.name() : "undefined");
     }
 
+    public String getTestMethodName() {
+        return testClass.getName() + "." + testMethod.getName();
+    }
+
     public AnvilTestRun(ExtensionContext extensionContext) {
         this.uniqueId = extensionContext.getUniqueId();
-        this.scoreContainer =
-                AnvilFactoryRegistry.get().getScoreContainerFactory().getInstance(extensionContext);
+        this.scoreContainer = null;
         this.testClass =
                 Utils.getTemplateContainerExtensionContext(extensionContext).getRequiredTestClass();
         this.testMethod =
@@ -87,7 +89,7 @@ public class AnvilTestRun {
     public void setResultRaw(int resultRaw) {
         this.resultRaw = resultRaw;
         result = TestResult.resultForBitmask(resultRaw);
-        scoreContainer.updateForResult(result);
+        // scoreContainer.updateForResult(result);
     }
 
     public void finish() {
@@ -97,15 +99,12 @@ public class AnvilTestRun {
             result = resolveFinalResult();
         }
         if (result == TestResult.DISABLED && getDisabledReason() != null) {
-            LOGGER.info(
-                    "{}.{} is disable because ",
-                    testClass.getName(),
-                    testMethod.getName(),
-                    getDisabledReason());
+            LOGGER.info("{} is disable because {}", getTestMethodName(), getDisabledReason());
         }
         AnvilContext.getInstance()
                 .addTestResult(result, testClass.getName() + "." + testMethod.getName());
         AnvilContext.getInstance().testFinished(uniqueId);
+        AnvilContext.getInstance().getMapper().saveTestRunToPath(this);
     }
 
     public TestResult resolveFinalResult() {

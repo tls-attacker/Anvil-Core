@@ -13,8 +13,8 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.support.AnnotationSupport;
 
-public class DerivationScope {
-    private final ModelType modelType;
+public class AnvilTestTemplate {
+    private final String modelType;
     private final List<ParameterIdentifier> ipmLimitations;
     private final List<ParameterIdentifier> ipmExtensions;
     private final List<ValueConstraint> valueConstraints;
@@ -24,7 +24,7 @@ public class DerivationScope {
     private final Set<ParameterIdentifier> manualConfigTypes;
     private final int testStrength;
 
-    public DerivationScope(ExtensionContext extensionContext) {
+    public AnvilTestTemplate(ExtensionContext extensionContext) {
         this.extensionContext = extensionContext;
         this.ipmLimitations = resolveIpmLimitations(extensionContext);
         this.ipmExtensions = resolveIpmExtensions(extensionContext);
@@ -37,7 +37,7 @@ public class DerivationScope {
     }
 
     // TODO Remove constructor, only for testing purposes
-    public DerivationScope() {
+    public AnvilTestTemplate() {
         this.ipmLimitations = Collections.emptyList();
         this.ipmExtensions = Collections.emptyList();
         this.valueConstraints = Collections.emptyList();
@@ -46,10 +46,10 @@ public class DerivationScope {
         this.extensionContext = null;
         this.manualConfigTypes = Collections.emptySet();
         this.testStrength = 3;
-        this.modelType = DefaultModelType.ALL_PARAMETERS;
+        this.modelType = DefaultModelTypes.ALL_PARAMETERS;
     }
 
-    public static ModelType resolveModelType(ExtensionContext extensionContext) {
+    public static String resolveModelType(ExtensionContext extensionContext) {
         ModelFromScope closestAnnotation;
         if (extensionContext.getRequiredTestMethod().getAnnotation(ModelFromScope.class) != null) {
             closestAnnotation =
@@ -66,12 +66,12 @@ public class DerivationScope {
         }
 
         if (closestAnnotation != null) {
-            return ModelType.resolveModelType(closestAnnotation.modelType());
+            return closestAnnotation.modelType().toUpperCase();
         }
-        return DefaultModelType.ALL_PARAMETERS;
+        return DefaultModelTypes.ALL_PARAMETERS;
     }
 
-    public ModelType getModelType() {
+    public String getModelType() {
         return modelType;
     }
 

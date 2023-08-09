@@ -1,9 +1,8 @@
 package de.rub.nds.anvilcore.junit.extension;
 
-import de.rub.nds.anvilcore.model.DerivationScope;
+import de.rub.nds.anvilcore.model.AnvilTestTemplate;
 import de.rub.nds.anvilcore.model.constraint.ValueConstraint;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
-import de.rub.nds.anvilcore.model.parameter.ParameterFactory;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
 import org.junit.jupiter.api.extension.ExecutionCondition;
@@ -17,18 +16,23 @@ public class ValueConstraintsConditionExtension implements ExecutionCondition {
             return ConditionEvaluationResult.enabled("Class annotations are not relevant");
         }
 
-        DerivationScope derivationScope = new DerivationScope(extensionContext);
-        for (ValueConstraint valueConstraint : derivationScope.getValueConstraints()) {
-            DerivationParameter derivationParameter = ParameterFactory.getInstanceFromIdentifier(valueConstraint.getAffectedParameter());
-            if (derivationParameter.hasNoApplicableValues(derivationScope)) {
-                return ConditionEvaluationResult.disabled("No values supported required for parameter "
-                        + derivationParameter.getParameterIdentifier());
+        AnvilTestTemplate anvilTestTemplate = new AnvilTestTemplate(extensionContext);
+        for (ValueConstraint valueConstraint : anvilTestTemplate.getValueConstraints()) {
+            DerivationParameter derivationParameter =
+                    valueConstraint.getAffectedParameter().getInstance();
+            if (derivationParameter.hasNoApplicableValues(anvilTestTemplate)) {
+                return ConditionEvaluationResult.disabled(
+                        "No values supported required for parameter "
+                                + derivationParameter.getParameterIdentifier());
             }
         }
-        for (ParameterIdentifier explicitParameterIdentifier : derivationScope.getExplicitValues().keySet()) {
-            DerivationParameter derivationParameter = ParameterFactory.getInstanceFromIdentifier(explicitParameterIdentifier);
-            if (derivationParameter.hasNoApplicableValues(derivationScope)) {
-                return ConditionEvaluationResult.disabled("No values supported required for parameter " + explicitParameterIdentifier);
+        for (ParameterIdentifier explicitParameterIdentifier :
+                anvilTestTemplate.getExplicitValues().keySet()) {
+            DerivationParameter derivationParameter = explicitParameterIdentifier.getInstance();
+            if (derivationParameter.hasNoApplicableValues(anvilTestTemplate)) {
+                return ConditionEvaluationResult.disabled(
+                        "No values supported required for parameter "
+                                + explicitParameterIdentifier);
             }
         }
         return ConditionEvaluationResult.enabled("");

@@ -1,48 +1,51 @@
 package de.rub.nds.anvilcore.model.constraint;
 
-import de.rub.nds.anvilcore.model.DerivationScope;
+import de.rub.nds.anvilcore.model.AnvilTestTemplate;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Predicate;
 
 @SuppressWarnings("rawtypes")
 public class AggregatedEnableConstraintBuilder<T> {
-    private final DerivationScope derivationScope;
+    private final AnvilTestTemplate anvilTestTemplate;
 
-    public static <T> AggregatedEnableConstraintBuilder<T> init(DerivationScope derivationScope) {
-        return new AggregatedEnableConstraintBuilder<>(derivationScope);
+    public static <T> AggregatedEnableConstraintBuilder<T> init(
+            AnvilTestTemplate anvilTestTemplate) {
+        return new AggregatedEnableConstraintBuilder<>(anvilTestTemplate);
     }
 
-    private AggregatedEnableConstraintBuilder(DerivationScope derivationScope) {
-        this.derivationScope = derivationScope;
+    private AggregatedEnableConstraintBuilder(AnvilTestTemplate anvilTestTemplate) {
+        this.anvilTestTemplate = anvilTestTemplate;
     }
 
     public AggregatedEnableConstraintBuilder1<T> constrain(DerivationParameter target) {
-        return new AggregatedEnableConstraintBuilder1<>(derivationScope, target);
+        return new AggregatedEnableConstraintBuilder1<>(anvilTestTemplate, target);
     }
 
     @SuppressWarnings("rawtypes")
     public static final class AggregatedEnableConstraintBuilder1<T> {
-        private final DerivationScope derivationScope;
+        private final AnvilTestTemplate anvilTestTemplate;
         private final DerivationParameter target;
-        private final Map<ParameterIdentifier, Predicate<DerivationParameter>> conditions = new HashMap<>();
+        private final Map<ParameterIdentifier, Predicate<DerivationParameter>> conditions =
+                new HashMap<>();
         private T defaultValue = null;
 
-        private AggregatedEnableConstraintBuilder1(DerivationScope derivationScope, DerivationParameter target) {
-            this.derivationScope = derivationScope;
+        private AggregatedEnableConstraintBuilder1(
+                AnvilTestTemplate anvilTestTemplate, DerivationParameter target) {
+            this.anvilTestTemplate = anvilTestTemplate;
             this.target = target;
         }
 
-        public AggregatedEnableConstraintBuilder1<T> condition(ParameterIdentifier subject,
-                                                            Predicate<DerivationParameter> condition) {
+        public AggregatedEnableConstraintBuilder1<T> condition(
+                ParameterIdentifier subject, Predicate<DerivationParameter> condition) {
             conditions.put(subject, condition);
             return this;
         }
 
-        public AggregatedEnableConstraintBuilder1<T> conditions(Map<ParameterIdentifier, Predicate<DerivationParameter>> conditions) {
+        public AggregatedEnableConstraintBuilder1<T> conditions(
+                Map<ParameterIdentifier, Predicate<DerivationParameter>> conditions) {
             this.conditions.putAll(conditions);
             return this;
         }
@@ -53,7 +56,8 @@ public class AggregatedEnableConstraintBuilder<T> {
         }
 
         public AggregatedEnableConstraint<T> get() {
-            return new AggregatedEnableConstraint<T>(derivationScope, target, defaultValue, conditions);
+            return new AggregatedEnableConstraint<T>(
+                    anvilTestTemplate, target, defaultValue, conditions);
         }
     }
 }

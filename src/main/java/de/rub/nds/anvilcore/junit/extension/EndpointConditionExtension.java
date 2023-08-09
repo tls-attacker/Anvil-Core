@@ -52,8 +52,8 @@ public class EndpointConditionExtension implements ExecutionCondition {
         AnvilContext anvilContext = AnvilContext.getInstance();
         TestEndpointType targetEndpoint = endpointOfMethod(extensionContext);
 
-        if (anvilContext.getEvaluatedEndpoint() == TestEndpointType.BOTH
-                || targetEndpoint == anvilContext.getEvaluatedEndpoint()
+        if (anvilContext.getConfig().getEnpointMode() == TestEndpointType.BOTH
+                || targetEndpoint == anvilContext.getConfig().getEnpointMode()
                 || targetEndpoint == TestEndpointType.BOTH) {
             return ConditionEvaluationResult.enabled("TestEndpointMode matches");
         }

@@ -1,5 +1,7 @@
 package de.rub.nds.anvilcore.coffee4j.junit;
 
+import static org.junit.platform.commons.util.AnnotationUtils.isAnnotated;
+
 import de.rub.nds.anvilcore.annotation.AnvilTest;
 import de.rwth.swc.coffee4j.junit.*;
 import de.rwth.swc.coffee4j.junit.provider.configuration.ConfigurationLoader;
@@ -8,23 +10,20 @@ import de.rwth.swc.coffee4j.model.Combination;
 import de.rwth.swc.coffee4j.model.InputParameterModel;
 import de.rwth.swc.coffee4j.model.manager.CombinatorialTestConsumerManager;
 import de.rwth.swc.coffee4j.model.manager.CombinatorialTestConsumerManagerConfiguration;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.TestTemplateInvocationContext;
-import org.junit.platform.commons.util.Preconditions;
-
 import java.lang.reflect.Method;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
-import static org.junit.platform.commons.util.AnnotationUtils.isAnnotated;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.TestTemplateInvocationContext;
+import org.junit.platform.commons.util.Preconditions;
 
 public class AnvilCombinatorialTestExtension extends CombinatorialTestExtension {
 
     @Override
     public boolean supportsTestTemplate(ExtensionContext extensionContext) {
-        if (!extensionContext.getTestMethod().isPresent()) {
+        if (extensionContext.getTestMethod().isEmpty()) {
             return false;
         }
         final Method testMethod = extensionContext.getRequiredTestMethod();

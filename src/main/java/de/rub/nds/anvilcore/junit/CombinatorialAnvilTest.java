@@ -4,7 +4,7 @@ import de.rub.nds.anvilcore.junit.extension.AnvilTestWatcher;
 import de.rub.nds.anvilcore.junit.extension.EndpointConditionExtension;
 import de.rub.nds.anvilcore.junit.extension.MethodConditionExtension;
 import de.rub.nds.anvilcore.junit.extension.ValueConstraintsConditionExtension;
-import de.rub.nds.anvilcore.model.DerivationScope;
+import de.rub.nds.anvilcore.model.AnvilTestTemplate;
 import de.rub.nds.anvilcore.model.ParameterCombination;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,11 +33,11 @@ public abstract class CombinatorialAnvilTest {
     protected ParameterCombination resolveParameterCombination(
             ArgumentsAccessor argumentsAccessor) {
         return ParameterCombination.fromArgumentsAccessor(
-                argumentsAccessor, new DerivationScope(extensionContext));
+                argumentsAccessor, new AnvilTestTemplate(extensionContext));
     }
 
     protected ParameterCombination resolveParameterCombination(
-            ArgumentsAccessor argumentsAccessor, DerivationScope derivationScope) {
-        return ParameterCombination.fromArgumentsAccessor(argumentsAccessor, derivationScope);
+            ArgumentsAccessor argumentsAccessor, AnvilTestTemplate anvilTestTemplate) {
+        return ParameterCombination.fromArgumentsAccessor(argumentsAccessor, anvilTestTemplate);
     }
 }

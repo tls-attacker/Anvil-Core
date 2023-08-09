@@ -1,16 +1,9 @@
 package de.rub.nds.anvilcore.junit.reporting;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import de.rub.nds.anvilcore.context.AnvilContext;
-import de.rub.nds.anvilcore.context.AnvilTestConfig;
-import de.rub.nds.anvilcore.teststate.TestResult;
 import de.rub.nds.anvilcore.teststate.reporting.AnvilReport;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,91 +18,26 @@ public class AnvilTestExecutionListener implements TestExecutionListener {
 
     private long startTime;
     private final Map<String, Long> elapsedTimes = new HashMap<>();
-    private final AnvilTestConfig testConfig;
 
-    public AnvilTestExecutionListener(AnvilTestConfig testConfig) {
-        this.testConfig = testConfig;
-    }
+    public AnvilTestExecutionListener() {}
 
     @Override
     public void testPlanExecutionStarted(TestPlan testPlan) {
-        startTime = System.currentTimeMillis();
+        AnvilContext.getInstance().setTestStartTime(new Date());
         LOGGER.trace("Started execution of " + testPlan.toString());
+        if (AnvilContext.getInstance().getListener() != null) {
+            AnvilContext.getInstance().getListener().onStarted();
+        }
     }
 
     @Override
     public void testPlanExecutionFinished(TestPlan testPlan) {
         LOGGER.trace("Execution of " + testPlan.toString() + " finished");
-        try {
-            writeTestSummary();
-        } catch (IOException e) {
-            LOGGER.error("Failed to write post execution report", e);
+        AnvilReport anvilReport = new AnvilReport(AnvilContext.getInstance());
+        AnvilContext.getInstance().getMapper().saveReportToPath(anvilReport);
+        if (AnvilContext.getInstance().getListener() != null) {
+            AnvilContext.getInstance().getListener().onReportFinished(anvilReport);
         }
-    }
-
-    /**
-     * Generate and return a test summary describing the tests and their status.
-     *
-     * @return a test summary
-     */
-    public AnvilReport getReport() {
-        final AnvilReport report = new AnvilReport();
-        report.setElapsedTime(System.currentTimeMillis() - startTime);
-        report.setIdentifier(testConfig.getIdentifier());
-        report.setDate(AnvilContext.getInstance().getStartTime());
-        report.setTestsDisabled(
-                AnvilContext.getInstance()
-                        .getResultTestMap()
-                        .computeIfAbsent(TestResult.DISABLED, k -> new LinkedList<>())
-                        .size());
-        report.setTestsFullyFailed(
-                AnvilContext.getInstance()
-                        .getResultTestMap()
-                        .computeIfAbsent(TestResult.FULLY_FAILED, k -> new LinkedList<>())
-                        .size());
-        report.setTestsStrictlySucceeded(
-                AnvilContext.getInstance()
-                        .getResultTestMap()
-                        .computeIfAbsent(TestResult.STRICTLY_SUCCEEDED, k -> new LinkedList<>())
-                        .size());
-        report.setTestsPartiallyFailed(
-                AnvilContext.getInstance()
-                        .getResultTestMap()
-                        .computeIfAbsent(TestResult.PARTIALLY_FAILED, k -> new LinkedList<>())
-                        .size());
-        report.setTestsConceptuallySucceeded(
-                AnvilContext.getInstance()
-                        .getResultTestMap()
-                        .computeIfAbsent(TestResult.CONCEPTUALLY_SUCCEEDED, k -> new LinkedList<>())
-                        .size());
-        report.setScoreContainer(AnvilContext.getInstance().getScoreContainer());
-
-        return report;
-    }
-
-    /**
-     * Write {@link AnvilReport} to {@code stream}.
-     *
-     * <p>This should be called when execution of test plan has already finished.
-     *
-     * @throws IOException on stream write failure
-     */
-    public void writeTestSummary() throws IOException {
-        FileOutputStream stream =
-                new FileOutputStream(testConfig.getOutputFolder() + "/report.json");
-        final ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.setVisibility(
-                objectMapper
-                        .getSerializationConfig()
-                        .getDefaultVisibilityChecker()
-                        .withFieldVisibility(JsonAutoDetect.Visibility.NONE)
-                        .withGetterVisibility(JsonAutoDetect.Visibility.NONE)
-                        .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
-                        .withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
-        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-
-        final AnvilReport report = getReport();
-        objectMapper.writeValue(stream, report);
     }
 
     @Override
