@@ -245,7 +245,7 @@ public class WorkerClient implements AnvilListener {
             CompletableFuture.runAsync(
                     () -> {
                         // send last report
-                        AnvilReport report = new AnvilReport(AnvilContext.getInstance());
+                        AnvilReport report = new AnvilReport(AnvilContext.getInstance(), false);
                         postTestReportUpdate(report, true);
                         // next job if available
                         Optional<Map<?, ?>> nextJob;

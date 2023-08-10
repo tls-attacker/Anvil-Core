@@ -21,11 +21,11 @@ public class AnvilContext {
     private final AnvilJsonMapper mapper;
     private AnvilListener listener;
 
-    private int testStrength = 2;
     private final ParameterIdentifierProvider parameterIdentifierProvider;
 
     private long totalTests = 0;
     private long testsDone = 0;
+    private long testCases = 0;
     private final Date creationTime = new Date();
     private Date testStartTime;
     private final ScoreContainer scoreContainer = null;
@@ -74,8 +74,8 @@ public class AnvilContext {
         return activeTestRuns.get(uniqueId);
     }
 
-    public synchronized void addActiveTestRun(AnvilTestRun testResult) {
-        activeTestRuns.put(testResult.getUniqueId(), testResult);
+    public synchronized void addActiveTestRun(AnvilTestRun testRun) {
+        activeTestRuns.put(testRun.getUniqueId(), testRun);
     }
 
     public synchronized void testFinished(String uniqueId) {
@@ -83,6 +83,9 @@ public class AnvilContext {
         // TODO scoreContainer.merge(activeTestRuns.get(uniqueId).getScoreContainer());
         AnvilTestRun finishedContainer = activeTestRuns.remove(uniqueId);
         testsDone++;
+        if (finishedContainer.getTestCases() != null) {
+            testCases += finishedContainer.getTestCases().size();
+        }
 
         long timediff = new Date().getTime() - creationTime.getTime();
         long minutes = TimeUnit.MILLISECONDS.toMinutes(timediff);
@@ -100,14 +103,6 @@ public class AnvilContext {
 
     public synchronized Map<String, Boolean> getFinishedTests() {
         return finishedTests;
-    }
-
-    public synchronized int getTestStrength() {
-        return testStrength;
-    }
-
-    public synchronized void setTestStrength(int testStrength) {
-        this.testStrength = testStrength;
     }
 
     public synchronized boolean testIsFinished(String uniqueId) {
@@ -132,6 +127,10 @@ public class AnvilContext {
 
     public void setTotalTests(long totalTests) {
         this.totalTests = totalTests;
+    }
+
+    public long getTestCases() {
+        return testCases;
     }
 
     public long getTestsDone() {

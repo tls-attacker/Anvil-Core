@@ -33,7 +33,7 @@ public class ParameterIdentifier {
         if (parameterScope == ParameterScope.NO_SCOPE || parameterScope == null) {
             return parameterType.toString();
         }
-        return parameterScope + "." + parameterType.toString();
+        return parameterScope + ":" + parameterType.toString();
     }
 
     public static ParameterIdentifier fromName(String name) {

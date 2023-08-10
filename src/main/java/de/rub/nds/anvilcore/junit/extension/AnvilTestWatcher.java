@@ -33,51 +33,50 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
         if (AnvilContext.getInstance().isAborted()) {
             return;
         }
-        AnvilTestRun testStateContainer =
+        AnvilTestRun testRun =
                 AnvilContext.getInstance()
                         .getTestResult(
                                 Utils.getTemplateContainerExtensionContext(extensionContext)
                                         .getUniqueId());
         if (!Utils.extensionContextIsBasedOnCombinatorialTesting(
                 extensionContext.getParent().get())) {
-            processNonCombinatorial(
-                    testStateContainer, extensionContext, TestResult.STRICTLY_SUCCEEDED, null);
+            processNonCombinatorial(testRun, extensionContext, TestResult.STRICTLY_SUCCEEDED, null);
         } else {
-            AnvilTestCase testState = getTestState(extensionContext, testStateContainer);
+            AnvilTestCase testState = getTestState(extensionContext, testRun);
             if (testState != null && testState.getTestResult() == null) {
                 // test template did not yield a reason why this test did not succeed
                 testState.setTestResult(TestResult.STRICTLY_SUCCEEDED);
             }
 
-            if (testStateContainer.isReadyForCompletion()) {
-                testStateContainer.finish();
+            if (testRun.isReadyForCompletion()) {
+                testRun.finish();
             }
         }
     }
 
     private void processNonCombinatorial(
-            AnvilTestRun testStateContainer,
+            AnvilTestRun testRun,
             ExtensionContext extensionContext,
             TestResult defaultResult,
             Throwable cause) {
-        if (testStateContainer == null) {
-            testStateContainer = new AnvilTestRun(extensionContext);
-            AnvilContext.getInstance().addActiveTestRun(testStateContainer);
-            testStateContainer.setResultRaw(defaultResult.getValue());
+        if (testRun == null) {
+            testRun = new AnvilTestRun(extensionContext);
+            AnvilContext.getInstance().addActiveTestRun(testRun);
+            testRun.setResultRaw(defaultResult.getValue());
         } else {
-            testStateContainer.setResultRaw(testStateContainer.resolveFinalResult().getValue());
+            testRun.setResultRaw(testRun.resolveFinalResult().getValue());
         }
 
         if (cause != null) {
-            testStateContainer.setFailedReason(cause.toString());
+            testRun.setFailedReason(cause.toString());
         }
 
-        testStateContainer.finish();
+        testRun.finish();
     }
 
     private AnvilTestCase getTestState(
             ExtensionContext extensionContext, AnvilTestRun testStateContainer) {
-        return testStateContainer.getStates().stream()
+        return testStateContainer.getTestCases().stream()
                 .filter(
                         state ->
                                 state.getExtensionContext()
@@ -98,25 +97,24 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
                     extensionContext.getDisplayName(),
                     cause);
         }
-        AnvilTestRun testStateContainer =
+        AnvilTestRun testRun =
                 AnvilContext.getInstance()
                         .getTestResult(
                                 Utils.getTemplateContainerExtensionContext(extensionContext)
                                         .getUniqueId());
         if (!Utils.extensionContextIsBasedOnCombinatorialTesting(
                 extensionContext.getParent().get())) {
-            processNonCombinatorial(
-                    testStateContainer, extensionContext, TestResult.FULLY_FAILED, cause);
+            processNonCombinatorial(testRun, extensionContext, TestResult.FULLY_FAILED, cause);
         } else {
-            AnvilTestCase testState = getTestState(extensionContext, testStateContainer);
+            AnvilTestCase testState = getTestState(extensionContext, testRun);
             if (testState != null && cause != null && testState.getTestResult() == null) {
                 // default to failed for all thrown exceptions
                 testState.setTestResult(TestResult.FULLY_FAILED);
             }
-            testStateContainer.setFailedReason(cause.toString());
+            testRun.setFailedReason(cause.toString());
 
-            if (testStateContainer.isReadyForCompletion()) {
-                testStateContainer.finish();
+            if (testRun.isReadyForCompletion()) {
+                testRun.finish();
             }
         }
     }
@@ -126,23 +124,24 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
         if (AnvilContext.getInstance().isAborted()) {
             return;
         }
-        AnvilTestRun testStateContainer = new AnvilTestRun(extensionContext);
-        testStateContainer.setResultRaw(TestResult.DISABLED.getValue());
-        testStateContainer.setDisabledReason(reason.orElse("No reason specified"));
+        AnvilTestRun testRun = new AnvilTestRun(extensionContext);
+        testRun.setResultRaw(TestResult.DISABLED.getValue());
+        testRun.setDisabledReason(reason.orElse("No reason specified"));
+        AnvilContext.getInstance().addActiveTestRun(testRun);
         if (!Utils.extensionContextIsBasedOnCombinatorialTesting(
                 extensionContext.getParent().get())) {
             // simple tests finish immediately
-            testStateContainer.finish();
-        } else if (testStateContainer.isReadyForCompletion()) {
-            testStateContainer.finish();
+            testRun.finish();
+        } else if (testRun.isReadyForCompletion()) {
+            testRun.finish();
         }
     }
 
     @Override
     public void testInputGroupGenerated(
             TestInputGroupContext context, List<Combination> testInputs) {
-        AnvilTestRun testStateContainer = new AnvilTestRun(extensionContext);
-        AnvilContext.getInstance().addActiveTestRun(testStateContainer);
+        AnvilTestRun testRun = new AnvilTestRun(extensionContext);
+        AnvilContext.getInstance().addActiveTestRun(testRun);
         LOGGER.trace(
                 "Test Inputs generated for " + extensionContext.getRequiredTestMethod().getName());
     }

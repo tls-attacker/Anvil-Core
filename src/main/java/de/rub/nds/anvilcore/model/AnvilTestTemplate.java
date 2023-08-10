@@ -3,6 +3,7 @@ package de.rub.nds.anvilcore.model;
 import de.rub.nds.anvilcore.annotation.*;
 import de.rub.nds.anvilcore.coffee4j.model.ModelFromScope;
 import de.rub.nds.anvilcore.context.AnvilContext;
+import de.rub.nds.anvilcore.context.AnvilTestConfig;
 import de.rub.nds.anvilcore.model.constraint.ValueConstraint;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import java.util.*;
@@ -334,13 +335,13 @@ public class AnvilTestTemplate {
      * @param extensionContext the current extension context
      * @return test strength
      * @see TestStrength
-     * @see AnvilContext#getTestStrength
+     * @see AnvilTestConfig#getStrength()
      */
     private static int resolveTestStrength(final ExtensionContext extensionContext) {
         return AnnotationSupport.findAnnotation(
                         extensionContext.getRequiredTestMethod(), TestStrength.class)
                 .map(TestStrength::value)
-                .orElseGet(() -> AnvilContext.getInstance().getTestStrength());
+                .orElseGet(() -> AnvilContext.getInstance().getConfig().getStrength());
     }
 
     public boolean parameterListedForManualConfig(ParameterIdentifier identifier) {

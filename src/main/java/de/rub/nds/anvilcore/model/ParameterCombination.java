@@ -159,10 +159,10 @@ public class ParameterCombination {
     }
 
     @JsonValue
-    public Map<String, DerivationParameter> jsonObject() {
-        Map<String, DerivationParameter> res = new HashMap<>();
+    public Map<String, Object> jsonObject() {
+        Map<String, Object> res = new HashMap<>();
         for (DerivationParameter i : getParameterValues()) {
-            res.put(i.getParameterIdentifier().name(), i);
+            res.put(i.getParameterIdentifier().name(), i.getSelectedValue());
         }
         return res;
     }

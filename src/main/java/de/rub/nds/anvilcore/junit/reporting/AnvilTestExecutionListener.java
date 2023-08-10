@@ -33,7 +33,7 @@ public class AnvilTestExecutionListener implements TestExecutionListener {
     @Override
     public void testPlanExecutionFinished(TestPlan testPlan) {
         LOGGER.trace("Execution of " + testPlan.toString() + " finished");
-        AnvilReport anvilReport = new AnvilReport(AnvilContext.getInstance());
+        AnvilReport anvilReport = new AnvilReport(AnvilContext.getInstance(), false);
         AnvilContext.getInstance().getMapper().saveReportToPath(anvilReport);
         if (AnvilContext.getInstance().getListener() != null) {
             AnvilContext.getInstance().getListener().onReportFinished(anvilReport);

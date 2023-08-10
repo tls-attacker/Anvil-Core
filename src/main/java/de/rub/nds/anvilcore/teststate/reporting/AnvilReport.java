@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.rub.nds.anvilcore.constants.TestEndpointType;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.teststate.TestResult;
 import java.util.Date;
@@ -18,6 +19,12 @@ public class AnvilReport {
 
     @JsonProperty("Date")
     private Date date;
+
+    @JsonProperty("TotalTests")
+    private long totalTests;
+
+    @JsonProperty("FinishedTests")
+    private long finishedTests;
 
     @JsonProperty("StrictlySucceededTests")
     private long testsStrictlySucceeded;
@@ -40,9 +47,18 @@ public class AnvilReport {
     @JsonProperty("AnvilConfig")
     private String anvilConfigString;
 
+    @JsonProperty("TestCaseCount")
+    private long testCaseCount;
+
+    @JsonProperty("TestEndpointType")
+    private TestEndpointType endpointType;
+
+    @JsonProperty("Running")
+    private boolean running;
+
     @JsonUnwrapped private ScoreContainer scoreContainer;
 
-    public AnvilReport(AnvilContext context) {
+    public AnvilReport(AnvilContext context, boolean running) {
         this.elapsedTime = System.currentTimeMillis() - context.getCreationTime().getTime();
         this.identifier = context.getConfig().getIdentifier();
         this.date = context.getCreationTime();
@@ -66,6 +82,9 @@ public class AnvilReport {
                 context.getResultTestMap()
                         .computeIfAbsent(TestResult.CONCEPTUALLY_SUCCEEDED, k -> new LinkedList<>())
                         .size();
+        this.totalTests = context.getTotalTests();
+        this.finishedTests = context.getTestsDone();
+        this.testCaseCount = context.getTestCases();
         this.scoreContainer = context.getScoreContainer();
         this.configString = context.getConfigString();
         try {
@@ -73,5 +92,7 @@ public class AnvilReport {
         } catch (JsonProcessingException e) {
 
         }
+        this.endpointType = context.getConfig().getEnpointMode();
+        this.running = running;
     }
 }
