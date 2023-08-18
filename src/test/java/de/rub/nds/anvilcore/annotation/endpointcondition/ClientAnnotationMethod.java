@@ -23,7 +23,7 @@ public class ClientAnnotationMethod {
 
     @BeforeAll
     public static void setEvaluatedEndpoint() {
-        AnvilContext.getInstance().getConfig().setEnpointMode(TestEndpointType.CLIENT);
+        AnvilContext.getInstance().getConfig().setEndpointMode(TestEndpointType.CLIENT);
     }
 
     @ClientTest

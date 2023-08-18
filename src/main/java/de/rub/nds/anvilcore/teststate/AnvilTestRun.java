@@ -54,7 +54,7 @@ public class AnvilTestRun {
 
     @JsonProperty("TestMethod")
     private String getTestMethodString() {
-        return testMethod.toString();
+        return testMethod.getName();
     }
 
     @JsonProperty("TestClass")

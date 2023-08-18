@@ -86,14 +86,14 @@ public class AnvilTestConfig {
             description = "Disables the packet capturing with tcpdump")
     private boolean disableTcpDump = false;
 
-    private TestEndpointType enpointMode;
+    private TestEndpointType endpointMode;
 
-    public TestEndpointType getEnpointMode() {
-        return enpointMode;
+    public TestEndpointType getEndpointMode() {
+        return endpointMode;
     }
 
-    public void setEnpointMode(TestEndpointType enpointMode) {
-        this.enpointMode = enpointMode;
+    public void setEndpointMode(TestEndpointType endpointMode) {
+        this.endpointMode = endpointMode;
     }
 
     public List<String> getTags() {

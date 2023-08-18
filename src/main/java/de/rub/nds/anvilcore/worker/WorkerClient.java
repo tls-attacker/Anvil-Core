@@ -2,6 +2,7 @@ package de.rub.nds.anvilcore.worker;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.context.AnvilTestConfig;
@@ -187,11 +188,13 @@ public class WorkerClient implements AnvilListener {
     }
 
     private void startTestRun(Map<?, ?> job) {
-        String anvilConfigString = (String) job.get("anvilConfig");
+        String anvilConfigString = (String) job.get("config");
         String additionalConfigString = (String) job.get("additionalConfig");
         AnvilTestConfig anvilConfig = new AnvilTestConfig();
         try {
-            anvilConfig = new ObjectMapper().readValue(anvilConfigString, AnvilTestConfig.class);
+            ObjectMapper configMapper = new ObjectMapper();
+            configMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+            anvilConfig = configMapper.readValue(anvilConfigString, AnvilTestConfig.class);
         } catch (JsonProcessingException e) {
             LOGGER.error("Could not read AnvilTestConfig", e);
         }
@@ -304,9 +307,9 @@ public class WorkerClient implements AnvilListener {
         stateUpdate.put("jobId", activeJobId);
         stateUpdate.put("className", className);
         stateUpdate.put("methodName", methodName);
-        stateUpdate.put("state", testCase);
+        stateUpdate.put("testCase", testCase);
 
-        postUpdateAsync("/worker/update/state", stateUpdate);
+        postUpdateAsync("worker/update/testcase", stateUpdate);
     }
 
     @Override
@@ -318,7 +321,7 @@ public class WorkerClient implements AnvilListener {
         testUpdate.put("jobId", activeJobId);
         testUpdate.put("testRun", testRun);
 
-        postUpdateAsync("/worker/update/testresult", testUpdate);
+        postUpdateAsync("worker/update/testrun", testUpdate);
     }
 
     @Override
@@ -330,12 +333,12 @@ public class WorkerClient implements AnvilListener {
     }
 
     public void postTestReportUpdate(AnvilReport anvilReport, boolean finished) {
-        Map<String, Object> summaryUpdate = new LinkedHashMap<>();
-        summaryUpdate.put("jobId", activeJobId);
-        summaryUpdate.put("summary", anvilReport);
-        summaryUpdate.put("finished", finished);
+        Map<String, Object> reportUpdate = new LinkedHashMap<>();
+        reportUpdate.put("jobId", activeJobId);
+        reportUpdate.put("report", anvilReport);
+        reportUpdate.put("finished", finished);
 
-        postUpdateAsync("/worker/update/testrun", summaryUpdate);
+        postUpdateAsync("worker/update/report", reportUpdate);
     }
 
     @Override
@@ -346,7 +349,7 @@ public class WorkerClient implements AnvilListener {
         Map<String, Object> scanUpdate = new LinkedHashMap<>();
         scanUpdate.put("jobId", activeJobId);
 
-        postUpdateAsync("/worker/update/scan", scanUpdate);
+        postUpdateAsync("worker/update/scan", scanUpdate);
     }
 
     @Override

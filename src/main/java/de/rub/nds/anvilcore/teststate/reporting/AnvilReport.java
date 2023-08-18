@@ -92,7 +92,7 @@ public class AnvilReport {
         } catch (JsonProcessingException e) {
 
         }
-        this.endpointType = context.getConfig().getEnpointMode();
+        this.endpointType = context.getConfig().getEndpointMode();
         this.running = running;
     }
 }
