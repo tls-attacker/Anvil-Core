@@ -42,10 +42,19 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
                 extensionContext.getParent().get())) {
             processNonCombinatorial(testRun, extensionContext, TestResult.STRICTLY_SUCCEEDED, null);
         } else {
-            AnvilTestCase testState = getTestState(extensionContext, testRun);
-            if (testState != null && testState.getTestResult() == null) {
+            AnvilTestCase testCase = getTestCase(extensionContext, testRun);
+            if (testCase != null && testCase.getTestResult() == null) {
                 // test template did not yield a reason why this test did not succeed
-                testState.setTestResult(TestResult.STRICTLY_SUCCEEDED);
+                testCase.setTestResult(TestResult.STRICTLY_SUCCEEDED);
+            }
+
+            if (AnvilContext.getInstance().getListener() != null) {
+                AnvilContext.getInstance()
+                        .getListener()
+                        .onTestCaseFinished(
+                                testCase,
+                                testRun.getTestClass().getName(),
+                                testRun.getTestMethod().getName());
             }
 
             if (testRun.isReadyForCompletion()) {
@@ -74,12 +83,12 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
         testRun.finish();
     }
 
-    private AnvilTestCase getTestState(
-            ExtensionContext extensionContext, AnvilTestRun testStateContainer) {
-        return testStateContainer.getTestCases().stream()
+    private AnvilTestCase getTestCase(
+            ExtensionContext extensionContext, AnvilTestRun anvilTestRun) {
+        return anvilTestRun.getTestCases().stream()
                 .filter(
-                        state ->
-                                state.getExtensionContext()
+                        testCase ->
+                                testCase.getExtensionContext()
                                         .getUniqueId()
                                         .equals(extensionContext.getUniqueId()))
                 .findFirst()
@@ -106,12 +115,21 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
                 extensionContext.getParent().get())) {
             processNonCombinatorial(testRun, extensionContext, TestResult.FULLY_FAILED, cause);
         } else {
-            AnvilTestCase testState = getTestState(extensionContext, testRun);
-            if (testState != null && cause != null && testState.getTestResult() == null) {
+            AnvilTestCase testCase = getTestCase(extensionContext, testRun);
+            if (testCase != null && cause != null && testCase.getTestResult() == null) {
                 // default to failed for all thrown exceptions
-                testState.setTestResult(TestResult.FULLY_FAILED);
+                testCase.setTestResult(TestResult.FULLY_FAILED);
             }
             testRun.setFailedReason(cause.toString());
+
+            if (AnvilContext.getInstance().getListener() != null) {
+                AnvilContext.getInstance()
+                        .getListener()
+                        .onTestCaseFinished(
+                                testCase,
+                                testRun.getTestClass().getName(),
+                                testRun.getTestMethod().getName());
+            }
 
             if (testRun.isReadyForCompletion()) {
                 testRun.finish();
