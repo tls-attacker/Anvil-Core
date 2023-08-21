@@ -346,10 +346,11 @@ public class WorkerClient implements AnvilListener {
         if (listener != null) {
             listener.onStarted();
         }
-        Map<String, Object> scanUpdate = new LinkedHashMap<>();
-        scanUpdate.put("jobId", activeJobId);
+        Map<String, Object> statusUpdate = new LinkedHashMap<>();
+        statusUpdate.put("jobId", activeJobId);
+        statusUpdate.put("status", "TESTING");
 
-        postUpdateAsync("worker/update/scan", scanUpdate);
+        postUpdateAsync("worker/update/status", statusUpdate);
     }
 
     @Override
@@ -361,6 +362,13 @@ public class WorkerClient implements AnvilListener {
 
     @Override
     public boolean beforeStart(TestPlan testPlan) {
+
+        Map<String, Object> statusUpdate = new LinkedHashMap<>();
+        statusUpdate.put("jobId", activeJobId);
+        statusUpdate.put("status", "SCANNING");
+
+        postUpdateAsync("worker/update/status", statusUpdate);
+
         if (listener != null) {
             return listener.beforeStart(testPlan);
         } else {
@@ -383,7 +391,7 @@ public class WorkerClient implements AnvilListener {
 
     private Map<?, ?> postRequest(String location, Map<?, ?> object)
             throws IOException, InterruptedException {
-        System.out.println("Sending: " + mapper.writeValueAsString(object));
+        // System.out.println("Sending: " + mapper.writeValueAsString(object));
         HttpRequest request =
                 HttpRequest.newBuilder()
                         .uri(URI.create("http://" + this.hostname + API_URL + location))
