@@ -280,6 +280,9 @@
                             <version>1.15.0</version>
                             <style>AOSP</style>
                         </googleJavaFormat>
+                        <licenseHeader>
+                            <file>${project.basedir}/license_header_plain.txt</file>
+                        </licenseHeader>
                     </java>
                 </configuration>
             </plugin>

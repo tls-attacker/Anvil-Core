@@ -6,8 +6,3 @@
  * Licensed under Apache License, Version 2.0
  * http://www.apache.org/licenses/LICENSE-2.0.txt
  */
-package de.rub.nds.anvilcore.model.parameter;
-
-import de.rub.nds.anvilcore.model.config.AnvilConfig;
-
-public class TestAnvilConfig implements AnvilConfig {}

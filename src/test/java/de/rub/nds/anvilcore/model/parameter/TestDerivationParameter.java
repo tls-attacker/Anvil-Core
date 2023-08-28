@@ -1,17 +1,10 @@
 /*
- * Copyright 2023 marcel.
+ * Anvil Core - A combinatorial testing framework for cryptographic protocols based on coffee4j
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Copyright 2022-2023 Ruhr University Bochum, Paderborn University, and Hackmanit GmbH
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Licensed under Apache License, Version 2.0
+ * http://www.apache.org/licenses/LICENSE-2.0.txt
  */
 package de.rub.nds.anvilcore.model.parameter;
 
@@ -19,9 +12,6 @@ import de.rub.nds.anvilcore.model.DerivationScope;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * @author marcel
- */
 public class TestDerivationParameter extends DerivationParameter<TestAnvilConfig, Integer> {
 
     private final TestParameterType testParameterType;
