@@ -1,14 +1,22 @@
+/*
+ * Anvil Core - A combinatorial testing framework for cryptographic protocols based on coffee4j
+ *
+ * Copyright 2022-2023 Ruhr University Bochum, Paderborn University, and Hackmanit GmbH
+ *
+ * Licensed under Apache License, Version 2.0
+ * http://www.apache.org/licenses/LICENSE-2.0.txt
+ */
 package de.rub.nds.anvilcore.teststate;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.rub.nds.anvilcore.model.ParameterCombination;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-import java.util.List;
-
-public class AnvilTestState {
+public class AnvilTestCase {
     private static final Logger LOGGER = LogManager.getLogger();
 
     @JsonProperty("Result")
@@ -24,16 +32,16 @@ public class AnvilTestState {
     private List<String> additionalResultInformation;
     private List<String> additionalTestInformation;
     private ExtensionContext extensionContext;
-    private AnvilTestStateContainer associatedContainer;
+    private AnvilTestRun associatedContainer;
 
+    public AnvilTestCase() {}
 
-    public AnvilTestState() {}
-
-    public AnvilTestState(ParameterCombination parameterCombination, ExtensionContext extensionContext) {
+    public AnvilTestCase(
+            ParameterCombination parameterCombination, ExtensionContext extensionContext) {
         this.parameterCombination = parameterCombination;
         this.extensionContext = extensionContext;
         this.displayName = extensionContext.getDisplayName();
-        this.associatedContainer = AnvilTestStateContainer.forExtensionContext(extensionContext);
+        this.associatedContainer = AnvilTestRun.forExtensionContext(extensionContext);
         this.associatedContainer.add(this);
     }
 
@@ -93,11 +101,27 @@ public class AnvilTestState {
         this.extensionContext = extensionContext;
     }
 
-    public AnvilTestStateContainer getAssociatedContainer() {
+    public AnvilTestRun getAssociatedContainer() {
         return associatedContainer;
     }
 
-    public void setAssociatedContainer(AnvilTestStateContainer associatedContainer) {
+    public void setAssociatedContainer(AnvilTestRun associatedContainer) {
         this.associatedContainer = associatedContainer;
+    }
+
+    public void addAdditionalResultInfo(String info) {
+        if (additionalResultInformation == null) {
+            additionalResultInformation = new ArrayList<>();
+        }
+
+        additionalResultInformation.add(info);
+    }
+
+    public void addAdditionalTestInfo(String info) {
+        if (additionalTestInformation == null) {
+            additionalTestInformation = new ArrayList<>();
+        }
+
+        additionalTestInformation.add(info);
     }
 }

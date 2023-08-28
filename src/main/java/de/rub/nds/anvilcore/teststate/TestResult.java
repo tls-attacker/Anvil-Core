@@ -1,3 +1,11 @@
+/*
+ * Anvil Core - A combinatorial testing framework for cryptographic protocols based on coffee4j
+ *
+ * Copyright 2022-2023 Ruhr University Bochum, Paderborn University, and Hackmanit GmbH
+ *
+ * Licensed under Apache License, Version 2.0
+ * http://www.apache.org/licenses/LICENSE-2.0.txt
+ */
 package de.rub.nds.anvilcore.teststate;
 
 import java.util.ArrayList;
@@ -5,10 +13,10 @@ import java.util.List;
 
 public enum TestResult {
     NOT_SPECIFIED(1, 0),
-    SUCCEEDED(1 << 1, 100),
-    PARTIALLY_SUCCEEDED(1 << 2, 80),
+    STRICTLY_SUCCEEDED(1 << 1, 100),
+    CONCEPTUALLY_SUCCEEDED(1 << 2, 80),
     PARTIALLY_FAILED(1 << 3, 20),
-    FAILED(1 << 4, 0),
+    FULLY_FAILED(1 << 4, 0),
     DISABLED(1 << 5, 0);
 
     private final int value;
@@ -31,8 +39,7 @@ public enum TestResult {
         }
 
         for (TestResult ap : values()) {
-            if ((val & ap.getValue()) > 0)
-                resultList.add(ap);
+            if ((val & ap.getValue()) > 0) resultList.add(ap);
         }
         return resultList;
     }
@@ -55,8 +62,8 @@ public enum TestResult {
             throw new UnsupportedOperationException("TestResult Bitmask contains NOT_SPECIFIED");
         }
 
-        if (result.contains(FAILED) || result.contains(PARTIALLY_FAILED)) {
-            if (result.contains(PARTIALLY_SUCCEEDED) || result.contains(SUCCEEDED)) {
+        if (result.contains(FULLY_FAILED) || result.contains(PARTIALLY_FAILED)) {
+            if (result.contains(CONCEPTUALLY_SUCCEEDED) || result.contains(STRICTLY_SUCCEEDED)) {
                 return PARTIALLY_FAILED;
             }
         }

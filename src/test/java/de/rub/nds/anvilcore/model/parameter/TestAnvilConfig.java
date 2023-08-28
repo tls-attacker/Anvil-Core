@@ -6,15 +6,8 @@
  * Licensed under Apache License, Version 2.0
  * http://www.apache.org/licenses/LICENSE-2.0.txt
  */
-package de.rub.nds.anvilcore.annotation;
+package de.rub.nds.anvilcore.model.parameter;
 
-import java.lang.annotation.*;
+import de.rub.nds.anvilcore.model.config.AnvilConfig;
 
-@Repeatable(ValueConstraints.class)
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
-public @interface ValueConstraint {
-    String identifier();
-
-    String method();
-}
+public class TestAnvilConfig implements AnvilConfig {}

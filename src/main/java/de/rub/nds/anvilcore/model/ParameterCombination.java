@@ -1,16 +1,27 @@
+/*
+ * Anvil Core - A combinatorial testing framework for cryptographic protocols based on coffee4j
+ *
+ * Copyright 2022-2023 Ruhr University Bochum, Paderborn University, and Hackmanit GmbH
+ *
+ * Licensed under Apache License, Version 2.0
+ * http://www.apache.org/licenses/LICENSE-2.0.txt
+ */
 package de.rub.nds.anvilcore.model;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import de.rub.nds.anvilcore.model.config.AnvilConfig;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import de.rwth.swc.coffee4j.model.Combination;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.StringJoiner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.params.aggregator.ArgumentsAccessor;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringJoiner;
 
 public class ParameterCombination {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -22,7 +33,8 @@ public class ParameterCombination {
         this.parameterValues = parameters;
     }
 
-    public ParameterCombination(List<DerivationParameter> parameters, DerivationScope derivationScope) {
+    public ParameterCombination(
+            List<DerivationParameter> parameters, DerivationScope derivationScope) {
         this.parameterValues = parameters;
         this.parameterValues.addAll(IpmProvider.getStaticParameterValues(derivationScope));
         this.derivationScope = derivationScope;
@@ -30,18 +42,23 @@ public class ParameterCombination {
 
     public static ParameterCombination fromCombination(Combination combination) {
         List<DerivationParameter> parameters = new ArrayList<>();
-        combination.getParameterValueMap().keySet().forEach(key -> {
-            Object obj = combination.getParameterValueMap().get(key).get();
-            if (obj instanceof DerivationParameter) {
-                parameters.add((DerivationParameter) obj);
-            } else {
-                LOGGER.warn("Unsupported parameter type ignored");
-            }
-        });
+        combination
+                .getParameterValueMap()
+                .keySet()
+                .forEach(
+                        key -> {
+                            Object obj = combination.getParameterValueMap().get(key).get();
+                            if (obj instanceof DerivationParameter) {
+                                parameters.add((DerivationParameter) obj);
+                            } else {
+                                LOGGER.warn("Unsupported parameter type ignored");
+                            }
+                        });
         return new ParameterCombination(parameters);
     }
 
-    public static ParameterCombination fromArgumentsAccessor(ArgumentsAccessor argumentsAccessor, DerivationScope derivationScope) {
+    public static ParameterCombination fromArgumentsAccessor(
+            ArgumentsAccessor argumentsAccessor, DerivationScope derivationScope) {
         List<DerivationParameter> parameters = new ArrayList<>();
         for (Object obj : argumentsAccessor.toList()) {
             if (obj instanceof DerivationParameter) {
@@ -54,7 +71,7 @@ public class ParameterCombination {
     }
 
     public DerivationParameter getParameter(ParameterIdentifier parameterIdentifier) {
-        for (DerivationParameter parameter : parameterValues) {
+        for (DerivationParameter parameter : getParameterValues()) {
             if (parameter.getParameterIdentifier().equals(parameterIdentifier)) {
                 return parameter;
             }
@@ -62,29 +79,99 @@ public class ParameterCombination {
         return null;
     }
 
+    public <T extends DerivationParameter<?, ?>> T getParameter(Class<T> clazz) {
+        T matchingFound = null;
+        for (DerivationParameter listed : getParameterValues()) {
+            if (clazz.equals(listed.getClass())) {
+                if (matchingFound == null) {
+                    matchingFound = (T) listed;
+                } else {
+                    throw new IllegalArgumentException(
+                            "Found multiple ParameterIdentifiers for "
+                                    + clazz
+                                    + ". Full ParameterIdentifier is required.");
+                }
+            }
+        }
+
+        if (matchingFound == null) {
+            throw new IllegalArgumentException("Found no Parameter for requested class " + clazz);
+        }
+        return matchingFound;
+    }
+
+    public DerivationParameter getLinkedParameter(ParameterIdentifier identifierWithRef) {
+        if (!identifierWithRef.hasLinkedParameterIdentifier()) {
+            throw new IllegalArgumentException(
+                    "Provided ParameterIdentifier has no linked parameter");
+        }
+        for (DerivationParameter parameter : getParameterValues()) {
+            if (parameter
+                    .getParameterIdentifier()
+                    .equals(identifierWithRef.getLinkedParameterIdentifier())) {
+                return parameter;
+            }
+        }
+        return null;
+    }
+
     public void applyToConfig(AnvilConfig config) {
-        for (DerivationParameter parameter : parameterValues) {
-            if (!derivationScope.getManualConfigTypes().contains(parameter.getParameterIdentifier())) {
-                parameter.preProcessConfig(config, derivationScope);
+        for (DerivationParameter parameter : getParameterValues()) {
+            if (!derivationScope
+                    .getManualConfigTypes()
+                    .contains(parameter.getParameterIdentifier())) {
+                parameter.preProcessConfig(config, getDerivationScope());
             }
         }
-        for (DerivationParameter parameter : parameterValues) {
-            if (!derivationScope.getManualConfigTypes().contains(parameter.getParameterIdentifier())) {
-                parameter.applyToConfig(config, derivationScope);
+        for (DerivationParameter parameter : getParameterValues()) {
+            if (!derivationScope
+                    .getManualConfigTypes()
+                    .contains(parameter.getParameterIdentifier())) {
+                parameter.applyToConfig(config, getDerivationScope());
             }
         }
-        for (DerivationParameter parameter : parameterValues) {
-            if (!derivationScope.getManualConfigTypes().contains(parameter.getParameterIdentifier())) {
-                parameter.postProcessConfig(config, derivationScope);
+        for (DerivationParameter parameter : getParameterValues()) {
+            if (!derivationScope
+                    .getManualConfigTypes()
+                    .contains(parameter.getParameterIdentifier())) {
+                parameter.postProcessConfig(config, getDerivationScope());
             }
         }
     }
 
+    @Override
     public String toString() {
         StringJoiner joiner = new StringJoiner(", ");
-        for (DerivationParameter derivationParameter : parameterValues) {
+        for (DerivationParameter derivationParameter : getParameterValues()) {
             joiner.add(derivationParameter.toString());
         }
         return joiner.toString();
+    }
+
+    /**
+     * @return the parameterValues
+     */
+    public List<DerivationParameter> getParameterValues() {
+        return Collections.unmodifiableList(parameterValues);
+    }
+
+    /**
+     * @return the derivationScope
+     */
+    public DerivationScope getDerivationScope() {
+        return derivationScope;
+    }
+
+    public void setDerivationScope(DerivationScope derivationScope) {
+        this.derivationScope = derivationScope;
+    }
+
+    @JsonValue
+    public Map<String, DerivationParameter> jsonObject() {
+        Map<String, DerivationParameter> res = new HashMap<>();
+        for (DerivationParameter i : getParameterValues()) {
+            res.put(i.getParameterIdentifier().name(), i);
+        }
+        return res;
     }
 }

@@ -1,17 +1,22 @@
+/*
+ * Anvil Core - A combinatorial testing framework for cryptographic protocols based on coffee4j
+ *
+ * Copyright 2022-2023 Ruhr University Bochum, Paderborn University, and Hackmanit GmbH
+ *
+ * Licensed under Apache License, Version 2.0
+ * http://www.apache.org/licenses/LICENSE-2.0.txt
+ */
 package de.rub.nds.anvilcore.context;
 
 import de.rub.nds.anvilcore.model.ParameterIdentifierProvider;
 import de.rub.nds.anvilcore.model.parameter.ParameterFactory;
 import de.rub.nds.anvilcore.model.parameter.ParameterType;
 import de.rub.nds.anvilcore.teststate.reporting.DefaultScoreContainerFactory;
-import de.rub.nds.anvilcore.teststate.reporting.DefaultTestSummaryFactory;
 import de.rub.nds.anvilcore.teststate.reporting.ScoreContainerFactory;
-import de.rub.nds.anvilcore.teststate.reporting.TestSummaryFactory;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class AnvilFactoryRegistry {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -19,7 +24,6 @@ public class AnvilFactoryRegistry {
 
     private ParameterIdentifierProvider parameterIdentifierProvider;
     private ScoreContainerFactory scoreContainerFactory = new DefaultScoreContainerFactory();
-    private TestSummaryFactory testSummaryFactory = new DefaultTestSummaryFactory();
     private final Map<ParameterType, ParameterFactory> knownParameters = new HashMap<>();
 
     private AnvilFactoryRegistry() {}
@@ -38,7 +42,8 @@ public class AnvilFactoryRegistry {
         return parameterIdentifierProvider;
     }
 
-    public void setParameterIdentifierProvider(ParameterIdentifierProvider parameterIdentifierProvider) {
+    public void setParameterIdentifierProvider(
+            ParameterIdentifierProvider parameterIdentifierProvider) {
         this.parameterIdentifierProvider = parameterIdentifierProvider;
     }
 
@@ -50,19 +55,12 @@ public class AnvilFactoryRegistry {
         this.scoreContainerFactory = scoreContainerFactory;
     }
 
-    public TestSummaryFactory getTestSummaryFactory() {
-        return testSummaryFactory;
-    }
-
-    public void setTestSummaryFactory(TestSummaryFactory testSummaryFactory) {
-        this.testSummaryFactory = testSummaryFactory;
-    }
-
     public Map<ParameterType, ParameterFactory> getKnownParameters() {
         return knownParameters;
     }
 
-    public void addParameterTypes(ParameterType[] parameterTypes, ParameterFactory associatedFactory) {
+    public void addParameterTypes(
+            ParameterType[] parameterTypes, ParameterFactory associatedFactory) {
         for (ParameterType parameterType : parameterTypes) {
             if (knownParameters.containsKey(parameterType)) {
                 LOGGER.warn("Parameter type " + parameterType.toString() + " already exists");
