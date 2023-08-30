@@ -1,5 +1,6 @@
 package de.rub.nds.anvilcore.coffee4j.model;
 
+import de.rub.nds.anvilcore.model.IpmProvider;
 import de.rwth.swc.coffee4j.junit.provider.model.ModelSource;
 import java.lang.annotation.*;
 
@@ -7,7 +8,7 @@ import java.lang.annotation.*;
 @Inherited
 @Target({ElementType.ANNOTATION_TYPE, ElementType.FIELD, ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@ModelSource(ScopeBasedProvider.class)
+@ModelSource(IpmProvider.class)
 public @interface ModelFromScope {
     String modelType() default "ALL_PARAMETERS";
 }

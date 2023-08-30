@@ -1,9 +1,11 @@
 package de.rub.nds.anvilcore.model;
 
+import de.rub.nds.anvilcore.coffee4j.model.ModelFromScope;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.model.constraint.ConditionalConstraint;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
+import de.rwth.swc.coffee4j.junit.provider.model.ModelProvider;
 import de.rwth.swc.coffee4j.model.InputParameterModel;
 import de.rwth.swc.coffee4j.model.Parameter;
 import de.rwth.swc.coffee4j.model.Value;
@@ -13,9 +15,24 @@ import java.util.LinkedList;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.support.AnnotationConsumer;
 
-public class IpmProvider {
+public class IpmProvider implements ModelProvider, AnnotationConsumer<ModelFromScope> {
     private static final Logger LOGGER = LogManager.getLogger();
+
+    private ModelFromScope modelFromScope;
+
+    @Override
+    public void accept(ModelFromScope modelFromScope) {
+        this.modelFromScope = modelFromScope;
+    }
+
+    @Override
+    public InputParameterModel provide(ExtensionContext extensionContext) {
+        AnvilTestTemplate anvilTestTemplate = new AnvilTestTemplate(extensionContext);
+        return generateIpm(anvilTestTemplate);
+    }
 
     public static InputParameterModel generateIpm(AnvilTestTemplate anvilTestTemplate) {
         List<ParameterIdentifier> parameterIdentifiers =

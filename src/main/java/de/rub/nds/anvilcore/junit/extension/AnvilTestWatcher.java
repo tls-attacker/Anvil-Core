@@ -1,6 +1,5 @@
 package de.rub.nds.anvilcore.junit.extension;
 
-import de.rub.nds.anvilcore.annotation.AnvilTest;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.junit.Utils;
 import de.rub.nds.anvilcore.model.ParameterCombination;
@@ -11,23 +10,19 @@ import de.rub.nds.anvilcore.teststate.reporting.AnvilReport;
 import de.rwth.swc.coffee4j.model.Combination;
 import de.rwth.swc.coffee4j.model.TestInputGroupContext;
 import de.rwth.swc.coffee4j.model.report.ExecutionReporter;
-
-import java.lang.reflect.Method;
 import java.util.*;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestWatcher;
 import org.junit.platform.engine.TestExecutionResult;
-import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
 
 /**
- * Implements TestWatcher, ExecutionReporter and TestExecutionListener.
- * Gets updates from JUnit tests and sends out actions based on those.
+ * Implements TestWatcher, ExecutionReporter and TestExecutionListener. Gets updates from JUnit
+ * tests and sends out actions based on those.
  */
 public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExecutionListener {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -43,6 +38,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
 
     /**
      * TestCase or non-combinatorial test finished successfully.
+     *
      * @param extensionContext context of the test template
      */
     @Override
@@ -114,6 +110,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
 
     /**
      * TestCase or non-combinatorial test failed / did not pass.
+     *
      * @param extensionContext context of the test template
      */
     @Override
@@ -160,6 +157,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
 
     /**
      * TestRun or non-combinatorial test is skipped due to being disabled.
+     *
      * @param extensionContext context of the test template
      */
     @Override
@@ -182,7 +180,8 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
 
     /**
      * Coffee4j generated the different TestCases for a combinatorial AnvilTest
-     * @param context    all important information about one group
+     *
+     * @param context all important information about one group
      * @param testInputs the initially generated test inputs
      */
     @Override
@@ -196,10 +195,11 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
 
     /**
      * Coffee4j analyzed which parameter combinations may lead to failed tests.
-     * @param context                     the context of the group for which fault characterization finished
-     * @param failureInducingCombinations all failure-inducing combinations found. The order may or may not be based
-     *                                    on an algorithm internal probability metric of the combinations being
-     *                                    failure-inducing
+     *
+     * @param context the context of the group for which fault characterization finished
+     * @param failureInducingCombinations all failure-inducing combinations found. The order may or
+     *     may not be based on an algorithm internal probability metric of the combinations being
+     *     failure-inducing
      */
     @Override
     public void faultCharacterizationFinished(
@@ -214,6 +214,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
 
     /**
      * All TestCases of one TestRun finished.
+     *
      * @param context the context of the group which was finished
      */
     @Override
@@ -223,6 +224,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
 
     /**
      * JUnit launcher started testing.
+     *
      * @param testPlan information about the discovered tests
      */
     @Override
@@ -236,6 +238,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
 
     /**
      * JUnit launcher finished the execution of all tests it discovered.
+     *
      * @param testPlan information about the discovered tests
      */
     @Override
@@ -249,8 +252,9 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
     }
 
     /**
-     * Called when the execution of a leaf or subtree of the TestPlan has been skipped e.g. the test is disabled.
-     * Only used for logging.
+     * Called when the execution of a leaf or subtree of the TestPlan has been skipped e.g. the test
+     * is disabled. Only used for logging.
+     *
      * @param testIdentifier may represent a test or a container
      * @param reason reason why it is skipped
      */
@@ -260,8 +264,9 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
     }
 
     /**
-     * Called when the execution of a leaf or subtree of the TestPlan is about to be started.
-     * Called by TestCases and TestRuns as well as non-combinatorial tests. Only used for logging.
+     * Called when the execution of a leaf or subtree of the TestPlan is about to be started. Called
+     * by TestCases and TestRuns as well as non-combinatorial tests. Only used for logging.
+     *
      * @param testIdentifier may represent a test or a container
      */
     @Override
@@ -273,8 +278,10 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
     }
 
     /**
-     * Called when the execution of a leaf or subtree of the TestPlan has finished, regardless of the outcome.
-     * Called by TestCases and TestRuns as well as non-combinatorial tests. Only used for logging.
+     * Called when the execution of a leaf or subtree of the TestPlan has finished, regardless of
+     * the outcome. Called by TestCases and TestRuns as well as non-combinatorial tests. Only used
+     * for logging.
+     *
      * @param testIdentifier represents a test or a container
      * @param testExecutionResult result of the execution for the supplied TestIdentifier
      */
