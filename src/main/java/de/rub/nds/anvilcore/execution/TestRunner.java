@@ -4,7 +4,7 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPacka
 
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.context.AnvilTestConfig;
-import de.rub.nds.anvilcore.junit.reporting.AnvilTestExecutionListener;
+import de.rub.nds.anvilcore.junit.extension.AnvilTestWatcher;
 import de.rub.nds.anvilcore.model.ParameterIdentifierProvider;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
@@ -81,14 +81,14 @@ public class TestRunner {
         LauncherDiscoveryRequest request = builder.build();
 
         SummaryGeneratingListener summaryListener = new SummaryGeneratingListener();
-        AnvilTestExecutionListener anvilTestListener = new AnvilTestExecutionListener();
+        AnvilTestWatcher anvilTestWatcher = new AnvilTestWatcher();
 
         Launcher launcher =
                 LauncherFactory.create(
                         LauncherConfig.builder()
                                 .enableTestExecutionListenerAutoRegistration(false)
                                 .addTestExecutionListeners(summaryListener)
-                                .addTestExecutionListeners(anvilTestListener)
+                                .addTestExecutionListeners(anvilTestWatcher)
                                 .build());
 
         TestPlan testplan = launcher.discover(request);
