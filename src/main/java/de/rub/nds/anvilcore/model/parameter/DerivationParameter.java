@@ -1,7 +1,6 @@
 package de.rub.nds.anvilcore.model.parameter;
 
 import de.rub.nds.anvilcore.model.AnvilTestTemplate;
-import de.rub.nds.anvilcore.model.config.AnvilConfig;
 import de.rub.nds.anvilcore.model.constraint.ConditionalConstraint;
 import de.rub.nds.anvilcore.model.constraint.ValueConstraint;
 import de.rwth.swc.coffee4j.model.Parameter;
@@ -15,7 +14,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public abstract class DerivationParameter<ConfigType extends AnvilConfig, ValueType> {
+public abstract class DerivationParameter<ConfigType, ValueType> {
     private static final Logger LOGGER = LogManager.getLogger();
 
     private ValueType selectedValue;
@@ -44,7 +43,7 @@ public abstract class DerivationParameter<ConfigType extends AnvilConfig, ValueT
         return valueClass;
     }
 
-    public Class<? extends AnvilConfig> getConfigClass() {
+    public Class<ConfigType> getConfigClass() {
         return configClass;
     }
 

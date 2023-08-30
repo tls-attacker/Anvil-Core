@@ -1,7 +1,6 @@
 package de.rub.nds.anvilcore.model;
 
 import com.fasterxml.jackson.annotation.JsonValue;
-import de.rub.nds.anvilcore.model.config.AnvilConfig;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import de.rwth.swc.coffee4j.model.Combination;
@@ -107,7 +106,7 @@ public class ParameterCombination {
         return null;
     }
 
-    public void applyToConfig(AnvilConfig config) {
+    public void applyToConfig(Object config) {
         for (DerivationParameter parameter : getParameterValues()) {
             if (!anvilTestTemplate
                     .getManualConfigTypes()

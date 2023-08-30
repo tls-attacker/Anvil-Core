@@ -1,7 +1,6 @@
 package de.rub.nds.anvilcore.model;
 
 import de.rub.nds.anvilcore.context.AnvilContext;
-import de.rub.nds.anvilcore.model.config.AnvilConfig;
 import de.rub.nds.anvilcore.model.constraint.ConditionalConstraint;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
@@ -70,7 +69,7 @@ public class IpmProvider {
             List<ParameterIdentifier> parameterIdentifiers, AnvilTestTemplate anvilTestTemplate) {
         List<Parameter.Builder> parameterBuilders = new ArrayList<>();
         for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
-            DerivationParameter<AnvilConfig, Object> parameter = parameterIdentifier.getInstance();
+            DerivationParameter<Object, Object> parameter = parameterIdentifier.getInstance();
             if (!parameter.getConstrainedParameterValues(anvilTestTemplate).isEmpty()) {
                 Parameter.Builder parameterBuilder =
                         parameter.getParameterBuilder(anvilTestTemplate);
@@ -95,7 +94,7 @@ public class IpmProvider {
             List<ParameterIdentifier> parameterIdentifiers, AnvilTestTemplate anvilTestTemplate) {
         List<Constraint> applicableConstraints = new ArrayList<>();
         for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
-            DerivationParameter<AnvilConfig, Object> parameter = parameterIdentifier.getInstance();
+            DerivationParameter<Object, Object> parameter = parameterIdentifier.getInstance();
             // if (parameter.canBeModeled(derivationScope)) {
             List<ConditionalConstraint> conditionalConstraints =
                     parameter.getConditionalConstraints(anvilTestTemplate);
@@ -117,13 +116,13 @@ public class IpmProvider {
      * @param anvilTestTemplate
      * @return List of parameters modeled with only one possible value
      */
-    public static List<DerivationParameter<AnvilConfig, Object>> getStaticParameterValues(
+    public static List<DerivationParameter<Object, Object>> getStaticParameterValues(
             AnvilTestTemplate anvilTestTemplate) {
-        List<DerivationParameter<AnvilConfig, Object>> staticParameterValues = new ArrayList<>();
+        List<DerivationParameter<Object, Object>> staticParameterValues = new ArrayList<>();
         List<ParameterIdentifier> parameterIdentifiers =
                 getParameterIdentifiersForScope(anvilTestTemplate);
         for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
-            List<DerivationParameter<AnvilConfig, Object>> parameterValues =
+            List<DerivationParameter<Object, Object>> parameterValues =
                     parameterIdentifier
                             .getInstance()
                             .getConstrainedParameterValues(anvilTestTemplate);
