@@ -103,7 +103,7 @@ public class TestRunner {
         context.setTotalTests(testcases);
 
         if (context.getListener() != null) {
-            context.getListener().beforeStart(testplan);
+            context.getListener().beforeStart(testplan, testcases);
         }
 
         long start = System.currentTimeMillis();

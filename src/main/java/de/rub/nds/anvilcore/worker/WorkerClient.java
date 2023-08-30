@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.util.StdDateFormat;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.context.AnvilTestConfig;
 import de.rub.nds.anvilcore.execution.AnvilListener;
@@ -72,6 +74,8 @@ public class WorkerClient implements AnvilListener {
                         .withGetterVisibility(JsonAutoDetect.Visibility.NONE)
                         .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
                         .withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        mapper.setDateFormat(new StdDateFormat());
         this.alive = false;
         this.status = WorkerStatus.IDLE;
         this.jobs = new LinkedHashMap<>();
@@ -361,16 +365,17 @@ public class WorkerClient implements AnvilListener {
     }
 
     @Override
-    public boolean beforeStart(TestPlan testPlan) {
+    public boolean beforeStart(TestPlan testPlan, long totalTests) {
 
         Map<String, Object> statusUpdate = new LinkedHashMap<>();
         statusUpdate.put("jobId", activeJobId);
         statusUpdate.put("status", "SCANNING");
+        statusUpdate.put("totalTests", totalTests);
 
         postUpdateAsync("worker/update/status", statusUpdate);
 
         if (listener != null) {
-            return listener.beforeStart(testPlan);
+            return listener.beforeStart(testPlan, totalTests);
         } else {
             return true;
         }

@@ -3,6 +3,7 @@ package de.rub.nds.anvilcore.teststate.reporting;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.util.StdDateFormat;
 import de.rub.nds.anvilcore.context.AnvilTestConfig;
 import de.rub.nds.anvilcore.teststate.AnvilTestRun;
 import java.io.File;
@@ -28,6 +29,8 @@ public class AnvilJsonMapper {
                         .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
                         .withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        mapper.setDateFormat(new StdDateFormat());
 
         this.config = config;
     }

@@ -13,7 +13,7 @@ public interface AnvilListener {
     default void onAborted() {}
     ;
 
-    default boolean beforeStart(TestPlan testPlan) {
+    default boolean beforeStart(TestPlan testPlan, long totalTests) {
         return true;
     }
 
