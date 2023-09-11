@@ -1,6 +1,6 @@
 package de.rub.nds.anvilcore.model.constraint;
 
-import de.rub.nds.anvilcore.model.AnvilTestTemplate;
+import de.rub.nds.anvilcore.model.DerivationScope;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import de.rwth.swc.coffee4j.model.constraints.Constraint;
@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 
 @SuppressWarnings("rawtypes")
 public class AggregatedEnableConstraint<T> extends ConditionalConstraint {
-    private final AnvilTestTemplate anvilTestTemplate;
+    private final DerivationScope derivationScope;
     private final DerivationParameter target;
     private final T defaultValue;
     private final Map<ParameterIdentifier, Predicate<DerivationParameter>> conditions;
@@ -18,11 +18,11 @@ public class AggregatedEnableConstraint<T> extends ConditionalConstraint {
     private final boolean staticTarget;
 
     public AggregatedEnableConstraint(
-            AnvilTestTemplate anvilTestTemplate,
+            DerivationScope derivationScope,
             DerivationParameter target,
             T defaultValue,
             Map<ParameterIdentifier, Predicate<DerivationParameter>> conditions) {
-        this.anvilTestTemplate = anvilTestTemplate;
+        this.derivationScope = derivationScope;
         this.target = target;
         this.defaultValue = defaultValue;
         this.conditions = conditions;
@@ -30,7 +30,7 @@ public class AggregatedEnableConstraint<T> extends ConditionalConstraint {
         // Partition required parameters into static and dynamic parameter
         for (ParameterIdentifier parameterIdentifier : conditions.keySet()) {
             DerivationParameter parameter = parameterIdentifier.getInstance();
-            if (parameter.canBeModeled(anvilTestTemplate)) {
+            if (parameter.canBeModeled(derivationScope)) {
                 dynamicParameters.add(parameterIdentifier);
             } else {
                 staticParameters.add(parameterIdentifier);
@@ -38,7 +38,7 @@ public class AggregatedEnableConstraint<T> extends ConditionalConstraint {
         }
         setRequiredParameters(dynamicParameters);
 
-        staticTarget = !target.canBeModeled(anvilTestTemplate);
+        staticTarget = !target.canBeModeled(derivationScope);
 
         List<String> parameterNames = new ArrayList<>();
         if (!staticTarget) {
@@ -84,7 +84,7 @@ public class AggregatedEnableConstraint<T> extends ConditionalConstraint {
             // Get static target value
             targetValue = target.getParameterIdentifier().getInstance();
             List<DerivationParameter> values =
-                    targetValue.getConstrainedParameterValues(anvilTestTemplate);
+                    targetValue.getConstrainedParameterValues(derivationScope);
             if (values.size() != 1) {
                 throw new IllegalStateException(
                         "Static target parameter does not have exactly 1 value");
@@ -109,7 +109,7 @@ public class AggregatedEnableConstraint<T> extends ConditionalConstraint {
         for (ParameterIdentifier staticParameterIdentifier : staticParameters) {
             DerivationParameter staticParameter = staticParameterIdentifier.getInstance();
             List<DerivationParameter> staticValue =
-                    staticParameter.getConstrainedParameterValues(anvilTestTemplate);
+                    staticParameter.getConstrainedParameterValues(derivationScope);
             if (staticValue.size() != 1) {
                 throw new IllegalStateException(
                         "Static parameter "

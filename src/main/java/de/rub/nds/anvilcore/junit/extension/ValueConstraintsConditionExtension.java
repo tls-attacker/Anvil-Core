@@ -1,6 +1,6 @@
 package de.rub.nds.anvilcore.junit.extension;
 
-import de.rub.nds.anvilcore.model.AnvilTestTemplate;
+import de.rub.nds.anvilcore.model.DerivationScope;
 import de.rub.nds.anvilcore.model.constraint.ValueConstraint;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
@@ -16,20 +16,20 @@ public class ValueConstraintsConditionExtension implements ExecutionCondition {
             return ConditionEvaluationResult.enabled("Class annotations are not relevant");
         }
 
-        AnvilTestTemplate anvilTestTemplate = new AnvilTestTemplate(extensionContext);
-        for (ValueConstraint valueConstraint : anvilTestTemplate.getValueConstraints()) {
+        DerivationScope derivationScope = new DerivationScope(extensionContext);
+        for (ValueConstraint valueConstraint : derivationScope.getValueConstraints()) {
             DerivationParameter derivationParameter =
                     valueConstraint.getAffectedParameter().getInstance();
-            if (derivationParameter.hasNoApplicableValues(anvilTestTemplate)) {
+            if (derivationParameter.hasNoApplicableValues(derivationScope)) {
                 return ConditionEvaluationResult.disabled(
                         "No values supported required for parameter "
                                 + derivationParameter.getParameterIdentifier());
             }
         }
         for (ParameterIdentifier explicitParameterIdentifier :
-                anvilTestTemplate.getExplicitValues().keySet()) {
+                derivationScope.getExplicitValues().keySet()) {
             DerivationParameter derivationParameter = explicitParameterIdentifier.getInstance();
-            if (derivationParameter.hasNoApplicableValues(anvilTestTemplate)) {
+            if (derivationParameter.hasNoApplicableValues(derivationScope)) {
                 return ConditionEvaluationResult.disabled(
                         "No values supported required for parameter "
                                 + explicitParameterIdentifier);

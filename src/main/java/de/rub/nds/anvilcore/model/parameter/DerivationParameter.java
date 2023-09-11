@@ -1,6 +1,6 @@
 package de.rub.nds.anvilcore.model.parameter;
 
-import de.rub.nds.anvilcore.model.AnvilTestTemplate;
+import de.rub.nds.anvilcore.model.DerivationScope;
 import de.rub.nds.anvilcore.model.constraint.ConditionalConstraint;
 import de.rub.nds.anvilcore.model.constraint.ValueConstraint;
 import de.rwth.swc.coffee4j.model.Parameter;
@@ -51,78 +51,77 @@ public abstract class DerivationParameter<ConfigType, ValueType> {
         return parameterIdentifier;
     }
 
-    public void preProcessConfig(ConfigType config, AnvilTestTemplate anvilTestTemplate) {}
+    public void preProcessConfig(ConfigType config, DerivationScope derivationScope) {}
     ;
 
-    public abstract void applyToConfig(ConfigType config, AnvilTestTemplate anvilTestTemplate);
+    public abstract void applyToConfig(ConfigType config, DerivationScope derivationScope);
 
-    public void postProcessConfig(ConfigType config, AnvilTestTemplate anvilTestTemplate) {}
+    public void postProcessConfig(ConfigType config, DerivationScope derivationScope) {}
     ;
 
     public abstract List<DerivationParameter<ConfigType, ValueType>> getParameterValues(
-            AnvilTestTemplate anvilTestTemplate);
+            DerivationScope derivationScope);
 
     public List<DerivationParameter<ConfigType, ValueType>> getConstrainedParameterValues(
-            AnvilTestTemplate anvilTestTemplate) {
-        if (anvilTestTemplate.hasExplicitValues(parameterIdentifier)) {
-            return getExplicitValues(anvilTestTemplate);
+            DerivationScope derivationScope) {
+        if (derivationScope.hasExplicitValues(parameterIdentifier)) {
+            return getExplicitValues(derivationScope);
         } else {
-            return getParameterValues(anvilTestTemplate).stream()
+            return getParameterValues(derivationScope).stream()
                     .filter(
                             value ->
                                     valueApplicableUnderAllConstraints(
-                                            anvilTestTemplate.getValueConstraints(),
+                                            derivationScope.getValueConstraints(),
                                             (ValueType) value.getSelectedValue()))
                     .collect(Collectors.toList());
         }
     }
 
     public List<ConditionalConstraint> getDefaultConditionalConstraints(
-            AnvilTestTemplate anvilTestTemplate) {
+            DerivationScope derivationScope) {
         return new ArrayList<>();
     }
 
-    public List<ConditionalConstraint> getConditionalConstraints(
-            AnvilTestTemplate anvilTestTemplate) {
-        if (anvilTestTemplate.hasExplicitModelingConstraints(parameterIdentifier)) {
-            return getExplicitModelingConstraints(anvilTestTemplate);
+    public List<ConditionalConstraint> getConditionalConstraints(DerivationScope derivationScope) {
+        if (derivationScope.hasExplicitModelingConstraints(parameterIdentifier)) {
+            return getExplicitModelingConstraints(derivationScope);
         } else {
             // return Collections.emptyList();
-            return getDefaultConditionalConstraints(anvilTestTemplate);
+            return getDefaultConditionalConstraints(derivationScope);
         }
     }
 
-    public Parameter.Builder getParameterBuilder(AnvilTestTemplate anvilTestTemplate) {
+    public Parameter.Builder getParameterBuilder(DerivationScope derivationScope) {
         List<DerivationParameter<ConfigType, ValueType>> parameterValues =
-                getConstrainedParameterValues(anvilTestTemplate);
+                getConstrainedParameterValues(derivationScope);
         return Parameter.parameter(parameterIdentifier.toString())
                 .values(parameterValues.toArray());
     }
 
-    public boolean canBeModeled(AnvilTestTemplate anvilTestTemplate) {
-        return getConstrainedParameterValues(anvilTestTemplate).size() > 1;
+    public boolean canBeModeled(DerivationScope derivationScope) {
+        return getConstrainedParameterValues(derivationScope).size() > 1;
     }
 
-    public boolean hasNoApplicableValues(AnvilTestTemplate anvilTestTemplate) {
-        return getConstrainedParameterValues(anvilTestTemplate).isEmpty();
+    public boolean hasNoApplicableValues(DerivationScope derivationScope) {
+        return getConstrainedParameterValues(derivationScope).isEmpty();
     }
 
     protected abstract DerivationParameter<ConfigType, ValueType> generateValue(
             ValueType selectedValue);
 
     private List<DerivationParameter<ConfigType, ValueType>> getExplicitValues(
-            AnvilTestTemplate anvilTestTemplate) {
+            DerivationScope derivationScope) {
         try {
-            String methodName = anvilTestTemplate.getExplicitValues().get(parameterIdentifier);
+            String methodName = derivationScope.getExplicitValues().get(parameterIdentifier);
             Method method =
-                    anvilTestTemplate
+                    derivationScope
                             .getExtensionContext()
                             .getRequiredTestClass()
-                            .getMethod(methodName, AnvilTestTemplate.class);
+                            .getMethod(methodName, DerivationScope.class);
             Constructor constructor =
-                    anvilTestTemplate.getExtensionContext().getRequiredTestClass().getConstructor();
+                    derivationScope.getExtensionContext().getRequiredTestClass().getConstructor();
             return (List<DerivationParameter<ConfigType, ValueType>>)
-                    method.invoke(constructor.newInstance(), anvilTestTemplate);
+                    method.invoke(constructor.newInstance(), derivationScope);
         } catch (NoSuchMethodException
                 | InvocationTargetException
                 | IllegalAccessException
@@ -172,20 +171,20 @@ public abstract class DerivationParameter<ConfigType, ValueType> {
     }
 
     private List<ConditionalConstraint> getExplicitModelingConstraints(
-            AnvilTestTemplate anvilTestTemplate) {
+            DerivationScope derivationScope) {
         try {
             String methodName =
-                    anvilTestTemplate.getExplicitModelingConstraints().get(parameterIdentifier);
+                    derivationScope.getExplicitModelingConstraints().get(parameterIdentifier);
             Method method =
-                    anvilTestTemplate
+                    derivationScope
                             .getExtensionContext()
                             .getRequiredTestClass()
-                            .getMethod(methodName, AnvilTestTemplate.class);
+                            .getMethod(methodName, DerivationScope.class);
             Constructor constructor =
-                    anvilTestTemplate.getExtensionContext().getRequiredTestClass().getConstructor();
+                    derivationScope.getExtensionContext().getRequiredTestClass().getConstructor();
 
             return (List<ConditionalConstraint>)
-                    method.invoke(constructor.newInstance(), anvilTestTemplate);
+                    method.invoke(constructor.newInstance(), derivationScope);
         } catch (NoSuchMethodException
                 | InvocationTargetException
                 | IllegalArgumentException

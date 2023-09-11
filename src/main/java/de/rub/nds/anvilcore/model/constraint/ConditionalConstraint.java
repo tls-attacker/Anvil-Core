@@ -1,6 +1,6 @@
 package de.rub.nds.anvilcore.model.constraint;
 
-import de.rub.nds.anvilcore.model.AnvilTestTemplate;
+import de.rub.nds.anvilcore.model.DerivationScope;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import de.rwth.swc.coffee4j.model.constraints.Constraint;
 import java.util.List;
@@ -35,10 +35,10 @@ public class ConditionalConstraint {
     }
 
     public boolean isApplicableTo(
-            List<ParameterIdentifier> modeledParameters, AnvilTestTemplate anvilTestTemplate) {
+            List<ParameterIdentifier> modeledParameters, DerivationScope derivationScope) {
         for (ParameterIdentifier required : requiredParameters) {
             if (!modeledParameters.contains(required)
-                    || !required.getInstance().canBeModeled(anvilTestTemplate)) {
+                    || !required.getInstance().canBeModeled(derivationScope)) {
                 return false;
             }
         }

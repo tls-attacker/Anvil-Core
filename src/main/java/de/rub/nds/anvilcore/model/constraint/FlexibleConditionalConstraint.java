@@ -1,6 +1,6 @@
 package de.rub.nds.anvilcore.model.constraint;
 
-import de.rub.nds.anvilcore.model.AnvilTestTemplate;
+import de.rub.nds.anvilcore.model.DerivationScope;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import de.rwth.swc.coffee4j.model.constraints.Constraint;
@@ -13,7 +13,7 @@ import java.util.function.BiPredicate;
 @SuppressWarnings("rawtypes")
 public class FlexibleConditionalConstraint extends ConditionalConstraint {
     private final String constraintName;
-    private final AnvilTestTemplate anvilTestTemplate;
+    private final DerivationScope derivationScope;
     private final DerivationParameter target;
     private final Set<ParameterIdentifier> requiredParameters;
     private final Set<ParameterIdentifier> dynamicParameters = new HashSet<>();
@@ -23,12 +23,12 @@ public class FlexibleConditionalConstraint extends ConditionalConstraint {
 
     public FlexibleConditionalConstraint(
             String constraintName,
-            AnvilTestTemplate anvilTestTemplate,
+            DerivationScope derivationScope,
             DerivationParameter target,
             Set<ParameterIdentifier> requiredParameters,
             BiPredicate<DerivationParameter, List<DerivationParameter>> predicate) {
         this.constraintName = constraintName;
-        this.anvilTestTemplate = anvilTestTemplate;
+        this.derivationScope = derivationScope;
         this.target = target;
         this.requiredParameters = requiredParameters;
         this.predicate = predicate;
@@ -36,14 +36,14 @@ public class FlexibleConditionalConstraint extends ConditionalConstraint {
         // Partition required parameters into static and dynamic parameters
         for (ParameterIdentifier parameterIdentifier : requiredParameters) {
             DerivationParameter parameter = parameterIdentifier.getInstance();
-            if (parameter.canBeModeled(anvilTestTemplate)) {
+            if (parameter.canBeModeled(derivationScope)) {
                 dynamicParameters.add(parameterIdentifier);
             } else {
                 staticParameters.add(parameterIdentifier);
             }
         }
 
-        staticTarget = !target.canBeModeled(anvilTestTemplate);
+        staticTarget = !target.canBeModeled(derivationScope);
 
         setRequiredParameters(dynamicParameters);
         List<String> dynamicParameterNames = new ArrayList<>();
@@ -84,7 +84,7 @@ public class FlexibleConditionalConstraint extends ConditionalConstraint {
             // Get static target value
             targetValue = target.getParameterIdentifier().getInstance();
             List<DerivationParameter> values =
-                    targetValue.getConstrainedParameterValues(anvilTestTemplate);
+                    targetValue.getConstrainedParameterValues(derivationScope);
             if (values.size() != 1) {
                 throw new IllegalStateException(
                         "Static target parameter does not have exactly 1 value");
@@ -110,7 +110,7 @@ public class FlexibleConditionalConstraint extends ConditionalConstraint {
         for (ParameterIdentifier staticParameterIdentifier : staticParameters) {
             DerivationParameter staticParameter = staticParameterIdentifier.getInstance();
             List<DerivationParameter> staticValue =
-                    staticParameter.getConstrainedParameterValues(anvilTestTemplate);
+                    staticParameter.getConstrainedParameterValues(derivationScope);
             if (staticValue.size() != 1) {
                 throw new IllegalStateException(
                         "Static parameter "

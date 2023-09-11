@@ -23,7 +23,6 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.platform.launcher.TestPlan;
@@ -163,7 +162,7 @@ public class WorkerClient implements AnvilListener {
                     String jobId = (String) commandObject.get("jobId");
                     String className = (String) commandObject.get("className");
                     String methodName = (String) commandObject.get("methodName");
-                    restartRun(jobId, className, methodName);
+                    restartAnvilRun(jobId, className, methodName);
                     break;
                 }
             case "RESTART_CASE":
@@ -278,9 +277,7 @@ public class WorkerClient implements AnvilListener {
         }
     }
 
-    private void restartRun(String jobId, String methodName, String className) {
-        throw new NotImplementedException();
-    }
+    private void restartAnvilRun(String jobId, String methodName, String className) {}
 
     private void restartCase(String jobId, String methodName, String className, String uuid) {
         // todo reimplement

@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.support.AnnotationSupport;
 
-public class AnvilTestTemplate {
+public class DerivationScope {
     private final String modelType;
     private final List<ParameterIdentifier> ipmLimitations;
     private final List<ParameterIdentifier> ipmExtensions;
@@ -25,7 +25,7 @@ public class AnvilTestTemplate {
     private final Set<ParameterIdentifier> manualConfigTypes;
     private final int testStrength;
 
-    public AnvilTestTemplate(ExtensionContext extensionContext) {
+    public DerivationScope(ExtensionContext extensionContext) {
         this.extensionContext = extensionContext;
         this.ipmLimitations = resolveIpmLimitations(extensionContext);
         this.ipmExtensions = resolveIpmExtensions(extensionContext);
@@ -38,7 +38,7 @@ public class AnvilTestTemplate {
     }
 
     // TODO Remove constructor, only for testing purposes
-    public AnvilTestTemplate() {
+    public DerivationScope() {
         this.ipmLimitations = Collections.emptyList();
         this.ipmExtensions = Collections.emptyList();
         this.valueConstraints = Collections.emptyList();

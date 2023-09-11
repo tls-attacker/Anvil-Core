@@ -30,25 +30,24 @@ public class IpmProvider implements ModelProvider, AnnotationConsumer<ModelFromS
 
     @Override
     public InputParameterModel provide(ExtensionContext extensionContext) {
-        AnvilTestTemplate anvilTestTemplate = new AnvilTestTemplate(extensionContext);
-        return generateIpm(anvilTestTemplate);
+        DerivationScope derivationScope = new DerivationScope(extensionContext);
+        return generateIpm(derivationScope);
     }
 
-    public static InputParameterModel generateIpm(AnvilTestTemplate anvilTestTemplate) {
+    public static InputParameterModel generateIpm(DerivationScope derivationScope) {
         List<ParameterIdentifier> parameterIdentifiers =
-                getParameterIdentifiersForScope(anvilTestTemplate);
-        Parameter.Builder[] builders =
-                getParameterBuilders(parameterIdentifiers, anvilTestTemplate);
-        Constraint[] constraints = getConstraintsForScope(parameterIdentifiers, anvilTestTemplate);
+                getParameterIdentifiersForScope(derivationScope);
+        Parameter.Builder[] builders = getParameterBuilders(parameterIdentifiers, derivationScope);
+        Constraint[] constraints = getConstraintsForScope(parameterIdentifiers, derivationScope);
 
-        int effectiveStrength = anvilTestTemplate.getTestStrength();
+        int effectiveStrength = derivationScope.getTestStrength();
         if (effectiveStrength > builders.length) {
             effectiveStrength = builders.length;
             LOGGER.info(
                     "Test {} will be executed with strength {} as the number of parameters in the IPM is lower than the configured strength {}",
-                    anvilTestTemplate.getExtensionContext().getDisplayName(),
+                    derivationScope.getExtensionContext().getDisplayName(),
                     effectiveStrength,
-                    anvilTestTemplate.getTestStrength());
+                    derivationScope.getTestStrength());
         }
 
         return InputParameterModel.inputParameterModel("dynamic-model")
@@ -59,17 +58,17 @@ public class IpmProvider implements ModelProvider, AnnotationConsumer<ModelFromS
     }
 
     public static List<ParameterIdentifier> getParameterIdentifiersForScope(
-            AnvilTestTemplate anvilTestTemplate) {
+            DerivationScope derivationScope) {
         final List<ParameterIdentifier> parameterIdentifiers = new ArrayList<>();
         // Get base parameters of model
         parameterIdentifiers.addAll(
                 AnvilContext.getInstance()
                         .getParameterIdentifierProvider()
-                        .getModelParameterIdentifiers(anvilTestTemplate));
+                        .getModelParameterIdentifiers(derivationScope));
         // Add explicit extensions
-        parameterIdentifiers.addAll(anvilTestTemplate.getIpmExtensions());
+        parameterIdentifiers.addAll(derivationScope.getIpmExtensions());
         // Remove explicit limitations
-        parameterIdentifiers.removeAll(anvilTestTemplate.getIpmLimitations());
+        parameterIdentifiers.removeAll(derivationScope.getIpmLimitations());
         // Add all linked
         List<ParameterIdentifier> linkedToAdd = new LinkedList<>();
         for (ParameterIdentifier identifier : parameterIdentifiers) {
@@ -83,13 +82,12 @@ public class IpmProvider implements ModelProvider, AnnotationConsumer<ModelFromS
     }
 
     private static Parameter.Builder[] getParameterBuilders(
-            List<ParameterIdentifier> parameterIdentifiers, AnvilTestTemplate anvilTestTemplate) {
+            List<ParameterIdentifier> parameterIdentifiers, DerivationScope derivationScope) {
         List<Parameter.Builder> parameterBuilders = new ArrayList<>();
         for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
             DerivationParameter<Object, Object> parameter = parameterIdentifier.getInstance();
-            if (!parameter.getConstrainedParameterValues(anvilTestTemplate).isEmpty()) {
-                Parameter.Builder parameterBuilder =
-                        parameter.getParameterBuilder(anvilTestTemplate);
+            if (!parameter.getConstrainedParameterValues(derivationScope).isEmpty()) {
+                Parameter.Builder parameterBuilder = parameter.getParameterBuilder(derivationScope);
                 parameterBuilders.add(parameterBuilder);
                 if (parameterIdentifier.hasLinkedParameterIdentifier()) {
                     parameterBuilder.build().getValues().stream()
@@ -108,15 +106,15 @@ public class IpmProvider implements ModelProvider, AnnotationConsumer<ModelFromS
     }
 
     private static Constraint[] getConstraintsForScope(
-            List<ParameterIdentifier> parameterIdentifiers, AnvilTestTemplate anvilTestTemplate) {
+            List<ParameterIdentifier> parameterIdentifiers, DerivationScope derivationScope) {
         List<Constraint> applicableConstraints = new ArrayList<>();
         for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
             DerivationParameter<Object, Object> parameter = parameterIdentifier.getInstance();
             // if (parameter.canBeModeled(derivationScope)) {
             List<ConditionalConstraint> conditionalConstraints =
-                    parameter.getConditionalConstraints(anvilTestTemplate);
+                    parameter.getConditionalConstraints(derivationScope);
             for (ConditionalConstraint conditionalConstraint : conditionalConstraints) {
-                if (conditionalConstraint.isApplicableTo(parameterIdentifiers, anvilTestTemplate)) {
+                if (conditionalConstraint.isApplicableTo(parameterIdentifiers, derivationScope)) {
                     applicableConstraints.add(conditionalConstraint.getConstraint());
                 }
             }
@@ -130,19 +128,19 @@ public class IpmProvider implements ModelProvider, AnnotationConsumer<ModelFromS
      * be selected. This one value will never be given to coffee4j and will be added as a
      * ParameterValue when creating the ParameterCombination from coffee4j's ArgumentsAccessor.
      *
-     * @param anvilTestTemplate
+     * @param derivationScope
      * @return List of parameters modeled with only one possible value
      */
     public static List<DerivationParameter<Object, Object>> getStaticParameterValues(
-            AnvilTestTemplate anvilTestTemplate) {
+            DerivationScope derivationScope) {
         List<DerivationParameter<Object, Object>> staticParameterValues = new ArrayList<>();
         List<ParameterIdentifier> parameterIdentifiers =
-                getParameterIdentifiersForScope(anvilTestTemplate);
+                getParameterIdentifiersForScope(derivationScope);
         for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
             List<DerivationParameter<Object, Object>> parameterValues =
                     parameterIdentifier
                             .getInstance()
-                            .getConstrainedParameterValues(anvilTestTemplate);
+                            .getConstrainedParameterValues(derivationScope);
             if (parameterValues.size() == 1) {
                 staticParameterValues.add(parameterValues.get(0));
             }

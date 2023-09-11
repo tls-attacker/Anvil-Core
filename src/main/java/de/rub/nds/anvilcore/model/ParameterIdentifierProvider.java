@@ -21,9 +21,8 @@ public abstract class ParameterIdentifierProvider {
 
     public abstract List<ParameterIdentifier> generateAllParameterIdentifiers();
 
-    public List<ParameterIdentifier> getModelParameterIdentifiers(
-            AnvilTestTemplate anvilTestTemplate) {
-        String modelType = anvilTestTemplate.getModelType();
+    public List<ParameterIdentifier> getModelParameterIdentifiers(DerivationScope derivationScope) {
+        String modelType = derivationScope.getModelType();
         if (modelType.equals(DefaultModelTypes.ALL_PARAMETERS)) {
             return getAllParameterIdentifiers();
         }

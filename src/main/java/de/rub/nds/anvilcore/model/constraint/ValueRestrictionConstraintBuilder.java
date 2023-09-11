@@ -1,6 +1,6 @@
 package de.rub.nds.anvilcore.model.constraint;
 
-import de.rub.nds.anvilcore.model.AnvilTestTemplate;
+import de.rub.nds.anvilcore.model.DerivationScope;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import java.util.Collection;
@@ -12,37 +12,36 @@ import java.util.function.BiPredicate;
 
 public class ValueRestrictionConstraintBuilder<T> {
     private final String name;
-    private final AnvilTestTemplate anvilTestTemplate;
+    private final DerivationScope derivationScope;
 
     public static <T> ValueRestrictionConstraintBuilder<T> init(
-            String name, AnvilTestTemplate anvilTestTemplate) {
-        return new ValueRestrictionConstraintBuilder<>(name, anvilTestTemplate);
+            String name, DerivationScope derivationScope) {
+        return new ValueRestrictionConstraintBuilder<>(name, derivationScope);
     }
 
-    public static <T> ValueRestrictionConstraintBuilder<T> init(
-            AnvilTestTemplate anvilTestTemplate) {
-        return new ValueRestrictionConstraintBuilder<>(null, anvilTestTemplate);
+    public static <T> ValueRestrictionConstraintBuilder<T> init(DerivationScope derivationScope) {
+        return new ValueRestrictionConstraintBuilder<>(null, derivationScope);
     }
 
-    private ValueRestrictionConstraintBuilder(String name, AnvilTestTemplate anvilTestTemplate) {
-        this.anvilTestTemplate = anvilTestTemplate;
+    private ValueRestrictionConstraintBuilder(String name, DerivationScope derivationScope) {
+        this.derivationScope = derivationScope;
         this.name = name;
     }
 
     public ValueRestrictionConstraintBuilder1<T> target(DerivationParameter target) {
-        return new ValueRestrictionConstraintBuilder1<T>(name, anvilTestTemplate, target);
+        return new ValueRestrictionConstraintBuilder1<T>(name, derivationScope, target);
     }
 
     public static final class ValueRestrictionConstraintBuilder1<T> {
         private final String name;
-        private final AnvilTestTemplate anvilTestTemplate;
+        private final DerivationScope derivationScope;
         private final DerivationParameter target;
         private final Set<ParameterIdentifier> requiredParameters = new HashSet<>();
 
         private ValueRestrictionConstraintBuilder1(
-                String name, AnvilTestTemplate anvilTestTemplate, DerivationParameter target) {
+                String name, DerivationScope derivationScope, DerivationParameter target) {
             this.name = name;
-            this.anvilTestTemplate = anvilTestTemplate;
+            this.derivationScope = derivationScope;
             this.target = target;
         }
 
@@ -61,7 +60,7 @@ public class ValueRestrictionConstraintBuilder<T> {
         public ValueRestrictionConstraintBuilder2<T> restrictValues(List<T> restrictedValues) {
             return new ValueRestrictionConstraintBuilder2<T>(
                     name,
-                    anvilTestTemplate,
+                    derivationScope,
                     target,
                     requiredParameters,
                     restrictedValues,
@@ -73,7 +72,7 @@ public class ValueRestrictionConstraintBuilder<T> {
         public ValueRestrictionConstraintBuilder2<T> allowValues(List<T> allowedValues) {
             return new ValueRestrictionConstraintBuilder2<T>(
                     name,
-                    anvilTestTemplate,
+                    derivationScope,
                     target,
                     requiredParameters,
                     null,
@@ -87,7 +86,7 @@ public class ValueRestrictionConstraintBuilder<T> {
                         restrictedValuesSupplier) {
             return new ValueRestrictionConstraintBuilder2<T>(
                     name,
-                    anvilTestTemplate,
+                    derivationScope,
                     target,
                     requiredParameters,
                     null,
@@ -101,7 +100,7 @@ public class ValueRestrictionConstraintBuilder<T> {
                         restrictedValuesSupplier) {
             return new ValueRestrictionConstraintBuilder2<T>(
                     name,
-                    anvilTestTemplate,
+                    derivationScope,
                     target,
                     requiredParameters,
                     null,
@@ -113,7 +112,7 @@ public class ValueRestrictionConstraintBuilder<T> {
 
     public static final class ValueRestrictionConstraintBuilder2<T> {
         private final String name;
-        private final AnvilTestTemplate anvilTestTemplate;
+        private final DerivationScope derivationScope;
         private final DerivationParameter target;
         private final Set<ParameterIdentifier> requiredParameters;
         private final List<T> restrictedValues;
@@ -125,7 +124,7 @@ public class ValueRestrictionConstraintBuilder<T> {
 
         private ValueRestrictionConstraintBuilder2(
                 String name,
-                AnvilTestTemplate anvilTestTemplate,
+                DerivationScope derivationScope,
                 DerivationParameter target,
                 Set<ParameterIdentifier> requiredParameters,
                 List<T> restrictedValues,
@@ -135,7 +134,7 @@ public class ValueRestrictionConstraintBuilder<T> {
                 BiFunction<DerivationParameter, List<DerivationParameter>, List<T>>
                         allowedValuesSupplier) {
             this.name = name;
-            this.anvilTestTemplate = anvilTestTemplate;
+            this.derivationScope = derivationScope;
             this.target = target;
             this.requiredParameters = requiredParameters;
             this.restrictedValues = restrictedValues;
@@ -148,7 +147,7 @@ public class ValueRestrictionConstraintBuilder<T> {
                 BiPredicate<DerivationParameter, List<DerivationParameter>> condition) {
             return new ValueRestrictionConstraintBuilder3<>(
                     name,
-                    anvilTestTemplate,
+                    derivationScope,
                     target,
                     requiredParameters,
                     restrictedValues,
@@ -161,7 +160,7 @@ public class ValueRestrictionConstraintBuilder<T> {
 
     public static final class ValueRestrictionConstraintBuilder3<T> {
         private final String name;
-        private final AnvilTestTemplate anvilTestTemplate;
+        private final DerivationScope derivationScope;
         private final DerivationParameter target;
         private final Set<ParameterIdentifier> requiredParameters;
         private List<T> restrictedValues;
@@ -174,7 +173,7 @@ public class ValueRestrictionConstraintBuilder<T> {
 
         private ValueRestrictionConstraintBuilder3(
                 String name,
-                AnvilTestTemplate anvilTestTemplate,
+                DerivationScope derivationScope,
                 DerivationParameter target,
                 Set<ParameterIdentifier> requiredParameters,
                 List<T> restrictedValues,
@@ -185,7 +184,7 @@ public class ValueRestrictionConstraintBuilder<T> {
                         allowedValuesSupplier,
                 BiPredicate<DerivationParameter, List<DerivationParameter>> condition) {
             this.name = name;
-            this.anvilTestTemplate = anvilTestTemplate;
+            this.derivationScope = derivationScope;
             this.target = target;
             this.requiredParameters = requiredParameters;
             this.restrictedValues = restrictedValues;
@@ -219,7 +218,7 @@ public class ValueRestrictionConstraintBuilder<T> {
                     };
 
             return new FlexibleConditionalConstraint(
-                    name, anvilTestTemplate, target, requiredParameters, predicate);
+                    name, derivationScope, target, requiredParameters, predicate);
         }
     }
 }

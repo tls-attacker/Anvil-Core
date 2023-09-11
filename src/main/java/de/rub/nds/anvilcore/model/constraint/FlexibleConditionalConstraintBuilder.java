@@ -1,6 +1,6 @@
 package de.rub.nds.anvilcore.model.constraint;
 
-import de.rub.nds.anvilcore.model.AnvilTestTemplate;
+import de.rub.nds.anvilcore.model.DerivationScope;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import java.util.Collection;
@@ -11,37 +11,37 @@ import java.util.function.BiPredicate;
 
 public class FlexibleConditionalConstraintBuilder {
     private final String name;
-    private final AnvilTestTemplate anvilTestTemplate;
+    private final DerivationScope derivationScope;
 
     public static FlexibleConditionalConstraintBuilder init(
-            String name, AnvilTestTemplate anvilTestTemplate) {
-        return new FlexibleConditionalConstraintBuilder(name, anvilTestTemplate);
+            String name, DerivationScope derivationScope) {
+        return new FlexibleConditionalConstraintBuilder(name, derivationScope);
     }
 
-    public static FlexibleConditionalConstraintBuilder init(AnvilTestTemplate anvilTestTemplate) {
+    public static FlexibleConditionalConstraintBuilder init(DerivationScope derivationScope) {
         return new FlexibleConditionalConstraintBuilder(
-                "flexible-conditional-constraint", anvilTestTemplate);
+                "flexible-conditional-constraint", derivationScope);
     }
 
-    private FlexibleConditionalConstraintBuilder(String name, AnvilTestTemplate anvilTestTemplate) {
-        this.anvilTestTemplate = anvilTestTemplate;
+    private FlexibleConditionalConstraintBuilder(String name, DerivationScope derivationScope) {
+        this.derivationScope = derivationScope;
         this.name = name;
     }
 
     public FlexibleConditionalConstraintBuilder1 target(DerivationParameter target) {
-        return new FlexibleConditionalConstraintBuilder1(name, anvilTestTemplate, target);
+        return new FlexibleConditionalConstraintBuilder1(name, derivationScope, target);
     }
 
     public static final class FlexibleConditionalConstraintBuilder1 {
         private final String name;
-        private final AnvilTestTemplate anvilTestTemplate;
+        private final DerivationScope derivationScope;
         private final DerivationParameter target;
         private final Set<ParameterIdentifier> requiredParameters = new HashSet<>();
 
         private FlexibleConditionalConstraintBuilder1(
-                String name, AnvilTestTemplate anvilTestTemplate, DerivationParameter target) {
+                String name, DerivationScope derivationScope, DerivationParameter target) {
             this.name = name;
-            this.anvilTestTemplate = anvilTestTemplate;
+            this.derivationScope = derivationScope;
             this.target = target;
         }
 
@@ -60,25 +60,25 @@ public class FlexibleConditionalConstraintBuilder {
         public FlexibleConditionalConstraintBuilder2 predicate(
                 BiPredicate<DerivationParameter, List<DerivationParameter>> predicate) {
             return new FlexibleConditionalConstraintBuilder2(
-                    name, anvilTestTemplate, target, requiredParameters, predicate);
+                    name, derivationScope, target, requiredParameters, predicate);
         }
     }
 
     public static final class FlexibleConditionalConstraintBuilder2 {
         private final String name;
-        private final AnvilTestTemplate anvilTestTemplate;
+        private final DerivationScope derivationScope;
         private final DerivationParameter target;
         private final Set<ParameterIdentifier> requiredParameters;
         private final BiPredicate<DerivationParameter, List<DerivationParameter>> predicate;
 
         private FlexibleConditionalConstraintBuilder2(
                 String name,
-                AnvilTestTemplate anvilTestTemplate,
+                DerivationScope derivationScope,
                 DerivationParameter target,
                 Set<ParameterIdentifier> requiredParameters,
                 BiPredicate<DerivationParameter, List<DerivationParameter>> predicate) {
             this.name = name;
-            this.anvilTestTemplate = anvilTestTemplate;
+            this.derivationScope = derivationScope;
             this.target = target;
             this.requiredParameters = requiredParameters;
             this.predicate = predicate;
@@ -86,7 +86,7 @@ public class FlexibleConditionalConstraintBuilder {
 
         public FlexibleConditionalConstraint get() {
             return new FlexibleConditionalConstraint(
-                    name, anvilTestTemplate, target, requiredParameters, predicate);
+                    name, derivationScope, target, requiredParameters, predicate);
         }
     }
 }
