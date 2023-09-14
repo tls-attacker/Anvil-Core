@@ -10,7 +10,13 @@ package de.rub.nds.anvilcore.teststate.reporting;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import de.rub.nds.anvilcore.constants.TestEndpointType;
+import de.rub.nds.anvilcore.context.AnvilContext;
+import de.rub.nds.anvilcore.teststate.TestResult;
 import java.util.Date;
+import java.util.LinkedList;
 
 public class AnvilReport {
     @JsonProperty("ElapsedTime")
@@ -21,6 +27,12 @@ public class AnvilReport {
 
     @JsonProperty("Date")
     private Date date;
+
+    @JsonProperty("TotalTests")
+    private long totalTests;
+
+    @JsonProperty("FinishedTests")
+    private long finishedTests;
 
     @JsonProperty("StrictlySucceededTests")
     private long testsStrictlySucceeded;
@@ -37,77 +49,58 @@ public class AnvilReport {
     @JsonProperty("FullyFailedTests")
     private long testsFullyFailed;
 
+    @JsonProperty("AdditionalConfig")
+    private String configString;
+
+    @JsonProperty("AnvilConfig")
+    private String anvilConfigString;
+
+    @JsonProperty("TestCaseCount")
+    private long testCaseCount;
+
+    @JsonProperty("TestEndpointType")
+    private TestEndpointType endpointType;
+
+    @JsonProperty("Running")
+    private boolean running;
+
     @JsonUnwrapped private ScoreContainer scoreContainer;
 
-    public long getElapsedTime() {
-        return elapsedTime;
-    }
+    public AnvilReport(AnvilContext context, boolean running) {
+        this.elapsedTime = System.currentTimeMillis() - context.getCreationTime().getTime();
+        this.identifier = context.getConfig().getIdentifier();
+        this.date = context.getCreationTime();
+        this.testsDisabled =
+                context.getResultTestMap()
+                        .computeIfAbsent(TestResult.DISABLED, k -> new LinkedList<>())
+                        .size();
+        this.testsFullyFailed =
+                context.getResultTestMap()
+                        .computeIfAbsent(TestResult.FULLY_FAILED, k -> new LinkedList<>())
+                        .size();
+        this.testsStrictlySucceeded =
+                context.getResultTestMap()
+                        .computeIfAbsent(TestResult.STRICTLY_SUCCEEDED, k -> new LinkedList<>())
+                        .size();
+        this.testsPartiallyFailed =
+                context.getResultTestMap()
+                        .computeIfAbsent(TestResult.PARTIALLY_FAILED, k -> new LinkedList<>())
+                        .size();
+        this.testsConceptuallySucceeded =
+                context.getResultTestMap()
+                        .computeIfAbsent(TestResult.CONCEPTUALLY_SUCCEEDED, k -> new LinkedList<>())
+                        .size();
+        this.totalTests = context.getTotalTests();
+        this.finishedTests = context.getTestsDone();
+        this.testCaseCount = context.getTestCases();
+        this.scoreContainer = context.getScoreContainer();
+        this.configString = context.getConfigString();
+        try {
+            this.anvilConfigString = new ObjectMapper().writeValueAsString(context.getConfig());
+        } catch (JsonProcessingException e) {
 
-    public void setElapsedTime(long elapsedTime) {
-        this.elapsedTime = elapsedTime;
-    }
-
-    public String getIdentifier() {
-        return identifier;
-    }
-
-    public void setIdentifier(String identifier) {
-        this.identifier = identifier;
-    }
-
-    public Date getDate() {
-        return date;
-    }
-
-    public void setDate(Date date) {
-        this.date = date;
-    }
-
-    public long getTestsStrictlySucceeded() {
-        return testsStrictlySucceeded;
-    }
-
-    public void setTestsStrictlySucceeded(long testsStrictlySucceeded) {
-        this.testsStrictlySucceeded = testsStrictlySucceeded;
-    }
-
-    public long getTestsDisabled() {
-        return testsDisabled;
-    }
-
-    public void setTestsDisabled(long testsDisabled) {
-        this.testsDisabled = testsDisabled;
-    }
-
-    public long getTestsFullyFailed() {
-        return testsFullyFailed;
-    }
-
-    public void setTestsFullyFailed(long testsFullyFailed) {
-        this.testsFullyFailed = testsFullyFailed;
-    }
-
-    public ScoreContainer getScoreContainer() {
-        return scoreContainer;
-    }
-
-    public void setScoreContainer(ScoreContainer scoreContainer) {
-        this.scoreContainer = scoreContainer;
-    }
-
-    public long getTestsConceptuallySucceeded() {
-        return testsConceptuallySucceeded;
-    }
-
-    public void setTestsConceptuallySucceeded(long testsConceptuallySucceeded) {
-        this.testsConceptuallySucceeded = testsConceptuallySucceeded;
-    }
-
-    public long getTestsPartiallyFailed() {
-        return testsPartiallyFailed;
-    }
-
-    public void setTestsPartiallyFailed(long testsPartiallyFailed) {
-        this.testsPartiallyFailed = testsPartiallyFailed;
+        }
+        this.endpointType = context.getConfig().getEndpointMode();
+        this.running = running;
     }
 }

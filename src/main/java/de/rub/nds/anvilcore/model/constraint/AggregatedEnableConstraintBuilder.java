@@ -1,9 +1,16 @@
+/*
+ * Anvil Core - A combinatorial testing framework for cryptographic protocols based on coffee4j
+ *
+ * Copyright 2022-2023 Ruhr University Bochum, Paderborn University, and Hackmanit GmbH
+ *
+ * Licensed under Apache License, Version 2.0
+ * http://www.apache.org/licenses/LICENSE-2.0.txt
+ */
 package de.rub.nds.anvilcore.model.constraint;
 
 import de.rub.nds.anvilcore.model.DerivationScope;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -28,21 +35,24 @@ public class AggregatedEnableConstraintBuilder<T> {
     public static final class AggregatedEnableConstraintBuilder1<T> {
         private final DerivationScope derivationScope;
         private final DerivationParameter target;
-        private final Map<ParameterIdentifier, Predicate<DerivationParameter>> conditions = new HashMap<>();
+        private final Map<ParameterIdentifier, Predicate<DerivationParameter>> conditions =
+                new HashMap<>();
         private T defaultValue = null;
 
-        private AggregatedEnableConstraintBuilder1(DerivationScope derivationScope, DerivationParameter target) {
+        private AggregatedEnableConstraintBuilder1(
+                DerivationScope derivationScope, DerivationParameter target) {
             this.derivationScope = derivationScope;
             this.target = target;
         }
 
-        public AggregatedEnableConstraintBuilder1<T> condition(ParameterIdentifier subject,
-                                                            Predicate<DerivationParameter> condition) {
+        public AggregatedEnableConstraintBuilder1<T> condition(
+                ParameterIdentifier subject, Predicate<DerivationParameter> condition) {
             conditions.put(subject, condition);
             return this;
         }
 
-        public AggregatedEnableConstraintBuilder1<T> conditions(Map<ParameterIdentifier, Predicate<DerivationParameter>> conditions) {
+        public AggregatedEnableConstraintBuilder1<T> conditions(
+                Map<ParameterIdentifier, Predicate<DerivationParameter>> conditions) {
             this.conditions.putAll(conditions);
             return this;
         }
@@ -53,7 +63,8 @@ public class AggregatedEnableConstraintBuilder<T> {
         }
 
         public AggregatedEnableConstraint<T> get() {
-            return new AggregatedEnableConstraint<T>(derivationScope, target, defaultValue, conditions);
+            return new AggregatedEnableConstraint<T>(
+                    derivationScope, target, defaultValue, conditions);
         }
     }
 }

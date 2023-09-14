@@ -11,7 +11,6 @@ package de.rub.nds.anvilcore.teststate;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import de.rub.nds.anvilcore.context.AnvilContext;
-import de.rub.nds.anvilcore.context.AnvilFactoryRegistry;
 import de.rub.nds.anvilcore.junit.Utils;
 import de.rub.nds.anvilcore.model.ParameterCombination;
 import de.rub.nds.anvilcore.teststate.reporting.ScoreContainer;
@@ -38,8 +37,11 @@ public class AnvilTestRun {
     private Method testMethod;
     private Class<?> testClass;
 
-    @JsonProperty("AnnotatedTestResults")
-    private List<AnvilTestCase> states = new ArrayList<>();
+    // todo what about HasStateWithAdditionalResultInformation,
+    // HasVaryingAdditionalResultInformation
+
+    @JsonProperty("TestCases")
+    private List<AnvilTestCase> testCases = new ArrayList<>();
 
     @JsonProperty("Result")
     private TestResult result;
@@ -51,12 +53,27 @@ public class AnvilTestRun {
     private String failedReason;
 
     @JsonProperty("ElapsedTime")
-    private long elapsedTime = 0;
+    private long elapsedTime = 0; // todo set elapsed time
 
     @JsonProperty("FailureInducingCombinations")
     private List<ParameterCombination> failureInducingCombinations;
 
     @JsonUnwrapped private ScoreContainer scoreContainer;
+
+    @JsonProperty("TestMethod")
+    private String getTestMethodString() {
+        return testMethod.getName();
+    }
+
+    @JsonProperty("TestClass")
+    private String getTestClassString() {
+        return testClass.getName();
+    }
+
+    @JsonProperty("CaseCount")
+    private int getCaseCount() {
+        return testCases.size();
+    }
 
     @Override
     public String toString() {
@@ -67,10 +84,13 @@ public class AnvilTestRun {
                 result != null ? result.name() : "undefined");
     }
 
+    public String getTestMethodName() {
+        return testClass.getName() + "." + testMethod.getName();
+    }
+
     public AnvilTestRun(ExtensionContext extensionContext) {
         this.uniqueId = extensionContext.getUniqueId();
-        this.scoreContainer =
-                AnvilFactoryRegistry.get().getScoreContainerFactory().getInstance(extensionContext);
+        this.scoreContainer = null;
         this.testClass =
                 Utils.getTemplateContainerExtensionContext(extensionContext).getRequiredTestClass();
         this.testMethod =
@@ -95,7 +115,7 @@ public class AnvilTestRun {
     public void setResultRaw(int resultRaw) {
         this.resultRaw = resultRaw;
         result = TestResult.resultForBitmask(resultRaw);
-        scoreContainer.updateForResult(result);
+        // scoreContainer.updateForResult(result);
     }
 
     public void finish() {
@@ -105,20 +125,17 @@ public class AnvilTestRun {
             result = resolveFinalResult();
         }
         if (result == TestResult.DISABLED && getDisabledReason() != null) {
-            LOGGER.info(
-                    "{}.{} is disable because ",
-                    testClass.getName(),
-                    testMethod.getName(),
-                    getDisabledReason());
+            LOGGER.info("{} is disable because {}", getTestMethodName(), getDisabledReason());
         }
         AnvilContext.getInstance()
                 .addTestResult(result, testClass.getName() + "." + testMethod.getName());
         AnvilContext.getInstance().testFinished(uniqueId);
+        AnvilContext.getInstance().getMapper().saveTestRunToPath(this);
     }
 
     public TestResult resolveFinalResult() {
         Set<TestResult> uniqueResultTypes =
-                states.stream().map(AnvilTestCase::getTestResult).collect(Collectors.toSet());
+                testCases.stream().map(AnvilTestCase::getTestResult).collect(Collectors.toSet());
         if (uniqueResultTypes.contains(TestResult.FULLY_FAILED)
                 || uniqueResultTypes.contains(TestResult.PARTIALLY_FAILED)) {
             if (uniqueResultTypes.size() > 1) {
@@ -174,8 +191,8 @@ public class AnvilTestRun {
         return uniqueId;
     }
 
-    public List<AnvilTestCase> getStates() {
-        return states;
+    public List<AnvilTestCase> getTestCases() {
+        return testCases;
     }
 
     public TestResult getResult() {
@@ -212,7 +229,7 @@ public class AnvilTestRun {
 
     public void add(AnvilTestCase testState) {
         testState.setAssociatedContainer(this);
-        this.states.add(testState);
+        this.testCases.add(testState);
     }
 
     public void setFailureInducingCombinations(

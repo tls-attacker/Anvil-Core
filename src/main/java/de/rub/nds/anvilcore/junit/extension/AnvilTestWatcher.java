@@ -14,21 +14,29 @@ import de.rub.nds.anvilcore.model.ParameterCombination;
 import de.rub.nds.anvilcore.teststate.AnvilTestCase;
 import de.rub.nds.anvilcore.teststate.AnvilTestRun;
 import de.rub.nds.anvilcore.teststate.TestResult;
+import de.rub.nds.anvilcore.teststate.reporting.AnvilReport;
 import de.rwth.swc.coffee4j.model.Combination;
 import de.rwth.swc.coffee4j.model.TestInputGroupContext;
 import de.rwth.swc.coffee4j.model.report.ExecutionReporter;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestWatcher;
+import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.launcher.TestExecutionListener;
+import org.junit.platform.launcher.TestIdentifier;
+import org.junit.platform.launcher.TestPlan;
 
-public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
+/**
+ * Implements TestWatcher, ExecutionReporter and TestExecutionListener. Gets updates from JUnit
+ * tests and sends out actions based on those.
+ */
+public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExecutionListener {
     private static final Logger LOGGER = LogManager.getLogger();
 
     private ExtensionContext extensionContext;
+    private final Map<String, Long> elapsedTimes = new HashMap<>();
 
     public AnvilTestWatcher() {}
 
@@ -36,116 +44,171 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
         extensionContext = context;
     }
 
+    /**
+     * TestCase or non-combinatorial test finished successfully.
+     *
+     * @param extensionContext context of the test template
+     */
     @Override
     public synchronized void testSuccessful(ExtensionContext extensionContext) {
-        AnvilTestRun testStateContainer =
+        if (AnvilContext.getInstance().isAborted()) {
+            return;
+        }
+        AnvilTestRun testRun =
                 AnvilContext.getInstance()
                         .getTestResult(
                                 Utils.getTemplateContainerExtensionContext(extensionContext)
                                         .getUniqueId());
         if (!Utils.extensionContextIsBasedOnCombinatorialTesting(
                 extensionContext.getParent().get())) {
-            processNonCombinatorial(
-                    testStateContainer, extensionContext, TestResult.STRICTLY_SUCCEEDED, null);
+            processNonCombinatorial(testRun, extensionContext, TestResult.STRICTLY_SUCCEEDED, null);
         } else {
-            AnvilTestCase testState = getTestState(extensionContext, testStateContainer);
-            if (testState != null && testState.getTestResult() == null) {
+            AnvilTestCase testCase = getTestCase(extensionContext, testRun);
+            if (testCase != null && testCase.getTestResult() == null) {
                 // test template did not yield a reason why this test did not succeed
-                testState.setTestResult(TestResult.STRICTLY_SUCCEEDED);
+                testCase.setTestResult(TestResult.STRICTLY_SUCCEEDED);
             }
 
-            if (testStateContainer.isReadyForCompletion()) {
-                testStateContainer.finish();
+            if (AnvilContext.getInstance().getListener() != null) {
+                AnvilContext.getInstance()
+                        .getListener()
+                        .onTestCaseFinished(
+                                testCase,
+                                testRun.getTestClass().getName(),
+                                testRun.getTestMethod().getName());
+            }
+
+            if (testRun.isReadyForCompletion()) {
+                testRun.finish();
             }
         }
     }
 
     private void processNonCombinatorial(
-            AnvilTestRun testStateContainer,
+            AnvilTestRun testRun,
             ExtensionContext extensionContext,
             TestResult defaultResult,
             Throwable cause) {
-        if (testStateContainer == null) {
-            testStateContainer = new AnvilTestRun(extensionContext);
-            AnvilContext.getInstance().addActiveTestRun(testStateContainer);
-            testStateContainer.setResultRaw(defaultResult.getValue());
+        if (testRun == null) {
+            testRun = new AnvilTestRun(extensionContext);
+            AnvilContext.getInstance().addActiveTestRun(testRun);
+            testRun.setResultRaw(defaultResult.getValue());
         } else {
-            testStateContainer.setResultRaw(testStateContainer.resolveFinalResult().getValue());
+            testRun.setResultRaw(testRun.resolveFinalResult().getValue());
         }
 
         if (cause != null) {
-            testStateContainer.setFailedReason(cause.toString());
+            testRun.setFailedReason(cause.toString());
         }
 
-        testStateContainer.finish();
+        testRun.finish();
     }
 
-    private AnvilTestCase getTestState(
-            ExtensionContext extensionContext, AnvilTestRun testStateContainer) {
-        return testStateContainer.getStates().stream()
+    private AnvilTestCase getTestCase(
+            ExtensionContext extensionContext, AnvilTestRun anvilTestRun) {
+        return anvilTestRun.getTestCases().stream()
                 .filter(
-                        state ->
-                                state.getExtensionContext()
+                        testCase ->
+                                testCase.getExtensionContext()
                                         .getUniqueId()
                                         .equals(extensionContext.getUniqueId()))
                 .findFirst()
                 .orElse(null);
     }
 
+    /**
+     * TestCase or non-combinatorial test failed / did not pass.
+     *
+     * @param extensionContext context of the test template
+     */
     @Override
     public synchronized void testFailed(ExtensionContext extensionContext, Throwable cause) {
+        if (AnvilContext.getInstance().isAborted()) {
+            return;
+        }
         if (!(cause instanceof AssertionError)) {
             LOGGER.error(
                     "Test failed without AssertionError {}\n",
                     extensionContext.getDisplayName(),
                     cause);
         }
-        AnvilTestRun testStateContainer =
+        AnvilTestRun testRun =
                 AnvilContext.getInstance()
                         .getTestResult(
                                 Utils.getTemplateContainerExtensionContext(extensionContext)
                                         .getUniqueId());
         if (!Utils.extensionContextIsBasedOnCombinatorialTesting(
                 extensionContext.getParent().get())) {
-            processNonCombinatorial(
-                    testStateContainer, extensionContext, TestResult.FULLY_FAILED, cause);
+            processNonCombinatorial(testRun, extensionContext, TestResult.FULLY_FAILED, cause);
         } else {
-            AnvilTestCase testState = getTestState(extensionContext, testStateContainer);
-            if (testState != null && cause != null && testState.getTestResult() == null) {
+            AnvilTestCase testCase = getTestCase(extensionContext, testRun);
+            if (testCase != null && cause != null && testCase.getTestResult() == null) {
                 // default to failed for all thrown exceptions
-                testState.setTestResult(TestResult.FULLY_FAILED);
+                testCase.setTestResult(TestResult.FULLY_FAILED);
             }
-            testStateContainer.setFailedReason(cause.toString());
+            testRun.setFailedReason(cause.toString());
 
-            if (testStateContainer.isReadyForCompletion()) {
-                testStateContainer.finish();
+            if (AnvilContext.getInstance().getListener() != null) {
+                AnvilContext.getInstance()
+                        .getListener()
+                        .onTestCaseFinished(
+                                testCase,
+                                testRun.getTestClass().getName(),
+                                testRun.getTestMethod().getName());
+            }
+
+            if (testRun.isReadyForCompletion()) {
+                testRun.finish();
             }
         }
     }
 
+    /**
+     * TestRun or non-combinatorial test is skipped due to being disabled.
+     *
+     * @param extensionContext context of the test template
+     */
     @Override
     public void testDisabled(ExtensionContext extensionContext, Optional<String> reason) {
-        AnvilTestRun testStateContainer = new AnvilTestRun(extensionContext);
-        testStateContainer.setResultRaw(TestResult.DISABLED.getValue());
-        testStateContainer.setDisabledReason(reason.orElse("No reason specified"));
+        if (AnvilContext.getInstance().isAborted()) {
+            return;
+        }
+        AnvilTestRun testRun = new AnvilTestRun(extensionContext);
+        testRun.setResultRaw(TestResult.DISABLED.getValue());
+        testRun.setDisabledReason(reason.orElse("No reason specified"));
+        AnvilContext.getInstance().addActiveTestRun(testRun);
         if (!Utils.extensionContextIsBasedOnCombinatorialTesting(
                 extensionContext.getParent().get())) {
             // simple tests finish immediately
-            testStateContainer.finish();
-        } else if (testStateContainer.isReadyForCompletion()) {
-            testStateContainer.finish();
+            testRun.finish();
+        } else if (testRun.isReadyForCompletion()) {
+            testRun.finish();
         }
     }
 
+    /**
+     * Coffee4j generated the different TestCases for a combinatorial AnvilTest
+     *
+     * @param context all important information about one group
+     * @param testInputs the initially generated test inputs
+     */
     @Override
     public void testInputGroupGenerated(
             TestInputGroupContext context, List<Combination> testInputs) {
-        AnvilTestRun testStateContainer = new AnvilTestRun(extensionContext);
-        AnvilContext.getInstance().addActiveTestRun(testStateContainer);
+        AnvilTestRun testRun = new AnvilTestRun(extensionContext);
+        AnvilContext.getInstance().addActiveTestRun(testRun);
         LOGGER.trace(
                 "Test Inputs generated for " + extensionContext.getRequiredTestMethod().getName());
     }
 
+    /**
+     * Coffee4j analyzed which parameter combinations may lead to failed tests.
+     *
+     * @param context the context of the group for which fault characterization finished
+     * @param failureInducingCombinations all failure-inducing combinations found. The order may or
+     *     may not be based on an algorithm internal probability metric of the combinations being
+     *     failure-inducing
+     */
     @Override
     public void faultCharacterizationFinished(
             TestInputGroupContext context, List<Combination> failureInducingCombinations) {
@@ -157,8 +220,101 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter {
                 .setFailureInducingCombinations(failureInducing);
     }
 
+    /**
+     * All TestCases of one TestRun finished.
+     *
+     * @param context the context of the group which was finished
+     */
     @Override
     public void testInputGroupFinished(TestInputGroupContext context) {
         AnvilTestRun.forExtensionContext(extensionContext).setReadyForCompletion(true);
+    }
+
+    /**
+     * JUnit launcher started testing.
+     *
+     * @param testPlan information about the discovered tests
+     */
+    @Override
+    public void testPlanExecutionStarted(TestPlan testPlan) {
+        AnvilContext.getInstance().setTestStartTime(new Date());
+        LOGGER.trace("Started execution of " + testPlan.toString());
+        if (AnvilContext.getInstance().getListener() != null) {
+            AnvilContext.getInstance().getListener().onStarted();
+        }
+    }
+
+    /**
+     * JUnit launcher finished the execution of all tests it discovered.
+     *
+     * @param testPlan information about the discovered tests
+     */
+    @Override
+    public void testPlanExecutionFinished(TestPlan testPlan) {
+        LOGGER.trace("Execution of " + testPlan.toString() + " finished");
+        AnvilReport anvilReport = new AnvilReport(AnvilContext.getInstance(), false);
+        AnvilContext.getInstance().getMapper().saveReportToPath(anvilReport);
+        if (AnvilContext.getInstance().getListener() != null) {
+            AnvilContext.getInstance().getListener().onReportFinished(anvilReport);
+        }
+    }
+
+    /**
+     * Called when the execution of a leaf or subtree of the TestPlan has been skipped e.g. the test
+     * is disabled. Only used for logging.
+     *
+     * @param testIdentifier may represent a test or a container
+     * @param reason reason why it is skipped
+     */
+    @Override
+    public void executionSkipped(TestIdentifier testIdentifier, String reason) {
+        LOGGER.trace(testIdentifier.getDisplayName() + " skipped, due to " + reason);
+    }
+
+    /**
+     * Called when the execution of a leaf or subtree of the TestPlan is about to be started. Called
+     * by TestCases and TestRuns as well as non-combinatorial tests. Only used for logging.
+     *
+     * @param testIdentifier may represent a test or a container
+     */
+    @Override
+    public void executionStarted(TestIdentifier testIdentifier) {
+        LOGGER.trace(testIdentifier.getDisplayName() + " started");
+        if (testIdentifier.isContainer()) {
+            elapsedTimes.put(testIdentifier.getUniqueId(), System.currentTimeMillis());
+        }
+    }
+
+    /**
+     * Called when the execution of a leaf or subtree of the TestPlan has finished, regardless of
+     * the outcome. Called by TestCases and TestRuns as well as non-combinatorial tests. Only used
+     * for logging.
+     *
+     * @param testIdentifier represents a test or a container
+     * @param testExecutionResult result of the execution for the supplied TestIdentifier
+     */
+    @Override
+    public void executionFinished(
+            TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
+        logTestFinished(testExecutionResult, testIdentifier);
+        if (testIdentifier.isContainer()) {
+            Long startTime = elapsedTimes.get(testIdentifier.getUniqueId());
+            if (startTime != null) {
+                long elapsedTime = System.currentTimeMillis() - startTime;
+                elapsedTimes.put(testIdentifier.getUniqueId(), elapsedTime);
+            }
+        }
+    }
+
+    public void logTestFinished(
+            TestExecutionResult testExecutionResult, TestIdentifier testIdentifier) {
+        if (testExecutionResult.getThrowable().isPresent() && testIdentifier.isContainer()) {
+            LOGGER.error(
+                    "Internal exception during execution of test container created for test {}. Exception: ",
+                    testIdentifier.getDisplayName(),
+                    testExecutionResult.getThrowable().get());
+        } else {
+            LOGGER.trace(testIdentifier.getDisplayName() + " finished");
+        }
     }
 }

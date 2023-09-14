@@ -1,11 +1,17 @@
+/*
+ * Anvil Core - A combinatorial testing framework for cryptographic protocols based on coffee4j
+ *
+ * Copyright 2022-2023 Ruhr University Bochum, Paderborn University, and Hackmanit GmbH
+ *
+ * Licensed under Apache License, Version 2.0
+ * http://www.apache.org/licenses/LICENSE-2.0.txt
+ */
 package de.rub.nds.anvilcore.model.constraint;
 
 import de.rub.nds.anvilcore.model.DerivationScope;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
-import de.rub.nds.anvilcore.model.parameter.ParameterFactory;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import de.rwth.swc.coffee4j.model.constraints.Constraint;
-
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -19,8 +25,11 @@ public class AggregatedEnableConstraint<T> extends ConditionalConstraint {
     private final Set<ParameterIdentifier> staticParameters = new HashSet<>();
     private final boolean staticTarget;
 
-    public AggregatedEnableConstraint(DerivationScope derivationScope, DerivationParameter target, T defaultValue,
-                                      Map<ParameterIdentifier, Predicate<DerivationParameter>> conditions) {
+    public AggregatedEnableConstraint(
+            DerivationScope derivationScope,
+            DerivationParameter target,
+            T defaultValue,
+            Map<ParameterIdentifier, Predicate<DerivationParameter>> conditions) {
         this.derivationScope = derivationScope;
         this.target = target;
         this.defaultValue = defaultValue;
@@ -28,19 +37,16 @@ public class AggregatedEnableConstraint<T> extends ConditionalConstraint {
 
         // Partition required parameters into static and dynamic parameter
         for (ParameterIdentifier parameterIdentifier : conditions.keySet()) {
-            DerivationParameter parameter = ParameterFactory.getInstanceFromIdentifier(parameterIdentifier);
+            DerivationParameter parameter = parameterIdentifier.getInstance();
             if (parameter.canBeModeled(derivationScope)) {
                 dynamicParameters.add(parameterIdentifier);
-            }
-            else {
+            } else {
                 staticParameters.add(parameterIdentifier);
             }
         }
         setRequiredParameters(dynamicParameters);
 
         staticTarget = !target.canBeModeled(derivationScope);
-
-
 
         List<String> parameterNames = new ArrayList<>();
         if (!staticTarget) {
@@ -49,19 +55,22 @@ public class AggregatedEnableConstraint<T> extends ConditionalConstraint {
         for (ParameterIdentifier dynamicParameterIdentifier : dynamicParameters) {
             parameterNames.add(dynamicParameterIdentifier.name());
         }
-        Constraint constraint = new Constraint("aggregated-enable-constraint", parameterNames, this::aggregatedPredicateAdapter);
+        Constraint constraint =
+                new Constraint(
+                        "aggregated-enable-constraint",
+                        parameterNames,
+                        this::aggregatedPredicateAdapter);
         setConstraint(constraint);
     }
-
 
     private boolean aggregatedPredicateAdapter(List<?> objects) {
         List<DerivationParameter> derivationParameters = new ArrayList<>();
         for (Object obj : objects) {
             if (obj instanceof DerivationParameter) {
                 derivationParameters.add((DerivationParameter) obj);
-            }
-            else {
-                throw new IllegalArgumentException("Object passed to constraint is not a DerivationParameter");
+            } else {
+                throw new IllegalArgumentException(
+                        "Object passed to constraint is not a DerivationParameter");
             }
         }
         return aggregatedPredicate(derivationParameters);
@@ -70,24 +79,33 @@ public class AggregatedEnableConstraint<T> extends ConditionalConstraint {
     private boolean aggregatedPredicate(List<DerivationParameter> dynamicParameterValues) {
         // Check dynamic parameter values
         for (int i = 1; i < dynamicParameterValues.size(); i++) {
-            if (!dynamicParameters.contains(dynamicParameterValues.get(i).getParameterIdentifier())) {
-                throw new IllegalStateException("Unexpected dynamic parameter: " + dynamicParameterValues.get(i).getParameterIdentifier());
+            if (!dynamicParameters.contains(
+                    dynamicParameterValues.get(i).getParameterIdentifier())) {
+                throw new IllegalStateException(
+                        "Unexpected dynamic parameter: "
+                                + dynamicParameterValues.get(i).getParameterIdentifier());
             }
         }
 
         DerivationParameter targetValue;
         if (staticTarget) {
             // Get static target value
-            targetValue = ParameterFactory.getInstanceFromIdentifier(target.getParameterIdentifier());
-            List<DerivationParameter> values = targetValue.getConstrainedParameterValues(derivationScope);
+            targetValue = target.getParameterIdentifier().getInstance();
+            List<DerivationParameter> values =
+                    targetValue.getConstrainedParameterValues(derivationScope);
             if (values.size() != 1) {
-                throw new IllegalStateException("Static target parameter does not have exactly 1 value");
+                throw new IllegalStateException(
+                        "Static target parameter does not have exactly 1 value");
             }
             targetValue = values.get(0);
-        }
-        else {
-            if (dynamicParameterValues.size() == 0 || !dynamicParameterValues.get(0).getParameterIdentifier().equals(target.getParameterIdentifier())) {
-                throw new IllegalArgumentException("The first parameter passed to constraint does not match target parameter");
+        } else {
+            if (dynamicParameterValues.size() == 0
+                    || !dynamicParameterValues
+                            .get(0)
+                            .getParameterIdentifier()
+                            .equals(target.getParameterIdentifier())) {
+                throw new IllegalArgumentException(
+                        "The first parameter passed to constraint does not match target parameter");
             }
             // Remove target value from parameter value list
             targetValue = dynamicParameterValues.get(0);
@@ -97,10 +115,14 @@ public class AggregatedEnableConstraint<T> extends ConditionalConstraint {
         // Add static parameter values
         List<DerivationParameter> allParameterValues = dynamicParameterValues;
         for (ParameterIdentifier staticParameterIdentifier : staticParameters) {
-            DerivationParameter staticParameter = ParameterFactory.getInstanceFromIdentifier(staticParameterIdentifier);
-            List<DerivationParameter> staticValue = staticParameter.getConstrainedParameterValues(derivationScope);
+            DerivationParameter staticParameter = staticParameterIdentifier.getInstance();
+            List<DerivationParameter> staticValue =
+                    staticParameter.getConstrainedParameterValues(derivationScope);
             if (staticValue.size() != 1) {
-                throw new IllegalStateException("Static parameter " + staticParameterIdentifier + " does not have exactly 1 value");
+                throw new IllegalStateException(
+                        "Static parameter "
+                                + staticParameterIdentifier
+                                + " does not have exactly 1 value");
             }
             allParameterValues.add(staticValue.get(0));
         }
@@ -108,14 +130,16 @@ public class AggregatedEnableConstraint<T> extends ConditionalConstraint {
         // The result of the aggregated constraint is true if all sub constraints return true
         boolean enabled = true;
         for (DerivationParameter parameterValue : allParameterValues) {
-            Predicate<DerivationParameter> subCondition = conditions.get(parameterValue.getParameterIdentifier());
+            Predicate<DerivationParameter> subCondition =
+                    conditions.get(parameterValue.getParameterIdentifier());
             if (!subCondition.test(parameterValue)) {
                 enabled = false;
                 break;
             }
         }
 
-        // If no defaultValue is specified, the parameter is set to null IF AND ONLY IF it is disabled
+        // If no defaultValue is specified, the parameter is set to null IF AND ONLY IF it is
+        // disabled
         if (defaultValue == null) {
             return enabled ^ targetValue.getSelectedValue() == null;
         }

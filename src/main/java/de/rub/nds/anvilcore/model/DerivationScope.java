@@ -11,6 +11,7 @@ package de.rub.nds.anvilcore.model;
 import de.rub.nds.anvilcore.annotation.*;
 import de.rub.nds.anvilcore.coffee4j.model.ModelFromScope;
 import de.rub.nds.anvilcore.context.AnvilContext;
+import de.rub.nds.anvilcore.context.AnvilTestConfig;
 import de.rub.nds.anvilcore.model.constraint.ValueConstraint;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import java.util.*;
@@ -22,7 +23,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.support.AnnotationSupport;
 
 public class DerivationScope {
-    private final ModelType modelType;
+    private final String modelType;
     private final List<ParameterIdentifier> ipmLimitations;
     private final List<ParameterIdentifier> ipmExtensions;
     private final List<ValueConstraint> valueConstraints;
@@ -54,10 +55,10 @@ public class DerivationScope {
         this.extensionContext = null;
         this.manualConfigTypes = Collections.emptySet();
         this.testStrength = 3;
-        this.modelType = DefaultModelType.ALL_PARAMETERS;
+        this.modelType = DefaultModelTypes.ALL_PARAMETERS;
     }
 
-    public static ModelType resolveModelType(ExtensionContext extensionContext) {
+    public static String resolveModelType(ExtensionContext extensionContext) {
         ModelFromScope closestAnnotation;
         if (extensionContext.getRequiredTestMethod().getAnnotation(ModelFromScope.class) != null) {
             closestAnnotation =
@@ -74,12 +75,12 @@ public class DerivationScope {
         }
 
         if (closestAnnotation != null) {
-            return ModelType.resolveModelType(closestAnnotation.modelType());
+            return closestAnnotation.modelType().toUpperCase();
         }
-        return DefaultModelType.ALL_PARAMETERS;
+        return DefaultModelTypes.ALL_PARAMETERS;
     }
 
-    public ModelType getModelType() {
+    public String getModelType() {
         return modelType;
     }
 
@@ -342,13 +343,13 @@ public class DerivationScope {
      * @param extensionContext the current extension context
      * @return test strength
      * @see TestStrength
-     * @see AnvilContext#getTestStrength
+     * @see AnvilTestConfig#getStrength()
      */
     private static int resolveTestStrength(final ExtensionContext extensionContext) {
         return AnnotationSupport.findAnnotation(
                         extensionContext.getRequiredTestMethod(), TestStrength.class)
                 .map(TestStrength::value)
-                .orElseGet(() -> AnvilContext.getInstance().getTestStrength());
+                .orElseGet(() -> AnvilContext.getInstance().getConfig().getStrength());
     }
 
     public boolean parameterListedForManualConfig(ParameterIdentifier identifier) {

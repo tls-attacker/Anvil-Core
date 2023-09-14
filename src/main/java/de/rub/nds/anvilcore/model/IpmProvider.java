@@ -8,12 +8,12 @@
  */
 package de.rub.nds.anvilcore.model;
 
-import de.rub.nds.anvilcore.context.AnvilFactoryRegistry;
-import de.rub.nds.anvilcore.model.config.AnvilConfig;
+import de.rub.nds.anvilcore.coffee4j.model.ModelFromScope;
+import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.model.constraint.ConditionalConstraint;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
-import de.rub.nds.anvilcore.model.parameter.ParameterFactory;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
+import de.rwth.swc.coffee4j.junit.provider.model.ModelProvider;
 import de.rwth.swc.coffee4j.model.InputParameterModel;
 import de.rwth.swc.coffee4j.model.Parameter;
 import de.rwth.swc.coffee4j.model.Value;
@@ -23,9 +23,24 @@ import java.util.LinkedList;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.support.AnnotationConsumer;
 
-public class IpmProvider {
+public class IpmProvider implements ModelProvider, AnnotationConsumer<ModelFromScope> {
     private static final Logger LOGGER = LogManager.getLogger();
+
+    private ModelFromScope modelFromScope;
+
+    @Override
+    public void accept(ModelFromScope modelFromScope) {
+        this.modelFromScope = modelFromScope;
+    }
+
+    @Override
+    public InputParameterModel provide(ExtensionContext extensionContext) {
+        DerivationScope derivationScope = new DerivationScope(extensionContext);
+        return generateIpm(derivationScope);
+    }
 
     public static InputParameterModel generateIpm(DerivationScope derivationScope) {
         List<ParameterIdentifier> parameterIdentifiers =
@@ -50,33 +65,12 @@ public class IpmProvider {
                 .build();
     }
 
-    public static boolean mustUseSimpleModel(DerivationScope scope) {
-        List<ParameterIdentifier> parameterIdentifiers = getParameterIdentifiersForScope(scope);
-        Parameter.Builder[] builders = getParameterBuilders(parameterIdentifiers, scope);
-        return builders.length == 1;
-    }
-
-    public static List<DerivationParameter<AnvilConfig, Object>> getSimpleModelVariations(
-            DerivationScope derivationScope) {
-        List<ParameterIdentifier> parameterIdentifiers =
-                getParameterIdentifiersForScope(derivationScope);
-        for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
-            DerivationParameter<AnvilConfig, Object> parameter =
-                    ParameterFactory.getInstanceFromIdentifier(parameterIdentifier);
-            if (parameter.canBeModeled(derivationScope)) {
-                List<DerivationParameter<AnvilConfig, Object>> parameters =
-                        parameter.getConstrainedParameterValues(derivationScope);
-            }
-        }
-        return null;
-    }
-
     public static List<ParameterIdentifier> getParameterIdentifiersForScope(
             DerivationScope derivationScope) {
         final List<ParameterIdentifier> parameterIdentifiers = new ArrayList<>();
         // Get base parameters of model
         parameterIdentifiers.addAll(
-                AnvilFactoryRegistry.get()
+                AnvilContext.getInstance()
                         .getParameterIdentifierProvider()
                         .getModelParameterIdentifiers(derivationScope));
         // Add explicit extensions
@@ -99,9 +93,8 @@ public class IpmProvider {
             List<ParameterIdentifier> parameterIdentifiers, DerivationScope derivationScope) {
         List<Parameter.Builder> parameterBuilders = new ArrayList<>();
         for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
-            DerivationParameter<AnvilConfig, Object> parameter =
-                    ParameterFactory.getInstanceFromIdentifier(parameterIdentifier);
-            if (parameter.canBeModeled(derivationScope)) {
+            DerivationParameter<Object, Object> parameter = parameterIdentifier.getInstance();
+            if (!parameter.getConstrainedParameterValues(derivationScope).isEmpty()) {
                 Parameter.Builder parameterBuilder = parameter.getParameterBuilder(derivationScope);
                 parameterBuilders.add(parameterBuilder);
                 if (parameterIdentifier.hasLinkedParameterIdentifier()) {
@@ -124,8 +117,7 @@ public class IpmProvider {
             List<ParameterIdentifier> parameterIdentifiers, DerivationScope derivationScope) {
         List<Constraint> applicableConstraints = new ArrayList<>();
         for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
-            DerivationParameter<AnvilConfig, Object> parameter =
-                    ParameterFactory.getInstanceFromIdentifier(parameterIdentifier);
+            DerivationParameter<Object, Object> parameter = parameterIdentifier.getInstance();
             // if (parameter.canBeModeled(derivationScope)) {
             List<ConditionalConstraint> conditionalConstraints =
                     parameter.getConditionalConstraints(derivationScope);
@@ -147,14 +139,15 @@ public class IpmProvider {
      * @param derivationScope
      * @return List of parameters modeled with only one possible value
      */
-    public static List<DerivationParameter<AnvilConfig, Object>> getStaticParameterValues(
+    public static List<DerivationParameter<Object, Object>> getStaticParameterValues(
             DerivationScope derivationScope) {
-        List<DerivationParameter<AnvilConfig, Object>> staticParameterValues = new ArrayList<>();
+        List<DerivationParameter<Object, Object>> staticParameterValues = new ArrayList<>();
         List<ParameterIdentifier> parameterIdentifiers =
                 getParameterIdentifiersForScope(derivationScope);
         for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
-            List<DerivationParameter<AnvilConfig, Object>> parameterValues =
-                    ParameterFactory.getInstanceFromIdentifier(parameterIdentifier)
+            List<DerivationParameter<Object, Object>> parameterValues =
+                    parameterIdentifier
+                            .getInstance()
                             .getConstrainedParameterValues(derivationScope);
             if (parameterValues.size() == 1) {
                 staticParameterValues.add(parameterValues.get(0));

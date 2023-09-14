@@ -6,10 +6,9 @@
  * Licensed under Apache License, Version 2.0
  * http://www.apache.org/licenses/LICENSE-2.0.txt
  */
-package de.rub.nds.anvilcore.context;
+package de.rub.nds.anvilcore.model;
 
-import de.rub.nds.anvilcore.teststate.AnvilTestRun;
-
-public interface ApplicationSpecificContextDelegate {
-    default void onTestFinished(String uniqueId, AnvilTestRun finishedContainer) {}
+public class DefaultModelTypes {
+    public static final String ALL_PARAMETERS = "ALL_PARAMETERS";
+    public static final String EMPTY = "EMPTY";
 }

@@ -8,7 +8,7 @@
  */
 package de.rub.nds.anvilcore.model.parameter;
 
-import de.rub.nds.anvilcore.context.AnvilFactoryRegistry;
+import de.rub.nds.anvilcore.model.ParameterIdentifierProvider;
 import java.util.List;
 import java.util.Objects;
 
@@ -41,18 +41,20 @@ public class ParameterIdentifier {
         if (parameterScope == ParameterScope.NO_SCOPE || parameterScope == null) {
             return parameterType.toString();
         }
-        return parameterScope + "." + parameterType.toString();
+        return parameterScope + ":" + parameterType.toString();
     }
 
     public static ParameterIdentifier fromName(String name) {
         List<ParameterIdentifier> knownIdentifiers =
-                AnvilFactoryRegistry.get()
-                        .getParameterIdentifierProvider()
-                        .getAllParameterIdentifiers();
+                ParameterIdentifierProvider.getAllParameterIdentifiers();
         return knownIdentifiers.stream()
                 .filter(known -> known.name().equals(name))
                 .findFirst()
                 .orElseThrow();
+    }
+
+    public DerivationParameter getInstance() {
+        return parameterType.getInstance(parameterScope);
     }
 
     @Override

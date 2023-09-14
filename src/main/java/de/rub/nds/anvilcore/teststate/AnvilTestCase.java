@@ -29,8 +29,13 @@ public class AnvilTestCase {
     private ParameterCombination parameterCombination;
 
     private Throwable failedReason;
+
+    @JsonProperty("AdditionalResultInformation")
     private List<String> additionalResultInformation;
+
+    @JsonProperty("AdditionalTestInformation")
     private List<String> additionalTestInformation;
+
     private ExtensionContext extensionContext;
     private AnvilTestRun associatedContainer;
 

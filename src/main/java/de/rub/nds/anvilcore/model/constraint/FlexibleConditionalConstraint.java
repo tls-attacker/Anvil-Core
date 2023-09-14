@@ -1,11 +1,17 @@
+/*
+ * Anvil Core - A combinatorial testing framework for cryptographic protocols based on coffee4j
+ *
+ * Copyright 2022-2023 Ruhr University Bochum, Paderborn University, and Hackmanit GmbH
+ *
+ * Licensed under Apache License, Version 2.0
+ * http://www.apache.org/licenses/LICENSE-2.0.txt
+ */
 package de.rub.nds.anvilcore.model.constraint;
 
 import de.rub.nds.anvilcore.model.DerivationScope;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
-import de.rub.nds.anvilcore.model.parameter.ParameterFactory;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import de.rwth.swc.coffee4j.model.constraints.Constraint;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -23,10 +29,12 @@ public class FlexibleConditionalConstraint extends ConditionalConstraint {
     private final BiPredicate<DerivationParameter, List<DerivationParameter>> predicate;
     private final boolean staticTarget;
 
-
-    public FlexibleConditionalConstraint(String constraintName, DerivationScope derivationScope, DerivationParameter target,
-                                         Set<ParameterIdentifier> requiredParameters,
-                                         BiPredicate<DerivationParameter, List<DerivationParameter>> predicate) {
+    public FlexibleConditionalConstraint(
+            String constraintName,
+            DerivationScope derivationScope,
+            DerivationParameter target,
+            Set<ParameterIdentifier> requiredParameters,
+            BiPredicate<DerivationParameter, List<DerivationParameter>> predicate) {
         this.constraintName = constraintName;
         this.derivationScope = derivationScope;
         this.target = target;
@@ -35,11 +43,10 @@ public class FlexibleConditionalConstraint extends ConditionalConstraint {
 
         // Partition required parameters into static and dynamic parameters
         for (ParameterIdentifier parameterIdentifier : requiredParameters) {
-            DerivationParameter parameter = ParameterFactory.getInstanceFromIdentifier(parameterIdentifier);
+            DerivationParameter parameter = parameterIdentifier.getInstance();
             if (parameter.canBeModeled(derivationScope)) {
                 dynamicParameters.add(parameterIdentifier);
-            }
-            else {
+            } else {
                 staticParameters.add(parameterIdentifier);
             }
         }
@@ -54,7 +61,8 @@ public class FlexibleConditionalConstraint extends ConditionalConstraint {
         for (ParameterIdentifier parameterIdentifier : dynamicParameters) {
             dynamicParameterNames.add(parameterIdentifier.name());
         }
-        Constraint constraint = new Constraint(constraintName, dynamicParameterNames, this::predicateAdapter);
+        Constraint constraint =
+                new Constraint(constraintName, dynamicParameterNames, this::predicateAdapter);
         setConstraint(constraint);
     }
 
@@ -64,33 +72,41 @@ public class FlexibleConditionalConstraint extends ConditionalConstraint {
         for (Object obj : objects) {
             if (obj instanceof DerivationParameter) {
                 parameterValues.add((DerivationParameter) obj);
-            }
-            else {
-                throw new IllegalArgumentException("Object passed to constraint is not a DerivationParameter");
+            } else {
+                throw new IllegalArgumentException(
+                        "Object passed to constraint is not a DerivationParameter");
             }
         }
 
         // Check dynamic parameter values
         for (int i = 1; i < parameterValues.size(); i++) {
             if (!dynamicParameters.contains(parameterValues.get(i).getParameterIdentifier())) {
-                throw new IllegalStateException("Unexpected dynamic parameter: " + parameterValues.get(i).getParameterIdentifier());
+                throw new IllegalStateException(
+                        "Unexpected dynamic parameter: "
+                                + parameterValues.get(i).getParameterIdentifier());
             }
         }
 
         DerivationParameter targetValue;
         if (staticTarget) {
             // Get static target value
-            targetValue = ParameterFactory.getInstanceFromIdentifier(target.getParameterIdentifier());
-            List<DerivationParameter> values = targetValue.getConstrainedParameterValues(derivationScope);
+            targetValue = target.getParameterIdentifier().getInstance();
+            List<DerivationParameter> values =
+                    targetValue.getConstrainedParameterValues(derivationScope);
             if (values.size() != 1) {
-                throw new IllegalStateException("Static target parameter does not have exactly 1 value");
+                throw new IllegalStateException(
+                        "Static target parameter does not have exactly 1 value");
             }
             targetValue = values.get(0);
-        }
-        else {
+        } else {
             // Check dynamic parameter values
-            if (parameterValues.size() == 0 || !parameterValues.get(0).getParameterIdentifier().equals(target.getParameterIdentifier())) {
-                throw new IllegalArgumentException("The first parameter passed to constraint does not match target parameter");
+            if (parameterValues.size() == 0
+                    || !parameterValues
+                            .get(0)
+                            .getParameterIdentifier()
+                            .equals(target.getParameterIdentifier())) {
+                throw new IllegalArgumentException(
+                        "The first parameter passed to constraint does not match target parameter");
             }
 
             // Remove target values from parameter value list
@@ -100,10 +116,14 @@ public class FlexibleConditionalConstraint extends ConditionalConstraint {
 
         // Add static parameter values manually
         for (ParameterIdentifier staticParameterIdentifier : staticParameters) {
-            DerivationParameter staticParameter = ParameterFactory.getInstanceFromIdentifier(staticParameterIdentifier);
-            List<DerivationParameter> staticValue = staticParameter.getConstrainedParameterValues(derivationScope);
+            DerivationParameter staticParameter = staticParameterIdentifier.getInstance();
+            List<DerivationParameter> staticValue =
+                    staticParameter.getConstrainedParameterValues(derivationScope);
             if (staticValue.size() != 1) {
-                throw new IllegalStateException("Static parameter " + staticParameterIdentifier + " does not have exactly 1 value");
+                throw new IllegalStateException(
+                        "Static parameter "
+                                + staticParameterIdentifier
+                                + " does not have exactly 1 value");
             }
             parameterValues.add(staticValue.get(0));
         }
