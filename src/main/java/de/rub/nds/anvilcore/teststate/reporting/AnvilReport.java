@@ -93,7 +93,7 @@ public class AnvilReport {
         this.totalTests = context.getTotalTests();
         this.finishedTests = context.getTestsDone();
         this.testCaseCount = context.getTestCases();
-        this.scoreContainer = context.getScoreContainer();
+        this.scoreContainer = context.getOverallScoreContainer();
         this.configString = context.getConfigString();
         try {
             this.anvilConfigString = new ObjectMapper().writeValueAsString(context.getConfig());

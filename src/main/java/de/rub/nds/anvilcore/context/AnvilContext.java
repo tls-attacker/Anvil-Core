@@ -8,11 +8,13 @@
  */
 package de.rub.nds.anvilcore.context;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import de.rub.nds.anvilcore.execution.AnvilListener;
 import de.rub.nds.anvilcore.model.ParameterIdentifierProvider;
 import de.rub.nds.anvilcore.teststate.AnvilTestRun;
 import de.rub.nds.anvilcore.teststate.TestResult;
 import de.rub.nds.anvilcore.teststate.reporting.AnvilJsonMapper;
+import de.rub.nds.anvilcore.teststate.reporting.MetadataFetcher;
 import de.rub.nds.anvilcore.teststate.reporting.ScoreContainer;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -27,6 +29,7 @@ public class AnvilContext {
     private final AnvilTestConfig config;
     private final String configString;
     private final AnvilJsonMapper mapper;
+    private final MetadataFetcher metadataFetcher;
     private AnvilListener listener;
 
     private final ParameterIdentifierProvider parameterIdentifierProvider;
@@ -36,7 +39,9 @@ public class AnvilContext {
     private long testCases = 0;
     private final Date creationTime = new Date();
     private Date testStartTime;
-    private final ScoreContainer scoreContainer = null;
+
+    @JsonProperty("Score")
+    private final ScoreContainer overallScoreContainer = new ScoreContainer();
 
     private final Map<String, AnvilTestRun> activeTestRuns = new HashMap<>();
     private final Map<TestResult, List<String>> resultTestMap = new HashMap<>();
@@ -60,6 +65,7 @@ public class AnvilContext {
         this.config = config;
         this.configString = configString;
         this.mapper = new AnvilJsonMapper(config);
+        this.metadataFetcher = new MetadataFetcher();
     }
 
     public void abortRemainingTests() {
@@ -88,7 +94,7 @@ public class AnvilContext {
 
     public synchronized void testFinished(String uniqueId) {
         finishedTests.put(uniqueId, true);
-        // TODO scoreContainer.merge(activeTestRuns.get(uniqueId).getScoreContainer());
+        overallScoreContainer.merge(activeTestRuns.get(uniqueId).getScoreContainer());
         AnvilTestRun finishedContainer = activeTestRuns.remove(uniqueId);
         testsDone++;
         if (finishedContainer.getTestCases() != null) {
@@ -145,8 +151,8 @@ public class AnvilContext {
         return testsDone;
     }
 
-    public ScoreContainer getScoreContainer() {
-        return scoreContainer;
+    public ScoreContainer getOverallScoreContainer() {
+        return overallScoreContainer;
     }
 
     public Map<TestResult, List<String>> getResultTestMap() {
@@ -172,6 +178,10 @@ public class AnvilContext {
 
     public AnvilJsonMapper getMapper() {
         return mapper;
+    }
+
+    public MetadataFetcher getMetadataFetcher() {
+        return metadataFetcher;
     }
 
     public String getConfigString() {

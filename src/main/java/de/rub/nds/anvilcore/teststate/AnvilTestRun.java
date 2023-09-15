@@ -10,6 +10,7 @@ package de.rub.nds.anvilcore.teststate;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import de.rub.nds.anvilcore.annotation.TestId;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.junit.Utils;
 import de.rub.nds.anvilcore.model.ParameterCombination;
@@ -17,6 +18,7 @@ import de.rub.nds.anvilcore.teststate.reporting.ScoreContainer;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
@@ -34,6 +36,7 @@ public class AnvilTestRun {
     private final long startTime = System.currentTimeMillis();
     private int resultRaw = 0;
     private String uniqueId;
+    private String testId;
     private Method testMethod;
     private Class<?> testClass;
 
@@ -58,7 +61,8 @@ public class AnvilTestRun {
     @JsonProperty("FailureInducingCombinations")
     private List<ParameterCombination> failureInducingCombinations;
 
-    @JsonUnwrapped private ScoreContainer scoreContainer;
+    @JsonProperty("Score")
+    private ScoreContainer scoreContainer;
 
     @JsonProperty("TestMethod")
     private String getTestMethodString() {
@@ -73,6 +77,11 @@ public class AnvilTestRun {
     @JsonProperty("CaseCount")
     private int getCaseCount() {
         return testCases.size();
+    }
+
+    @JsonUnwrapped
+    private Map getMetadata() {
+        return AnvilContext.getInstance().getMetadataFetcher().getRawMetadata(testId);
     }
 
     @Override
@@ -90,13 +99,15 @@ public class AnvilTestRun {
 
     public AnvilTestRun(ExtensionContext extensionContext) {
         this.uniqueId = extensionContext.getUniqueId();
-        this.scoreContainer = null;
         this.testClass =
                 Utils.getTemplateContainerExtensionContext(extensionContext).getRequiredTestClass();
         this.testMethod =
                 Utils.getTemplateContainerExtensionContext(extensionContext)
                         .getTestMethod()
                         .orElseThrow();
+        TestId testIdAnnotation = this.testMethod.getAnnotation(TestId.class);
+        this.testId = testIdAnnotation == null ? getTestMethodName() : testIdAnnotation.value();
+        this.scoreContainer = new ScoreContainer(testId);
     }
 
     public static synchronized AnvilTestRun forExtensionContext(ExtensionContext extensionContext) {
@@ -115,7 +126,6 @@ public class AnvilTestRun {
     public void setResultRaw(int resultRaw) {
         this.resultRaw = resultRaw;
         result = TestResult.resultForBitmask(resultRaw);
-        // scoreContainer.updateForResult(result);
     }
 
     public void finish() {
@@ -127,6 +137,7 @@ public class AnvilTestRun {
         if (result == TestResult.DISABLED && getDisabledReason() != null) {
             LOGGER.info("{} is disable because {}", getTestMethodName(), getDisabledReason());
         }
+        scoreContainer.updateForResult(result);
         AnvilContext.getInstance()
                 .addTestResult(result, testClass.getName() + "." + testMethod.getName());
         AnvilContext.getInstance().testFinished(uniqueId);
