@@ -8,7 +8,7 @@
  */
 package de.rub.nds.anvilcore.teststate.reporting;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 import de.rub.nds.anvilcore.teststate.TestResult;
 
 public class Score {
@@ -43,7 +43,7 @@ public class Score {
         this.reached = reached;
     }
 
-    @JsonProperty("Percentage")
+    @JsonValue
     public double getPercentage() {
         if (total == 0) return 100;
         return reached / total * 100;
