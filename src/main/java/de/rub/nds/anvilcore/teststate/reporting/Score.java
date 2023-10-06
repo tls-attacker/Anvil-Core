@@ -46,7 +46,8 @@ public class Score {
     @JsonValue
     public double getPercentage() {
         if (total == 0) return 100;
-        return reached / total * 100;
+        // rounded to two decimal places
+        return Math.round(reached / total * 10000) / 100.0;
     }
 
     public void updateForTestResult(TestResult result) {

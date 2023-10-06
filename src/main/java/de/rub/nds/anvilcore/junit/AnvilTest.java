@@ -28,7 +28,7 @@ import org.junit.jupiter.params.aggregator.ArgumentsAccessor;
     ValueConstraintsConditionExtension.class,
     ExtensionContextParameterResolver.class
 })
-public abstract class CombinatorialAnvilTest {
+public abstract class AnvilTest {
     protected static final Logger LOGGER = LogManager.getLogger();
 
     protected ExtensionContext extensionContext;

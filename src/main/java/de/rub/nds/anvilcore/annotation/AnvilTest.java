@@ -33,4 +33,6 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 @EnableFaultCharacterization(Ben.class)
 @ModelFromScope()
 @AnvilReporter(AnvilTestWatcher.class)
-public @interface AnvilTest {}
+public @interface AnvilTest {
+    String id() default "";
+}

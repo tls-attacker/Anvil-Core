@@ -8,7 +8,7 @@
  */
 package de.rub.nds.anvilcore.teststate.reporting;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.util.StdDateFormat;
@@ -29,13 +29,10 @@ public class AnvilJsonMapper {
 
     public AnvilJsonMapper(AnvilTestConfig config) {
         mapper = new ObjectMapper();
-        mapper.setVisibility(
-                mapper.getSerializationConfig()
-                        .getDefaultVisibilityChecker()
-                        .withFieldVisibility(JsonAutoDetect.Visibility.NONE)
-                        .withGetterVisibility(JsonAutoDetect.Visibility.NONE)
-                        .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
-                        .withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
+        mapper.disable(MapperFeature.AUTO_DETECT_FIELDS);
+        mapper.disable(MapperFeature.AUTO_DETECT_GETTERS);
+        mapper.disable(MapperFeature.AUTO_DETECT_SETTERS);
+        mapper.disable(MapperFeature.AUTO_DETECT_CREATORS);
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         mapper.setDateFormat(new StdDateFormat());

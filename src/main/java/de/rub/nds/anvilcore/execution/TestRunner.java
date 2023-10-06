@@ -10,6 +10,7 @@ package de.rub.nds.anvilcore.execution;
 
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPackage;
 
+import de.rub.nds.anvilcore.annotation.AnvilTest;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.context.AnvilTestConfig;
 import de.rub.nds.anvilcore.junit.extension.AnvilTestWatcher;
@@ -61,9 +62,9 @@ public class TestRunner {
     }
 
     /**
-     * Starts the testpahse. This function will search for JUnit tests with the {@link
-     * de.rub.nds.anvilcore.annotation.AnvilTest} tag and execute them with varying parameters.
-     * Tests are discovered based on the testPackage parameter in the AnvilConfig.
+     * Starts the testpahse. This function will search for JUnit tests with the {@link AnvilTest}
+     * tag and execute them with varying parameters. Tests are discovered based on the testPackage
+     * parameter in the AnvilConfig.
      */
     public void runTests() {
 

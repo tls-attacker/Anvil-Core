@@ -12,10 +12,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.Set;
 
 public class MetadataFetcher {
 
-    private Map<?, ?> metadataMap = null;
+    private Map<String, ?> metadataMap = null;
 
     public MetadataFetcher() {
         InputStream is = MetadataFetcher.class.getResourceAsStream("/metadata.json");
@@ -34,5 +35,9 @@ public class MetadataFetcher {
 
     public Map<?, ?> getRawMetadata(String id) {
         return (Map<?, ?>) this.metadataMap.get(id);
+    }
+
+    public Set<String> getAllTestIds() {
+        return this.metadataMap.keySet();
     }
 }

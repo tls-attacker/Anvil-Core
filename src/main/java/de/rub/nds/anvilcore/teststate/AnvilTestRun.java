@@ -8,18 +8,17 @@
  */
 package de.rub.nds.anvilcore.teststate;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
-import de.rub.nds.anvilcore.annotation.TestId;
+import de.rub.nds.anvilcore.annotation.AnvilTest;
+import de.rub.nds.anvilcore.annotation.NonCombinatorialAnvilTest;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.junit.Utils;
 import de.rub.nds.anvilcore.model.ParameterCombination;
 import de.rub.nds.anvilcore.teststate.reporting.ScoreContainer;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,9 +28,9 @@ public class AnvilTestRun {
     private static final Logger LOGGER = LogManager.getLogger();
 
     // set when the last finished has been reported by junit
-    private boolean finished = false;
+    @JsonIgnore private boolean finished = false;
     // set when coffee4j reports that the input group has been finished
-    private boolean readyForCompletion = false;
+    @JsonIgnore private boolean readyForCompletion = false;
 
     private final long startTime = System.currentTimeMillis();
     private int resultRaw = 0;
@@ -105,8 +104,16 @@ public class AnvilTestRun {
                 Utils.getTemplateContainerExtensionContext(extensionContext)
                         .getTestMethod()
                         .orElseThrow();
-        TestId testIdAnnotation = this.testMethod.getAnnotation(TestId.class);
-        this.testId = testIdAnnotation == null ? getTestMethodName() : testIdAnnotation.value();
+        NonCombinatorialAnvilTest nonCombinatorialAnvilTest =
+                this.testMethod.getAnnotation(NonCombinatorialAnvilTest.class);
+        AnvilTest anvilTest = this.testMethod.getAnnotation(AnvilTest.class);
+        // this.testId = String.valueOf(getTestMethodName().toUpperCase(Locale.ROOT).hashCode());
+        this.testId = getTestMethodName();
+        if (nonCombinatorialAnvilTest != null && !nonCombinatorialAnvilTest.id().isEmpty()) {
+            testId = nonCombinatorialAnvilTest.id();
+        } else if (anvilTest != null && !anvilTest.id().isEmpty()) {
+            testId = anvilTest.id();
+        }
         this.scoreContainer = new ScoreContainer(testId);
     }
 

@@ -8,12 +8,15 @@
  */
 package de.rub.nds.anvilcore.annotation;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import org.junit.platform.commons.annotation.Testable;
 
 @Retention(RetentionPolicy.RUNTIME)
-public @interface TestId {
-    @JsonProperty("TestId")
-    String value() default "";
+@Target({ElementType.METHOD, ElementType.TYPE})
+@Testable
+public @interface NonCombinatorialAnvilTest {
+    String id() default "";
 }
