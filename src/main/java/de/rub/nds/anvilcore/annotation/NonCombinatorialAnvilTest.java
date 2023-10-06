@@ -12,11 +12,13 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.annotation.Testable;
 
+@Target({ElementType.ANNOTATION_TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
 @Testable
+@Test
 public @interface NonCombinatorialAnvilTest {
     String id() default "";
 }
