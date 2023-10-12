@@ -35,7 +35,10 @@ public class AnvilTestRun {
     private final long startTime = System.currentTimeMillis();
     private int resultRaw = 0;
     private String uniqueId;
+
+    @JsonProperty("Id")
     private String testId;
+
     private Method testMethod;
     private Class<?> testClass;
 
@@ -107,8 +110,7 @@ public class AnvilTestRun {
         NonCombinatorialAnvilTest nonCombinatorialAnvilTest =
                 this.testMethod.getAnnotation(NonCombinatorialAnvilTest.class);
         AnvilTest anvilTest = this.testMethod.getAnnotation(AnvilTest.class);
-        // this.testId = String.valueOf(getTestMethodName().toUpperCase(Locale.ROOT).hashCode());
-        this.testId = getTestMethodName();
+        this.testId = getTestMethodName(); // fallback
         if (nonCombinatorialAnvilTest != null && !nonCombinatorialAnvilTest.id().isEmpty()) {
             testId = nonCombinatorialAnvilTest.id();
         } else if (anvilTest != null && !anvilTest.id().isEmpty()) {
@@ -183,6 +185,10 @@ public class AnvilTestRun {
 
     public void setTestMethod(Method testMethod) {
         this.testMethod = testMethod;
+    }
+
+    public String getTestId() {
+        return testId;
     }
 
     public Class<?> getTestClass() {

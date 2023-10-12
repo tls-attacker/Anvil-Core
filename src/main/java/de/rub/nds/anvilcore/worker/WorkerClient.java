@@ -168,18 +168,16 @@ public class WorkerClient implements AnvilListener {
             case "RESTART_RUN":
                 {
                     String jobId = (String) commandObject.get("jobId");
-                    String className = (String) commandObject.get("className");
-                    String methodName = (String) commandObject.get("methodName");
-                    restartAnvilRun(jobId, className, methodName);
+                    String testId = (String) commandObject.get("testId");
+                    restartAnvilRun(jobId, testId);
                     break;
                 }
             case "RESTART_CASE":
                 {
                     String jobId = (String) commandObject.get("jobId");
-                    String className = (String) commandObject.get("className");
-                    String methodName = (String) commandObject.get("methodName");
+                    String testId = (String) commandObject.get("testId");
                     String uuid = (String) commandObject.get("uuid");
-                    restartCase(jobId, className, methodName, uuid);
+                    restartCase(jobId, testId, uuid);
                     break;
                 }
             case "OK":
@@ -285,37 +283,20 @@ public class WorkerClient implements AnvilListener {
         }
     }
 
-    private void restartAnvilRun(String jobId, String methodName, String className) {}
+    private void restartAnvilRun(String jobId, String testId) {}
 
-    private void restartCase(String jobId, String methodName, String className, String uuid) {
-        // todo reimplement
-    }
-
-    private void startCase(
-            String jobId,
-            String methodName,
-            String className,
-            ParameterCombination parameterCombination) {
-        // todo reimplement
-    }
-
-    private void restartTestrun(String methodName, String className) {
-        // todo reimplement
-    }
-
-    private void startTestrun(String methodName, String className) {
+    private void restartCase(String jobId, String testId, String uuid) {
         // todo reimplement
     }
 
     @Override
-    public void onTestCaseFinished(AnvilTestCase testCase, String className, String methodName) {
+    public void onTestCaseFinished(AnvilTestCase testCase, String testId) {
         if (listener != null) {
-            listener.onTestCaseFinished(testCase, className, methodName);
+            listener.onTestCaseFinished(testCase, testId);
         }
         Map<String, Object> stateUpdate = new LinkedHashMap<>();
         stateUpdate.put("jobId", activeJobId);
-        stateUpdate.put("className", className);
-        stateUpdate.put("methodName", methodName);
+        stateUpdate.put("testId", testId);
         stateUpdate.put("testCase", testCase);
 
         postUpdateAsync("worker/update/testcase", stateUpdate);
