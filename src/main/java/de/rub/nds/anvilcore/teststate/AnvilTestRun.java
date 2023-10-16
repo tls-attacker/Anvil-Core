@@ -36,14 +36,48 @@ public class AnvilTestRun {
     private int resultRaw = 0;
     private String uniqueId;
 
-    @JsonProperty("Id")
+    @JsonProperty("TestId")
     private String testId;
 
     private Method testMethod;
     private Class<?> testClass;
 
-    // todo what about HasStateWithAdditionalResultInformation,
-    // HasVaryingAdditionalResultInformation
+    @JsonProperty("HasStateWithAdditionalResultInformation")
+    private boolean hasStateWithAdditionalResultInformation() {
+        if (testCases == null) {
+            return false;
+        }
+        return testCases.stream()
+                .anyMatch(
+                        tC ->
+                                tC.getAdditionalResultInformation() != null
+                                        && !tC.getAdditionalResultInformation().isEmpty());
+    }
+
+    @JsonProperty("HasVaryingAdditionalResultInformation")
+    private boolean hasVaryingAdditionalResultInformation() {
+        if (testCases == null) {
+            return false;
+        }
+        Optional<AnvilTestCase> testCase =
+                testCases.stream()
+                        .filter(
+                                tC ->
+                                        tC.getAdditionalResultInformation() != null
+                                                && !tC.getAdditionalResultInformation().isEmpty())
+                        .findFirst();
+        if (testCase.isEmpty()) return false;
+        List<String> additionalInformation = testCase.get().getAdditionalResultInformation();
+        return !testCases.stream()
+                .filter(
+                        tC ->
+                                tC.getAdditionalResultInformation() != null
+                                        && !tC.getAdditionalResultInformation().isEmpty())
+                .allMatch(
+                        tC ->
+                                new HashSet<>(tC.getAdditionalResultInformation())
+                                        .containsAll(additionalInformation));
+    }
 
     @JsonProperty("TestCases")
     private List<AnvilTestCase> testCases = new ArrayList<>();
