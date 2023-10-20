@@ -64,7 +64,9 @@ public class AnvilReport {
     @JsonProperty("Running")
     private boolean running;
 
-    @JsonUnwrapped private ScoreContainer scoreContainer;
+    @JsonProperty("Score")
+    @JsonUnwrapped
+    private ScoreContainer scoreContainer;
 
     public AnvilReport(AnvilContext context, boolean running) {
         this.elapsedTime = System.currentTimeMillis() - context.getCreationTime().getTime();
@@ -93,7 +95,7 @@ public class AnvilReport {
         this.totalTests = context.getTotalTests();
         this.finishedTests = context.getTestsDone();
         this.testCaseCount = context.getTestCases();
-        this.scoreContainer = context.getScoreContainer();
+        this.scoreContainer = context.getOverallScoreContainer();
         this.configString = context.getConfigString();
         try {
             this.anvilConfigString = new ObjectMapper().writeValueAsString(context.getConfig());

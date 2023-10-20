@@ -8,7 +8,6 @@
  */
 package de.rub.nds.anvilcore.annotation;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import de.rub.nds.anvilcore.coffee4j.junit.AnvilCombinatorialTestExtension;
 import de.rub.nds.anvilcore.coffee4j.junit.AnvilReporter;
 import de.rub.nds.anvilcore.coffee4j.model.ModelFromScope;
@@ -35,6 +34,5 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 @ModelFromScope()
 @AnvilReporter(AnvilTestWatcher.class)
 public @interface AnvilTest {
-    @JsonProperty("Description")
-    String description() default "";
+    String id() default "";
 }
