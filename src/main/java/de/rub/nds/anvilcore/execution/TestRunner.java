@@ -11,7 +11,6 @@ package de.rub.nds.anvilcore.execution;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPackage;
 
 import de.rub.nds.anvilcore.annotation.AnvilTest;
-import de.rub.nds.anvilcore.annotation.TestId;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.context.AnvilTestConfig;
 import de.rub.nds.anvilcore.context.ProfileResolver;
@@ -99,19 +98,24 @@ public class TestRunner {
                                 MethodBasedTestDescriptor md =
                                         (MethodBasedTestDescriptor) descriptor;
                                 Method method = md.getTestMethod();
-                                TestId testId = method.getAnnotation(TestId.class);
-                                if (testId != null) {
-                                    int pos = ids.indexOf(testId.value());
-                                    if (pos != -1) {
-                                        return FilterResult.included(null);
+                                String anvilTestId = null;
+                                try {
+                                    anvilTestId = method.getAnnotation(AnvilTest.class).id();
+                                } catch (NullPointerException e) {
+                                    LOGGER.debug("Method " + method + " has no ID");
+                                }
+                                if (anvilTestId != null) {
+                                    if (ids.contains(anvilTestId)) {
+                                        return FilterResult.included("Profile includes ID");
+
                                     } else {
-                                        return FilterResult.excluded(null);
+                                        return FilterResult.excluded("Profile does not include ID");
                                     }
                                 }
-                                return FilterResult.excluded("default - noId");
+                                return FilterResult.excluded("Method has no ID");
                             }
                             return FilterResult.included(
-                                    "default - not instanceof MethodBasedTestDescriptor");
+                                    "Method is not instance of MethodBasedTestDescriptor");
                         });
         LauncherDiscoveryRequest request = builder.build();
         SummaryGeneratingListener summaryListener = new SummaryGeneratingListener();
