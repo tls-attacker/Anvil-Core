@@ -41,15 +41,7 @@ public class AnvilJsonMapper {
     }
 
     public void saveTestRunToPath(AnvilTestRun testRun) {
-        String method = testRun.getTestMethodName();
-        // truncate the class name to shorten the path length
-        // basically throw away the common package, i.e. everything before "server" or "client"
-        String pName = config.getTestPackage();
-        method = method.replace(pName + ".", "");
-
-        String[] folderComponents = method.split("\\.");
-
-        Path filePath = Paths.get(config.getOutputFolder(), folderComponents);
+        Path filePath = Paths.get(config.getOutputFolder(), "results", testRun.getTestId());
         filePath = filePath.resolve("_testRun.json");
         File f = new File(filePath.toString());
 

@@ -64,7 +64,9 @@ public class AnvilReport {
     @JsonProperty("Running")
     private boolean running;
 
-    @JsonUnwrapped private ScoreContainer scoreContainer;
+    @JsonProperty("Score")
+    @JsonUnwrapped
+    private ScoreContainer scoreContainer;
 
     public AnvilReport(AnvilContext context, boolean running) {
         this.elapsedTime = System.currentTimeMillis() - context.getCreationTime().getTime();

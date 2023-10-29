@@ -72,10 +72,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             if (AnvilContext.getInstance().getListener() != null) {
                 AnvilContext.getInstance()
                         .getListener()
-                        .onTestCaseFinished(
-                                testCase,
-                                testRun.getTestClass().getName(),
-                                testRun.getTestMethod().getName());
+                        .onTestCaseFinished(testCase, testRun.getTestId());
             }
 
             if (testRun.isReadyForCompletion()) {
@@ -142,7 +139,10 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             processNonCombinatorial(testRun, extensionContext, TestResult.FULLY_FAILED, cause);
         } else {
             AnvilTestCase testCase = getTestCase(extensionContext, testRun);
-            if (testCase != null && cause != null && testCase.getTestResult() == null) {
+            if (testCase != null
+                    && cause != null
+                    && (testCase.getTestResult() == null
+                            || testCase.getTestResult() == TestResult.NOT_SPECIFIED)) {
                 // default to failed for all thrown exceptions
                 testCase.setTestResult(TestResult.FULLY_FAILED);
             }
@@ -151,10 +151,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             if (AnvilContext.getInstance().getListener() != null) {
                 AnvilContext.getInstance()
                         .getListener()
-                        .onTestCaseFinished(
-                                testCase,
-                                testRun.getTestClass().getName(),
-                                testRun.getTestMethod().getName());
+                        .onTestCaseFinished(testCase, testRun.getTestId());
             }
 
             if (testRun.isReadyForCompletion()) {

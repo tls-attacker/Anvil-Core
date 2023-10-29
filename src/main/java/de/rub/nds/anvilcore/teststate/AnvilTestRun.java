@@ -35,12 +35,49 @@ public class AnvilTestRun {
     private final long startTime = System.currentTimeMillis();
     private int resultRaw = 0;
     private String uniqueId;
+
+    @JsonProperty("TestId")
     private String testId;
+
     private Method testMethod;
     private Class<?> testClass;
 
-    // todo what about HasStateWithAdditionalResultInformation,
-    // HasVaryingAdditionalResultInformation
+    @JsonProperty("HasStateWithAdditionalResultInformation")
+    private boolean hasStateWithAdditionalResultInformation() {
+        if (testCases == null) {
+            return false;
+        }
+        return testCases.stream()
+                .anyMatch(
+                        tC ->
+                                tC.getAdditionalResultInformation() != null
+                                        && !tC.getAdditionalResultInformation().isEmpty());
+    }
+
+    @JsonProperty("HasVaryingAdditionalResultInformation")
+    private boolean hasVaryingAdditionalResultInformation() {
+        if (testCases == null) {
+            return false;
+        }
+        Optional<AnvilTestCase> testCase =
+                testCases.stream()
+                        .filter(
+                                tC ->
+                                        tC.getAdditionalResultInformation() != null
+                                                && !tC.getAdditionalResultInformation().isEmpty())
+                        .findFirst();
+        if (testCase.isEmpty()) return false;
+        List<String> additionalInformation = testCase.get().getAdditionalResultInformation();
+        return !testCases.stream()
+                .filter(
+                        tC ->
+                                tC.getAdditionalResultInformation() != null
+                                        && !tC.getAdditionalResultInformation().isEmpty())
+                .allMatch(
+                        tC ->
+                                new HashSet<>(tC.getAdditionalResultInformation())
+                                        .containsAll(additionalInformation));
+    }
 
     @JsonProperty("TestCases")
     private List<AnvilTestCase> testCases = new ArrayList<>();
@@ -107,8 +144,7 @@ public class AnvilTestRun {
         NonCombinatorialAnvilTest nonCombinatorialAnvilTest =
                 this.testMethod.getAnnotation(NonCombinatorialAnvilTest.class);
         AnvilTest anvilTest = this.testMethod.getAnnotation(AnvilTest.class);
-        // this.testId = String.valueOf(getTestMethodName().toUpperCase(Locale.ROOT).hashCode());
-        this.testId = getTestMethodName();
+        this.testId = getTestMethodName(); // fallback
         if (nonCombinatorialAnvilTest != null && !nonCombinatorialAnvilTest.id().isEmpty()) {
             testId = nonCombinatorialAnvilTest.id();
         } else if (anvilTest != null && !anvilTest.id().isEmpty()) {
@@ -183,6 +219,10 @@ public class AnvilTestRun {
 
     public void setTestMethod(Method testMethod) {
         this.testMethod = testMethod;
+    }
+
+    public String getTestId() {
+        return testId;
     }
 
     public Class<?> getTestClass() {
