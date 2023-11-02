@@ -20,10 +20,12 @@ import org.apache.logging.log4j.Logger;
 public class AnvilTestConfig {
     static Logger LOGGER = LogManager.getLogger();
 
-    @Parameter(names = "-profiles", description = "profiles")
+    @Parameter(names = "-profiles", description = "Which profiles should be used")
     private List<String> profiles = new ArrayList<String>();
 
-    @Parameter(names = "-profileFolder", description = "profileFolder")
+    @Parameter(
+            names = "-profileFolder",
+            description = "Path to the Folder which contains the profile definitions as json files")
     private String profileFolder = null;
 
     @Parameter(names = "-tags", description = "Run only tests containing on of the specified tags")

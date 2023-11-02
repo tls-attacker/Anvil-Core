@@ -30,5 +30,5 @@ public interface AnvilListener {
 
     default void onTestRunFinished(AnvilTestRun testRun) {}
 
-    default void onTestCaseFinished(AnvilTestCase testCase, String className, String methodName) {}
+    default void onTestCaseFinished(AnvilTestCase testCase, String testId) {}
 }
