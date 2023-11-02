@@ -104,8 +104,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         testRun.finish();
     }
 
-    private AnvilTestCase getTestCase(
-            ExtensionContext extensionContext, AnvilTestRun anvilTestRun) {
+    public AnvilTestCase getTestCase(ExtensionContext extensionContext, AnvilTestRun anvilTestRun) {
         return anvilTestRun.getTestCases().stream()
                 .filter(
                         testCase ->
