@@ -19,7 +19,7 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 
 public class ProfileResolver {
-    String path = "";
+    String path;
     ObjectMapper objectMapper = new ObjectMapper();
 
     private static final int MAX_DEPTH = 10;

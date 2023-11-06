@@ -69,8 +69,6 @@ public class TestRunner {
      * parameter in the AnvilConfig.
      */
     public void runTests() {
-        // if (true) return;
-
         LauncherDiscoveryRequestBuilder builder =
                 LauncherDiscoveryRequestBuilder.request()
                         .selectors(selectPackage(config.getTestPackage()))
@@ -89,34 +87,36 @@ public class TestRunner {
         if (!config.getTags().isEmpty()) {
             builder.filters(TagFilter.includeTags(config.getTags()));
         }
-        ProfileResolver profileResolver = new ProfileResolver(config.getProfileFolder());
-        List<String> ids = profileResolver.resolve(config.getProfiles());
-        builder.filters(
-                (PostDiscoveryFilter)
-                        descriptor -> {
-                            if (descriptor instanceof MethodBasedTestDescriptor) {
-                                MethodBasedTestDescriptor md =
-                                        (MethodBasedTestDescriptor) descriptor;
-                                Method method = md.getTestMethod();
-                                String anvilTestId = null;
-                                try {
-                                    anvilTestId = method.getAnnotation(AnvilTest.class).id();
-                                } catch (NullPointerException e) {
-                                    LOGGER.debug("Method " + method + " has no ID");
-                                }
-                                if (anvilTestId != null) {
-                                    if (ids.contains(anvilTestId)) {
-                                        return FilterResult.included("Profile includes ID");
-
-                                    } else {
-                                        return FilterResult.excluded("Profile does not include ID");
+        if (!config.getProfiles().isEmpty()) {
+            ProfileResolver profileResolver = new ProfileResolver(config.getProfileFolder());
+            List<String> ids = profileResolver.resolve(config.getProfiles());
+            builder.filters(
+                    (PostDiscoveryFilter)
+                            descriptor -> {
+                                if (descriptor instanceof MethodBasedTestDescriptor) {
+                                    MethodBasedTestDescriptor md =
+                                            (MethodBasedTestDescriptor) descriptor;
+                                    Method method = md.getTestMethod();
+                                    String anvilTestId = null;
+                                    try {
+                                        anvilTestId = method.getAnnotation(AnvilTest.class).id();
+                                    } catch (NullPointerException e) {
+                                        LOGGER.debug("Method " + method + " has no ID");
                                     }
+                                    if (anvilTestId != null) {
+                                        if (ids.contains(anvilTestId)) {
+                                            return FilterResult.included("Profile includes ID");
+                                        } else {
+                                            return FilterResult.excluded(
+                                                    "Profile does not include ID");
+                                        }
+                                    }
+                                    return FilterResult.excluded("Method has no ID");
                                 }
-                                return FilterResult.excluded("Method has no ID");
-                            }
-                            return FilterResult.included(
-                                    "Method is not instance of MethodBasedTestDescriptor");
-                        });
+                                return FilterResult.included(
+                                        "Method is not instance of MethodBasedTestDescriptor");
+                            });
+        }
         LauncherDiscoveryRequest request = builder.build();
         SummaryGeneratingListener summaryListener = new SummaryGeneratingListener();
         AnvilTestWatcher anvilTestWatcher = new AnvilTestWatcher();
