@@ -45,7 +45,8 @@ public class ProfileResolver {
                 objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
                 profile = objectMapper.readValue(new File(this.path, p + ".json"), Profile.class);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                LOGGER.error("Error while parsing profile");
+                return new ArrayList<>();
             }
             resolvedIds.addAll(profile.getTestIds());
             if (!profile.getProfiles().isEmpty())
