@@ -20,6 +20,14 @@ import org.apache.logging.log4j.Logger;
 public class AnvilTestConfig {
     static Logger LOGGER = LogManager.getLogger();
 
+    @Parameter(names = "-profiles", description = "Which profiles should be used")
+    private List<String> profiles = new ArrayList<String>();
+
+    @Parameter(
+            names = "-profileFolder",
+            description = "Path to the Folder which contains the profile definitions as json files")
+    private String profileFolder = System.getProperty("user.dir");
+
     @Parameter(names = "-tags", description = "Run only tests containing on of the specified tags")
     private List<String> tags = new ArrayList<>();
 
@@ -95,6 +103,22 @@ public class AnvilTestConfig {
     private boolean disableTcpDump = false;
 
     private TestEndpointType endpointMode;
+
+    public List<String> getProfiles() {
+        return profiles;
+    }
+
+    public void setProfiles(List<String> profiles) {
+        this.profiles = profiles;
+    }
+
+    public String getProfileFolder() {
+        return profileFolder;
+    }
+
+    public void setProfileFolder(String profileFolder) {
+        this.profileFolder = profileFolder;
+    }
 
     public TestEndpointType getEndpointMode() {
         return endpointMode;
