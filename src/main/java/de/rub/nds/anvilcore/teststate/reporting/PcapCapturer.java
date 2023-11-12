@@ -8,6 +8,7 @@
  */
 package de.rub.nds.anvilcore.teststate.reporting;
 
+import de.rub.nds.anvilcore.context.AnvilContext;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
@@ -53,10 +54,12 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
         /**
          * Name of the network interface to capture on.
          *
-         * <p>This value is set {@code "any"} by default.
+         * <p>On non-widows platforms this value is set {@code "any"} by default.
          */
-        private String interfaceName = "any";
-
+        private String interfaceName =
+                (System.getProperty("os.name").toLowerCase().indexOf("win") == -1)
+                        ? "any"
+                        : AnvilContext.getInstance().getConfig().getNetworkInterface();
         /**
          * Whether to use promiscuous mode for the network interface or not.
          *
@@ -211,7 +214,6 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
         final PcapNetworkInterface device = Pcaps.getDevByName(interfaceName);
         this.pcapHandle = device.openLive(snapshotLengthBytes, promiscuousMode, readTimeoutMillis);
         this.pcapDumper = this.pcapHandle.dumpOpen(filePath);
-
         if (bpfExpression.isPresent()) {
             this.pcapHandle.setFilter(bpfExpression.get(), BpfCompileMode.OPTIMIZE);
         }

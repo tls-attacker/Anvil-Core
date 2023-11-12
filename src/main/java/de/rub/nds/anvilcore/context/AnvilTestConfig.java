@@ -26,7 +26,7 @@ public class AnvilTestConfig {
     @Parameter(
             names = "-profileFolder",
             description = "Path to the Folder which contains the profile definitions as json files")
-    private String profileFolder = null;
+    private String profileFolder = System.getProperty("user.dir");
 
     @Parameter(names = "-tags", description = "Run only tests containing on of the specified tags")
     private List<String> tags = new ArrayList<>();
