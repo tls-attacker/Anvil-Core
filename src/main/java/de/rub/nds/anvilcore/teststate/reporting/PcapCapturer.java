@@ -54,7 +54,7 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
         /**
          * Name of the network interface to capture on.
          *
-         * <p>On non-widows platforms this value is set {@code "any"} by default.
+         * <p>On non-windows platforms this value is set {@code "any"} by default.
          */
         private String interfaceName =
                 (System.getProperty("os.name").toLowerCase().indexOf("win") == -1)
