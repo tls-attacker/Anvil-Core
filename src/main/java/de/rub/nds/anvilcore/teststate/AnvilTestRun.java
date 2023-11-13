@@ -133,12 +133,6 @@ public class AnvilTestRun {
         return testClass.getName() + "." + testMethod.getName();
     }
 
-    public void finalizeTestCases() {
-        for (AnvilTestCase c : this.testCases) {
-            c.finalizeAnvilTestCase();
-        }
-    }
-
     public AnvilTestRun(ExtensionContext extensionContext) {
         this.uniqueId = extensionContext.getUniqueId();
         this.testClass =
@@ -189,7 +183,6 @@ public class AnvilTestRun {
         scoreContainer.updateForResult(result);
         AnvilContext.getInstance()
                 .addTestResult(result, testClass.getName() + "." + testMethod.getName());
-        finalizeTestCases();
         AnvilContext.getInstance().getMapper().saveTestRunToPath(this);
         AnvilContext.getInstance().testFinished(uniqueId);
     }

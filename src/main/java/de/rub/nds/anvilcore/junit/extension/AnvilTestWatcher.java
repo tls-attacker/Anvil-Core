@@ -64,11 +64,16 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             processNonCombinatorial(testRun, extensionContext, TestResult.STRICTLY_SUCCEEDED, null);
         } else {
             AnvilTestCase testCase = getTestCase(extensionContext, testRun);
-            if (testCase != null && testCase.getTestResult() == null) {
+            if (testCase == null) {
+                LOGGER.error("TestCase sould not be null");
+                return;
+            }
+            if (testCase.getTestResult() == null) {
                 // test template did not yield a reason why this test did not succeed
                 testCase.setTestResult(TestResult.STRICTLY_SUCCEEDED);
             }
 
+            testCase.finalizeAnvilTestCase();
             if (AnvilContext.getInstance().getListener() != null) {
                 AnvilContext.getInstance()
                         .getListener()
@@ -138,8 +143,11 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             processNonCombinatorial(testRun, extensionContext, TestResult.FULLY_FAILED, cause);
         } else {
             AnvilTestCase testCase = getTestCase(extensionContext, testRun);
-            if (testCase != null
-                    && cause != null
+            if (testCase == null) {
+                LOGGER.error("TestCase should not be null.");
+                return;
+            }
+            if (cause != null
                     && (testCase.getTestResult() == null
                             || testCase.getTestResult() == TestResult.NOT_SPECIFIED)) {
                 // default to failed for all thrown exceptions
@@ -147,6 +155,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             }
             testRun.setFailedReason(cause.toString());
 
+            testCase.finalizeAnvilTestCase();
             if (AnvilContext.getInstance().getListener() != null) {
                 AnvilContext.getInstance()
                         .getListener()
