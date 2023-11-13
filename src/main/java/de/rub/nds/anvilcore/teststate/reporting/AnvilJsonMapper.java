@@ -65,6 +65,18 @@ public class AnvilJsonMapper {
         }
     }
 
+    public void saveExtraFileToPath(Object fileToSave, String fileName) {
+        Path path = Path.of(config.getOutputFolder(), fileName.trim() + ".json");
+        File f = new File(path.toString());
+
+        try {
+            createEmptyFile(path.toString());
+            new ObjectMapper().writeValue(f, fileToSave);
+        } catch (Exception e) {
+            LOGGER.error("Failed to save file " + fileName, e);
+        }
+    }
+
     public static void createEmptyFile(String path) throws IOException {
         File f = new File(path);
         f.getParentFile().mkdirs();

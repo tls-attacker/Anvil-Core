@@ -13,19 +13,21 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPacka
 import de.rub.nds.anvilcore.annotation.AnvilTest;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.context.AnvilTestConfig;
+import de.rub.nds.anvilcore.context.ProfileResolver;
 import de.rub.nds.anvilcore.junit.extension.AnvilTestWatcher;
 import de.rub.nds.anvilcore.model.ParameterIdentifierProvider;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.engine.descriptor.MethodBasedTestDescriptor;
+import org.junit.platform.engine.FilterResult;
 import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.support.descriptor.MethodSource;
-import org.junit.platform.launcher.Launcher;
-import org.junit.platform.launcher.LauncherDiscoveryRequest;
-import org.junit.platform.launcher.TagFilter;
-import org.junit.platform.launcher.TestPlan;
+import org.junit.platform.launcher.*;
 import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
@@ -67,7 +69,6 @@ public class TestRunner {
      * parameter in the AnvilConfig.
      */
     public void runTests() {
-
         LauncherDiscoveryRequestBuilder builder =
                 LauncherDiscoveryRequestBuilder.request()
                         .selectors(selectPackage(config.getTestPackage()))
@@ -86,9 +87,37 @@ public class TestRunner {
         if (!config.getTags().isEmpty()) {
             builder.filters(TagFilter.includeTags(config.getTags()));
         }
-
+        if (!config.getProfiles().isEmpty()) {
+            ProfileResolver profileResolver = new ProfileResolver(config.getProfileFolder());
+            List<String> ids = profileResolver.resolve(config.getProfiles());
+            builder.filters(
+                    (PostDiscoveryFilter)
+                            descriptor -> {
+                                if (descriptor instanceof MethodBasedTestDescriptor) {
+                                    MethodBasedTestDescriptor md =
+                                            (MethodBasedTestDescriptor) descriptor;
+                                    Method method = md.getTestMethod();
+                                    String anvilTestId = null;
+                                    try {
+                                        anvilTestId = method.getAnnotation(AnvilTest.class).id();
+                                    } catch (NullPointerException e) {
+                                        LOGGER.debug("Method " + method + " has no ID");
+                                    }
+                                    if (anvilTestId != null) {
+                                        if (ids.contains(anvilTestId)) {
+                                            return FilterResult.included("Profile includes ID");
+                                        } else {
+                                            return FilterResult.excluded(
+                                                    "Profile does not include ID");
+                                        }
+                                    }
+                                    return FilterResult.excluded("Method has no ID");
+                                }
+                                return FilterResult.included(
+                                        "Method is not instance of MethodBasedTestDescriptor");
+                            });
+        }
         LauncherDiscoveryRequest request = builder.build();
-
         SummaryGeneratingListener summaryListener = new SummaryGeneratingListener();
         AnvilTestWatcher anvilTestWatcher = new AnvilTestWatcher();
 
