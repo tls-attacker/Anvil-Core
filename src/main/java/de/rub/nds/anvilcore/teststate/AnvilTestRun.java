@@ -189,9 +189,9 @@ public class AnvilTestRun {
         scoreContainer.updateForResult(result);
         AnvilContext.getInstance()
                 .addTestResult(result, testClass.getName() + "." + testMethod.getName());
-        AnvilContext.getInstance().testFinished(uniqueId);
+        finalizeTestCases();
         AnvilContext.getInstance().getMapper().saveTestRunToPath(this);
-        this.finalizeTestCases();
+        AnvilContext.getInstance().testFinished(uniqueId);
     }
 
     public TestResult resolveFinalResult() {
