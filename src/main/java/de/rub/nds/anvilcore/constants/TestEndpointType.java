@@ -23,4 +23,10 @@ public enum TestEndpointType {
     public String toString() {
         return this.mode;
     }
+
+    public boolean isMatchingTestEndpointType(TestEndpointType otherType) {
+        return this == otherType
+                || otherType == TestEndpointType.BOTH
+                || this == TestEndpointType.BOTH;
+    }
 }
