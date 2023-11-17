@@ -63,7 +63,8 @@ public class MethodConditionExtension implements ExecutionCondition {
         return currentEvalResult;
     }
 
-    private Method getMethodForAnnotation(MethodCondition methodCondition, Class<?> testClass) {
+    public static Method getMethodForAnnotation(
+            MethodCondition methodCondition, Class<?> testClass) {
         if (methodCondition.clazz().equals(Object.class)) {
             return resolveMethod(testClass, methodCondition.method());
         } else {
@@ -71,7 +72,7 @@ public class MethodConditionExtension implements ExecutionCondition {
         }
     }
 
-    private Method resolveMethod(Class<?> clazz, String method) {
+    public static Method resolveMethod(Class<?> clazz, String method) {
         try {
             Arrays.stream(clazz.getDeclaredMethods()).forEach(m -> m.setAccessible(true));
             try {
