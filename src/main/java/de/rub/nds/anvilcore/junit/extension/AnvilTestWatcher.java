@@ -24,6 +24,8 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestWatcher;
 import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.TestSource;
+import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
@@ -193,6 +195,9 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             TestInputGroupContext context, List<Combination> testInputs) {
         AnvilTestRun testRun = new AnvilTestRun(extensionContext);
         AnvilContext.getInstance().addActiveTestRun(testRun);
+        AnvilContext.getInstance()
+                .addEndInputGenerationTime(
+                        extensionContext.getRequiredTestMethod().toString(), new Date());
         LOGGER.trace(
                 "Test Inputs generated for " + extensionContext.getRequiredTestMethod().getName());
     }
@@ -275,9 +280,17 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
      */
     @Override
     public void executionStarted(TestIdentifier testIdentifier) {
+        long time = System.currentTimeMillis();
+        Date date = new Date(time);
         LOGGER.trace(testIdentifier.getDisplayName() + " started");
         if (testIdentifier.isContainer()) {
-            elapsedTimes.put(testIdentifier.getUniqueId(), System.currentTimeMillis());
+            elapsedTimes.put(testIdentifier.getUniqueId(), time);
+        }
+        TestSource source = testIdentifier.getSource().orElse(null);
+        if (testIdentifier.isContainer() && source instanceof MethodSource) {
+            MethodSource methodSource = (MethodSource) source;
+            AnvilContext anvilContext = AnvilContext.getInstance();
+            anvilContext.addStartInputGenerationTime(methodSource.getJavaMethod().toString(), date);
         }
     }
 
@@ -305,7 +318,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
     public void logTestFinished(
             TestExecutionResult testExecutionResult, TestIdentifier testIdentifier) {
         if (testExecutionResult.getThrowable().isPresent() && testIdentifier.isContainer()) {
-            LOGGER.error(
+            LOGGER.info(
                     "Internal exception during execution of test container created for test {}. Exception: ",
                     testIdentifier.getDisplayName(),
                     testExecutionResult.getThrowable().get());

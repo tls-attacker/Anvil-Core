@@ -88,6 +88,12 @@ public class AnvilTestRun {
     @JsonProperty("DisabledReason")
     private String disabledReason;
 
+    @JsonProperty("StartInputGenerationTime")
+    private Date startInputGenerationTime;
+
+    @JsonProperty("EndInputGenerationTime")
+    private Date endInputGenerationTime;
+
     @JsonProperty("FailedReason")
     private String failedReason;
 
@@ -190,8 +196,28 @@ public class AnvilTestRun {
         AnvilContext.getInstance()
                 .addTestResult(result, testClass.getName() + "." + testMethod.getName());
         AnvilContext.getInstance().testFinished(uniqueId);
+        if (result != TestResult.DISABLED) {
+            if (testMethod.getAnnotation(AnvilTest.class) != null) {
+                try {
+                    // AnvilContext.getInstance().getStartInputGenerationTimes();
+                    Date startInputGenerationTimes =
+                            AnvilContext.getInstance()
+                                    .getStartInputGenerationTimes()
+                                    .get(this.testMethod.toString());
+                    Date endInputGenerationTimes =
+                            AnvilContext.getInstance()
+                                    .getEndInputGenerationTimes()
+                                    .get(this.testMethod.toString());
+                    this.setStartInputGenerationTime(startInputGenerationTimes);
+                    this.setEndInputGenerationTime(endInputGenerationTimes);
+                } catch (NullPointerException e) {
+                    LOGGER.warn("Cannot read GenerationTimes");
+                }
+            }
+            this.finalizeTestCases();
+        }
+
         AnvilContext.getInstance().getMapper().saveTestRunToPath(this);
-        this.finalizeTestCases();
     }
 
     public TestResult resolveFinalResult() {
@@ -314,5 +340,21 @@ public class AnvilTestRun {
      */
     public void setReadyForCompletion(boolean readyForCompletion) {
         this.readyForCompletion = readyForCompletion;
+    }
+
+    public Date getStartInputGenerationTime() {
+        return startInputGenerationTime;
+    }
+
+    public void setStartInputGenerationTime(Date startInputGenerationTime) {
+        this.startInputGenerationTime = startInputGenerationTime;
+    }
+
+    public Date getEndInputGenerationTime() {
+        return endInputGenerationTime;
+    }
+
+    public void setEndInputGenerationTime(Date endInputGenerationTime) {
+        this.endInputGenerationTime = endInputGenerationTime;
     }
 }
