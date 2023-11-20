@@ -197,22 +197,22 @@ public class AnvilTestRun {
                 .addTestResult(result, testClass.getName() + "." + testMethod.getName());
         AnvilContext.getInstance().testFinished(uniqueId);
         if (result != TestResult.DISABLED && testMethod.getAnnotation(AnvilTest.class) != null) {
-                try {
-                    // AnvilContext.getInstance().getStartInputGenerationTimes();
-                    Date startInputGenerationTimes =
-                            AnvilContext.getInstance()
-                                    .getStartInputGenerationTimes()
-                                    .get(this.testMethod.toString());
-                    Date endInputGenerationTimes =
-                            AnvilContext.getInstance()
-                                    .getEndInputGenerationTimes()
-                                    .get(this.testMethod.toString());
-                    this.setStartInputGenerationTime(startInputGenerationTimes);
-                    this.setEndInputGenerationTime(endInputGenerationTimes);
-                } catch (NullPointerException e) {
-                    LOGGER.warn("Cannot read GenerationTimes");
-                }
+            try {
+                Date startInputGenerationTimes =
+                        AnvilContext.getInstance()
+                                .getStartInputGenerationTimes()
+                                .get(this.testMethod.toString());
+                Date endInputGenerationTimes =
+                        AnvilContext.getInstance()
+                                .getEndInputGenerationTimes()
+                                .get(this.testMethod.toString());
+                this.setStartInputGenerationTime(startInputGenerationTimes);
+                this.setEndInputGenerationTime(endInputGenerationTimes);
+            } catch (NullPointerException e) {
+                LOGGER.warn("Cannot read GenerationTimes");
             }
+        }
+    }
 
     public TestResult resolveFinalResult() {
         Set<TestResult> uniqueResultTypes =
