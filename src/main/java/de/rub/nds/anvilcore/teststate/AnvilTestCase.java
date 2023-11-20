@@ -131,5 +131,5 @@ public class AnvilTestCase {
         additionalTestInformation.add(info);
     }
 
-    protected void finalizeAnvilTestCase() {}
+    public void finalizeAnvilTestCase() {}
 }

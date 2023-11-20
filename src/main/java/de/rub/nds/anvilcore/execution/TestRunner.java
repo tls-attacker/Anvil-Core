@@ -11,7 +11,6 @@ package de.rub.nds.anvilcore.execution;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPackage;
 
 import de.rub.nds.anvilcore.annotation.AnvilTest;
-import de.rub.nds.anvilcore.annotation.NonCombinatorialAnvilTest;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.context.AnvilTestConfig;
 import de.rub.nds.anvilcore.context.ProfileResolver;
@@ -70,8 +69,6 @@ public class TestRunner {
      * parameter in the AnvilConfig.
      */
     public void runTests() {
-        // if (true) return;
-
         LauncherDiscoveryRequestBuilder builder =
                 LauncherDiscoveryRequestBuilder.request()
                         .selectors(selectPackage(config.getTestPackage()))
