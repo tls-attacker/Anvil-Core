@@ -183,8 +183,8 @@ public class AnvilTestRun {
         scoreContainer.updateForResult(result);
         AnvilContext.getInstance()
                 .addTestResult(result, testClass.getName() + "." + testMethod.getName());
-        AnvilContext.getInstance().testFinished(uniqueId);
         AnvilContext.getInstance().getMapper().saveTestRunToPath(this);
+        AnvilContext.getInstance().testFinished(uniqueId);
     }
 
     public TestResult resolveFinalResult() {

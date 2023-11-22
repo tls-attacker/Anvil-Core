@@ -37,7 +37,7 @@ public class AnvilTestCase {
     private List<String> additionalTestInformation;
 
     private ExtensionContext extensionContext;
-    private AnvilTestRun associatedContainer;
+    protected AnvilTestRun associatedContainer;
 
     public AnvilTestCase() {}
 
@@ -130,4 +130,6 @@ public class AnvilTestCase {
 
         additionalTestInformation.add(info);
     }
+
+    public void finalizeAnvilTestCase() {}
 }
