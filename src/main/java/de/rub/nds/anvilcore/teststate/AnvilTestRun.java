@@ -195,7 +195,7 @@ public class AnvilTestRun {
         scoreContainer.updateForResult(result);
         AnvilContext.getInstance()
                 .addTestResult(result, testClass.getName() + "." + testMethod.getName());
-        AnvilContext.getInstance().testFinished(uniqueId);
+        // AnvilContext.getInstance().testFinished(uniqueId);
         if (result != TestResult.DISABLED && testMethod.getAnnotation(AnvilTest.class) != null) {
             try {
                 Date startInputGenerationTimes =
@@ -212,6 +212,11 @@ public class AnvilTestRun {
                 LOGGER.warn("Cannot read GenerationTimes");
             }
         }
+        scoreContainer.updateForResult(result);
+        AnvilContext.getInstance()
+                .addTestResult(result, testClass.getName() + "." + testMethod.getName());
+        AnvilContext.getInstance().testFinished(uniqueId);
+        AnvilContext.getInstance().getMapper().saveTestRunToPath(this);
     }
 
     public TestResult resolveFinalResult() {
