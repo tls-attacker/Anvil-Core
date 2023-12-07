@@ -73,7 +73,6 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
                 testCase.setTestResult(TestResult.STRICTLY_SUCCEEDED);
             }
 
-            testCase.finalizeAnvilTestCase();
             if (AnvilContext.getInstance().getListener() != null) {
                 AnvilContext.getInstance()
                         .getListener()
@@ -155,7 +154,6 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             }
             testRun.setFailedReason(cause.toString());
 
-            testCase.finalizeAnvilTestCase();
             if (AnvilContext.getInstance().getListener() != null) {
                 AnvilContext.getInstance()
                         .getListener()
