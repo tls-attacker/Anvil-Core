@@ -9,9 +9,12 @@
 package de.rub.nds.anvilcore.teststate.reporting;
 
 import de.rub.nds.anvilcore.context.AnvilContext;
+import de.rub.nds.anvilcore.teststate.AnvilTestCase;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.pcap4j.core.BpfProgram.BpfCompileMode;
@@ -39,6 +42,8 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
 
     /** The thread which takes care of the actual capturing. */
     private final Thread captureThread;
+
+    private AnvilTestCase testCase;
 
     /** Builder for a PcapCapturer instance. */
     public static class Builder {
@@ -98,6 +103,8 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
          * <p>This value is set to 50 by default.
          */
         private int readTimeoutMillis = 50;
+
+        private AnvilTestCase testCase;
 
         /**
          * Set the file path of the PCAP file to write to.
@@ -165,6 +172,11 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
             return this;
         }
 
+        public Builder withTestCase(AnvilTestCase testCase) {
+            this.testCase = testCase;
+            return this;
+        }
+
         /**
          * Build a {@link PcapCapturer} and start capturing.
          *
@@ -182,7 +194,8 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
                     this.promiscuousMode,
                     this.bpfExpression,
                     this.snapshotLengthBytes,
-                    this.readTimeoutMillis);
+                    this.readTimeoutMillis,
+                    this.testCase);
         }
     }
 
@@ -209,7 +222,8 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
             final PromiscuousMode promiscuousMode,
             final Optional<String> bpfExpression,
             final int snapshotLengthBytes,
-            final int readTimeoutMillis)
+            final int readTimeoutMillis,
+            AnvilTestCase testCase)
             throws PcapNativeException, NotOpenException {
         final PcapNetworkInterface device = Pcaps.getDevByName(interfaceName);
         this.pcapHandle = device.openLive(snapshotLengthBytes, promiscuousMode, readTimeoutMillis);
@@ -217,6 +231,8 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
         if (bpfExpression.isPresent()) {
             this.pcapHandle.setFilter(bpfExpression.get(), BpfCompileMode.OPTIMIZE);
         }
+
+        this.testCase = testCase;
 
         this.captureThread = new Thread(this, "pcap-capture");
         this.captureThread.start();
@@ -278,24 +294,24 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
         }
         this.pcapDumper.close();
         this.pcapHandle.close();
+
+        this.testCase.finalizeAnvilTestCase();
     }
 
     @Override
     public void close() throws PcapNativeException {
         // Break the `pcap_loop` call in the capture thread.
-        try {
-            this.pcapHandle.breakLoop();
-        } catch (NotOpenException err) {
-            LOGGER.error("Failed to break PCAP capture loop (handle not open)");
-            throw new RuntimeException();
-        }
-
-        // Now wait until the capture thread exits.
-        try {
-            this.captureThread.join();
-        } catch (InterruptedException err) {
-            LOGGER.error("PCAP capture thread was interrupted while trying to join it");
-            throw new RuntimeException();
-        }
+        Executors.newSingleThreadScheduledExecutor()
+                .schedule(
+                        () -> {
+                            try {
+                                this.pcapHandle.breakLoop();
+                            } catch (NotOpenException err) {
+                                LOGGER.error("Failed to break PCAP capture loop (handle not open)");
+                                throw new RuntimeException();
+                            }
+                        },
+                        5,
+                        TimeUnit.SECONDS);
     }
 }
