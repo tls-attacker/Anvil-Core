@@ -10,6 +10,9 @@ package de.rub.nds.anvilcore.teststate;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.rub.nds.anvilcore.model.ParameterCombination;
+import jakarta.xml.bind.DatatypeConverter;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
@@ -39,6 +42,10 @@ public class AnvilTestCase {
     private ExtensionContext extensionContext;
     protected AnvilTestRun associatedContainer;
 
+    private String caseSpecificPcapFilter = null;
+    private String temporaryPcapFileName = null;
+    private static int pcapFileCounter = 0;
+
     public AnvilTestCase() {}
 
     public AnvilTestCase(
@@ -49,6 +56,25 @@ public class AnvilTestCase {
         this.associatedContainer = AnvilTestRun.forExtensionContext(extensionContext);
         this.associatedContainer.add(this);
         this.testResult = TestResult.NOT_SPECIFIED;
+    }
+
+    @JsonProperty("uuid")
+    public String getUuid() {
+        StringBuilder toHash = new StringBuilder();
+        toHash.append(this.getAdditionalTestInformation());
+        if (getParameterCombination() != null) {
+            toHash.append(this.getParameterCombination().toString());
+        }
+        toHash.append(getAssociatedContainer().getTestClass().getName());
+        toHash.append(getAssociatedContainer().getTestMethod().getName());
+
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(toHash.toString().getBytes(StandardCharsets.UTF_8));
+            return DatatypeConverter.printHexBinary(hash);
+        } catch (Exception e) {
+            throw new RuntimeException("SHA-256 not possible...");
+        }
     }
 
     public TestResult getTestResult() {
@@ -131,5 +157,19 @@ public class AnvilTestCase {
         additionalTestInformation.add(info);
     }
 
-    public void finalizeAnvilTestCase() {}
+    public String getCaseSpecificPcapFilter() {
+        return caseSpecificPcapFilter;
+    }
+
+    public String getTemporaryPcapFileName() {
+        if (temporaryPcapFileName == null) {
+            temporaryPcapFileName = String.format("testcase_%d.pcap", pcapFileCounter);
+            pcapFileCounter++;
+        }
+        return temporaryPcapFileName;
+    }
+
+    public void setTemporaryPcapFileName(String temporaryPcapFileName) {
+        this.temporaryPcapFileName = temporaryPcapFileName;
+    }
 }

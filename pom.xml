@@ -53,6 +53,11 @@
             <groupId>de.rub.nds.tls</groupId>
             <artifactId>coffee4j-anvil-model</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

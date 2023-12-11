@@ -10,11 +10,14 @@ package de.rub.nds.anvilcore.teststate.reporting;
 
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.teststate.AnvilTestCase;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Optional;
+import java.io.EOFException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.pcap4j.core.BpfProgram.BpfCompileMode;
@@ -34,208 +37,78 @@ import org.pcap4j.packet.Packet;
  */
 public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
     private static final Logger LOGGER = LogManager.getLogger();
-    /** PCAP handle that reads from the network interface. */
+
     private final PcapHandle pcapHandle;
-
-    /** PCAP dumper instance that represents the output file. */
+    private final String tmpFilepath;
     private final PcapDumper pcapDumper;
-
-    /** The thread which takes care of the actual capturing. */
     private final Thread captureThread;
+    private final AnvilTestCase testCase;
 
-    private AnvilTestCase testCase;
-
-    /** Builder for a PcapCapturer instance. */
-    public static class Builder {
-        PcapDumper dumper;
-
-        /**
-         * File path of the PCAP file to write to.
-         *
-         * <p>Setting this to a non-empty value is required.
-         */
-        private Optional<String> filePath = Optional.empty();
-
-        /**
-         * Name of the network interface to capture on.
-         *
-         * <p>On non-windows platforms this value is set {@code "any"} by default.
-         */
-        private String interfaceName =
-                (System.getProperty("os.name").toLowerCase().indexOf("win") == -1)
-                        ? "any"
-                        : AnvilContext.getInstance().getConfig().getNetworkInterface();
-        /**
-         * Whether to use promiscuous mode for the network interface or not.
-         *
-         * <p>This value is set to non-promiscuous mode by default.
-         */
-        private PromiscuousMode promiscuousMode = PromiscuousMode.NONPROMISCUOUS;
-
-        /**
-         * Optional filter expression for the Berkeley Packet Filter (BPF).
-         *
-         * <p>This value is empty by default.
-         */
-        private Optional<String> bpfExpression = Optional.empty();
-
-        /**
-         * The maximum length of a captured packet.
-         *
-         * <p>According to the {@code pcap(3)} man page:
-         *
-         * <p>
-         *
-         * <blockquote>
-         *
-         * A snapshot length of 65535 should be sufficient, on most if not all networks, to capture
-         * all the data available from the packet.
-         *
-         * </blockquote>
-         *
-         * <p>Hence, this value is set to 65535 by default.
-         */
-        private int snapshotLengthBytes = 65_535;
-
-        /**
-         * Time to wait for next packet.
-         *
-         * <p>This value is set to 50 by default.
-         */
-        private int readTimeoutMillis = 50;
-
-        private AnvilTestCase testCase;
-
-        /**
-         * Set the file path of the PCAP file to write to.
-         *
-         * @param filePath path of the PCAP file
-         * @return builder instance
-         */
-        public Builder withFilePath(final String filePath) {
-            this.filePath = Optional.of(filePath);
-            return this;
-        }
-
-        /**
-         * Set the network interface to capture on.
-         *
-         * @param interfaceName name of the network interface
-         * @return builder instance
-         */
-        public Builder withInterfaceName(final String interfaceName) {
-            this.interfaceName = Objects.requireNonNull(interfaceName);
-            return this;
-        }
-
-        /**
-         * Set the promiscuous mode of the interface.
-         *
-         * @param promiscuousMode promiscuous mode setting
-         * @return builder instance
-         */
-        public Builder withPromiscuousMode(final PromiscuousMode promiscuousMode) {
-            this.promiscuousMode = promiscuousMode;
-            return this;
-        }
-
-        /**
-         * Set the BPF expression.
-         *
-         * @param bpfExpression filter expression
-         * @return builder instance
-         */
-        public Builder withBpfExpression(final String bpfExpression) {
-            this.bpfExpression = Optional.of(bpfExpression);
-            return this;
-        }
-
-        /**
-         * Set the snapshot length.
-         *
-         * @param snapshotLengthBytes snapshot length in bytes
-         * @return builder instance
-         */
-        public Builder withSnapshotLengthBytes(final int snapshotLengthBytes) {
-            this.snapshotLengthBytes = snapshotLengthBytes;
-            return this;
-        }
-
-        /**
-         * Set the read timeout.
-         *
-         * @param readTimeoutMillis read timeout in milliseconds
-         * @return builder instance
-         */
-        public Builder withReadTimeoutMillis(final int readTimeoutMillis) {
-            this.readTimeoutMillis = readTimeoutMillis;
-            return this;
-        }
-
-        public Builder withTestCase(AnvilTestCase testCase) {
-            this.testCase = testCase;
-            return this;
-        }
-
-        /**
-         * Build a {@link PcapCapturer} and start capturing.
-         *
-         * @return active pcap capturer
-         * @throws PcapNativeException if a native PCAP error occurred
-         * @throws NotOpenException if a file or device failed to open
-         */
-        public PcapCapturer build() throws PcapNativeException, NotOpenException {
-            return new PcapCapturer(
-                    this.filePath.orElseThrow(
-                            () ->
-                                    new NoSuchElementException(
-                                            "A file path is required to capturing a PCAP file")),
-                    this.interfaceName,
-                    this.promiscuousMode,
-                    this.bpfExpression,
-                    this.snapshotLengthBytes,
-                    this.readTimeoutMillis,
-                    this.testCase);
-        }
-    }
-
-    /**
-     * Create a builder to configure a {@link PcapCapturer}.
-     *
-     * @return builder instance
-     */
-    public static Builder builder() {
-        return new Builder();
-    }
+    private static final int SNAPSHOT_LENGTH_BYTES = 65_535;
+    private static final int READ_TIMEOUT_MILLIS = 50;
+    public static final int WAITING_TIME_AFTER_CLOSE_MILLI = 5000;
 
     /**
      * Create a new Capturer object and start capturing immediately, until {@link #close} is called.
      *
-     * @param filePath path of the PCAP file to write to
-     * @param interfaceName name of the network interface to capture on
-     * @param bpfExpression optional filter expression for the Berkeley Packet Filter (BPF)
-     * @param snapshotLengthBytes maximum length of a captured packet.
+     * @param testCase the AnvilTestCase related to the capturing
      */
-    protected PcapCapturer(
-            final String filePath,
-            final String interfaceName,
-            final PromiscuousMode promiscuousMode,
-            final Optional<String> bpfExpression,
-            final int snapshotLengthBytes,
-            final int readTimeoutMillis,
-            AnvilTestCase testCase)
-            throws PcapNativeException, NotOpenException {
-        final PcapNetworkInterface device = Pcaps.getDevByName(interfaceName);
-        this.pcapHandle = device.openLive(snapshotLengthBytes, promiscuousMode, readTimeoutMillis);
-        this.pcapDumper = this.pcapHandle.dumpOpen(filePath);
-        if (bpfExpression.isPresent()) {
-            this.pcapHandle.setFilter(bpfExpression.get(), BpfCompileMode.OPTIMIZE);
-        }
+    public PcapCapturer(AnvilTestCase testCase)
+            throws PcapNativeException, NotOpenException, IOException {
 
+        final PcapNetworkInterface device = getNetworkInterface();
         this.testCase = testCase;
+        this.pcapHandle =
+                device.openLive(
+                        SNAPSHOT_LENGTH_BYTES, PromiscuousMode.NONPROMISCUOUS, READ_TIMEOUT_MILLIS);
+        this.tmpFilepath = getTemporaryFilePath();
+
+        this.pcapDumper = this.pcapHandle.dumpOpen(tmpFilepath);
+        String filter = AnvilContext.getInstance().getConfig().getGeneralPcapFilter();
+        if (filter != null && !filter.isEmpty()) {
+            this.pcapHandle.setFilter(filter, BpfCompileMode.OPTIMIZE);
+        }
 
         this.captureThread = new Thread(this, "pcap-capture");
         this.captureThread.start();
+    }
+
+    private String getTemporaryFilePath() throws IOException {
+        String testId = testCase.getAssociatedContainer().getTestId();
+        String tmpId = testCase.getTemporaryPcapFileName();
+
+        Path folderPath =
+                Paths.get(
+                        AnvilContext.getInstance().getConfig().getOutputFolder(),
+                        "results",
+                        testId);
+        Files.createDirectories(folderPath);
+        return folderPath.resolve(tmpId).toString();
+    }
+
+    private PcapNetworkInterface getNetworkInterface() {
+        String interfaceName = AnvilContext.getInstance().getConfig().getNetworkInterface();
+        if (System.getProperty("os.name").toLowerCase().contains("win")
+                && interfaceName.equals("any")) {
+            LOGGER.error(
+                    "Network-Interface has to be explicitly set on windows. Use the -networkInterface flag.");
+            System.exit(1);
+        }
+        try {
+            PcapNetworkInterface networkInterface = Pcaps.getDevByName(interfaceName);
+            if (networkInterface == null) {
+                StringBuilder builder = new StringBuilder();
+                builder.append("Please choose one of the following network interfaces: \n");
+                for (PcapNetworkInterface availableInterface : Pcaps.findAllDevs()) {
+                    builder.append(" - ").append(availableInterface.getName()).append("\n");
+                }
+                LOGGER.error("Network interface provided can not be found. " + builder);
+                System.exit(1);
+            }
+            return networkInterface;
+        } catch (PcapNativeException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     @Override
@@ -295,7 +168,47 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
         this.pcapDumper.close();
         this.pcapHandle.close();
 
-        this.testCase.finalizeAnvilTestCase();
+        // filter again for specific port and testcase name
+        reFilter();
+    }
+
+    private void reFilter() {
+        // filter the pcap files according to used ports and save them with their uuid
+        Path tmpFile = Path.of(tmpFilepath);
+        if (!Files.exists(tmpFile)) {
+            LOGGER.error("No temporary pcap file found for testcase.");
+            return;
+        }
+        Path finalPcapPath =
+                tmpFile.getParent().resolve(String.format("dump_%s.pcap", testCase.getUuid()));
+        try (PcapHandle pcapHandle = Pcaps.openOffline(this.tmpFilepath)) {
+            if (!testCase.getCaseSpecificPcapFilter().isEmpty()) {
+                pcapHandle.setFilter(testCase.getCaseSpecificPcapFilter(), BpfCompileMode.OPTIMIZE);
+            }
+            PcapDumper pcapDumper = pcapHandle.dumpOpen(finalPcapPath.toString());
+            while (true) {
+                try {
+                    Packet p = pcapHandle.getNextPacketEx();
+                    if (p != null) {
+                        pcapDumper.dump(p, pcapHandle.getTimestamp());
+                    }
+                } catch (EOFException e) {
+                    // break on end of file
+                    break;
+                } catch (TimeoutException e) {
+                    LOGGER.error("Error during filtering of pcap files: ", e);
+                }
+            }
+            pcapDumper.close();
+        } catch (PcapNativeException | NotOpenException e) {
+            LOGGER.error("Error filtering pcap dump: ", e);
+        }
+
+        try {
+            Files.delete(tmpFile);
+        } catch (IOException e) {
+            LOGGER.error("Error deleting temporary pcap dump file: ", e);
+        }
     }
 
     @Override
@@ -311,7 +224,7 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
                                 throw new RuntimeException();
                             }
                         },
-                        5,
-                        TimeUnit.SECONDS);
+                        WAITING_TIME_AFTER_CLOSE_MILLI,
+                        TimeUnit.MILLISECONDS);
     }
 }
