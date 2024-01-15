@@ -176,10 +176,9 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         if (AnvilContext.getInstance().isAborted()) {
             return;
         }
-        AnvilTestRun testRun = new AnvilTestRun(extensionContext);
+        AnvilTestRun testRun = createAnvilTestRunForExtensionContext(extensionContext);
         testRun.setResultRaw(TestResult.DISABLED.getValue());
         testRun.setDisabledReason(reason.orElse("No reason specified"));
-        AnvilContext.getInstance().addActiveTestRun(testRun);
         if (!Utils.extensionContextIsBasedOnCombinatorialTesting(
                 extensionContext.getParent().get())) {
             // simple tests finish immediately
@@ -187,6 +186,12 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         } else if (testRun.isReadyForCompletion()) {
             testRun.finish();
         }
+    }
+
+    private AnvilTestRun createAnvilTestRunForExtensionContext(ExtensionContext extensionContext1) {
+        AnvilTestRun testRun = new AnvilTestRun(extensionContext1);
+        AnvilContext.getInstance().addActiveTestRun(testRun);
+        return testRun;
     }
 
     /**
@@ -198,8 +203,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
     @Override
     public void testInputGroupGenerated(
             TestInputGroupContext context, List<Combination> testInputs) {
-        AnvilTestRun testRun = new AnvilTestRun(extensionContext);
-        AnvilContext.getInstance().addActiveTestRun(testRun);
+        AnvilTestRun testRun = createAnvilTestRunForExtensionContext(extensionContext);
         LOGGER.trace(
                 "Test Inputs generated for " + extensionContext.getRequiredTestMethod().getName());
     }
@@ -290,8 +294,8 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
 
     /**
      * Called when the execution of a leaf or subtree of the TestPlan has finished, regardless of
-     * the outcome. Called by TestCases and TestRuns as well as non-combinatorial tests. Only used
-     * for logging.
+     * the outcome. Called by TestCases and TestRuns as well as non-combinatorial tests. This is
+     * also the only place where we can catch test initialization errors.
      *
      * @param testIdentifier represents a test or a container
      * @param testExecutionResult result of the execution for the supplied TestIdentifier
@@ -299,7 +303,10 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
     @Override
     public void executionFinished(
             TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
-        logTestFinished(testExecutionResult, testIdentifier);
+        if (testExecutionResult.getThrowable().isPresent()) {
+            handleFailedTestInitialization(testIdentifier, testExecutionResult);
+        }
+        LOGGER.trace(testIdentifier.getDisplayName() + " finished");
         if (testIdentifier.isContainer()) {
             Long startTime = elapsedTimes.get(testIdentifier.getUniqueId());
             if (startTime != null) {
@@ -308,16 +315,23 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             }
         }
     }
-
-    public void logTestFinished(
-            TestExecutionResult testExecutionResult, TestIdentifier testIdentifier) {
-        if (testExecutionResult.getThrowable().isPresent() && testIdentifier.isContainer()) {
-            LOGGER.error(
-                    "Internal exception during execution of test container created for test {}. Exception: ",
-                    testIdentifier.getDisplayName(),
-                    testExecutionResult.getThrowable().get());
-        } else {
-            LOGGER.trace(testIdentifier.getDisplayName() + " finished");
-        }
+    /**
+     * Combinatorial tests might fail before we enter the body of the test template. This is the
+     * case when coffee4j fails to produce the test inputs. In this case, no container will be added
+     * by the test itself. We need to add it here, so the failure is added to the test report.
+     */
+    private void handleFailedTestInitialization(
+            TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
+        LOGGER.error(
+                "Internal exception during execution of test container created for test {}. Exception: ",
+                testIdentifier.getDisplayName(),
+                testExecutionResult.getThrowable().get());
+        AnvilTestRun testRun = AnvilTestRun.forFailedInitialization(testIdentifier);
+        AnvilContext.getInstance().addActiveTestRun(testRun);
+        testRun.setResultRaw(TestResult.TEST_SUITE_ERROR.getValue());
+        testRun.setFailedReason(testExecutionResult.getThrowable().get().toString());
+        // Finalize artificial result immediately
+        testRun.setReadyForCompletion(true);
+        testRun.finish();
     }
 }
