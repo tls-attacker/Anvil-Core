@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.platform.engine.support.descriptor.MethodSource;
+import org.junit.platform.launcher.TestIdentifier;
 
 public class AnvilTestRun {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -141,6 +143,11 @@ public class AnvilTestRun {
                 Utils.getTemplateContainerExtensionContext(extensionContext)
                         .getTestMethod()
                         .orElseThrow();
+        resolveTestId();
+        this.scoreContainer = new ScoreContainer(testId);
+    }
+
+    private void resolveTestId() {
         NonCombinatorialAnvilTest nonCombinatorialAnvilTest =
                 this.testMethod.getAnnotation(NonCombinatorialAnvilTest.class);
         AnvilTest anvilTest = this.testMethod.getAnnotation(AnvilTest.class);
@@ -150,7 +157,34 @@ public class AnvilTestRun {
         } else if (anvilTest != null && !anvilTest.id().isEmpty()) {
             testId = anvilTest.id();
         }
+    }
+
+    /**
+     * Constructor used only for failed tests where parameters are not provided by an
+     * ExtensionContext. Note that we base the unique ID solely on the test source as this should
+     * only occur (at most) once for each test.
+     *
+     * @param testClass The class determined externally
+     * @param testMethod The test method determined externally
+     */
+    private AnvilTestRun(Class<?> testClass, Method testMethod) {
+        this.uniqueId = testClass.getName() + "." + testMethod.getName();
+        this.testClass = testClass;
+        this.testMethod = testMethod;
+        resolveTestId();
         this.scoreContainer = new ScoreContainer(testId);
+    }
+
+    public static AnvilTestRun forFailedInitialization(TestIdentifier testIdentifier) {
+        if (testIdentifier.getSource().isPresent()
+                && testIdentifier.getSource().get() instanceof MethodSource) {
+            MethodSource methodSource = (MethodSource) testIdentifier.getSource().get();
+            return new AnvilTestRun(methodSource.getJavaClass(), methodSource.getJavaMethod());
+        } else {
+            throw new UnsupportedOperationException(
+                    "Failed to create AnvilTestRun as no MethodSource was provided for test "
+                            + testIdentifier.toString());
+        }
     }
 
     public static synchronized AnvilTestRun forExtensionContext(ExtensionContext extensionContext) {
