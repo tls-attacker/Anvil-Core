@@ -31,4 +31,6 @@ public interface AnvilListener {
     default void onTestRunFinished(AnvilTestRun testRun) {}
 
     default void onTestCaseFinished(AnvilTestCase testCase, String testId) {}
+
+    default void onPcapCaptured(AnvilTestCase testCase, byte[] pcapData) {}
 }

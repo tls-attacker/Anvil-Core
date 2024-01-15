@@ -58,7 +58,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         }
         AnvilTestRun testRun =
                 AnvilContext.getInstance()
-                        .getTestResult(
+                        .getTestRun(
                                 Utils.getTemplateContainerExtensionContext(extensionContext)
                                         .getUniqueId());
         if (!Utils.extensionContextIsBasedOnCombinatorialTesting(
@@ -136,7 +136,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         }
         AnvilTestRun testRun =
                 AnvilContext.getInstance()
-                        .getTestResult(
+                        .getTestRun(
                                 Utils.getTemplateContainerExtensionContext(extensionContext)
                                         .getUniqueId());
         if (!Utils.extensionContextIsBasedOnCombinatorialTesting(

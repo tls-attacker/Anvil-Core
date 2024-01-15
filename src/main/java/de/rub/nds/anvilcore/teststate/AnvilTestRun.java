@@ -191,8 +191,8 @@ public class AnvilTestRun {
         ExtensionContext resolvedContext =
                 Utils.getTemplateContainerExtensionContext(extensionContext);
 
-        if (AnvilContext.getInstance().getTestResult(resolvedContext.getUniqueId()) != null) {
-            return AnvilContext.getInstance().getTestResult(resolvedContext.getUniqueId());
+        if (AnvilContext.getInstance().getTestRun(resolvedContext.getUniqueId()) != null) {
+            return AnvilContext.getInstance().getTestRun(resolvedContext.getUniqueId());
         }
 
         AnvilTestRun container = new AnvilTestRun(resolvedContext);
