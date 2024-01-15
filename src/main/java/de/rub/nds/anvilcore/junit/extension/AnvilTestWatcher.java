@@ -18,6 +18,8 @@ import de.rub.nds.anvilcore.teststate.reporting.AnvilReport;
 import de.rwth.swc.coffee4j.model.Combination;
 import de.rwth.swc.coffee4j.model.TestInputGroupContext;
 import de.rwth.swc.coffee4j.model.report.ExecutionReporter;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -329,7 +331,10 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         AnvilTestRun testRun = AnvilTestRun.forFailedInitialization(testIdentifier);
         AnvilContext.getInstance().addActiveTestRun(testRun);
         testRun.setResultRaw(TestResult.TEST_SUITE_ERROR.getValue());
-        testRun.setFailedReason(testExecutionResult.getThrowable().get().toString());
+        StringWriter stringWriter = new StringWriter();
+        PrintWriter printWriter = new PrintWriter(stringWriter);
+        testExecutionResult.getThrowable().get().printStackTrace(printWriter);
+        testRun.setFailedReason(stringWriter.toString());
         // Finalize artificial result immediately
         testRun.setReadyForCompletion(true);
         testRun.finish();
