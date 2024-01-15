@@ -413,7 +413,6 @@ public class WorkerClient implements AnvilListener {
         HttpResponse<String> response =
                 this.client.send(request, HttpResponse.BodyHandlers.ofString());
         String body = response.body();
-        // System.out.println("Receiving: " + body);
         return mapper.readValue(body, Map.class);
     }
 

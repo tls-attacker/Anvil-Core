@@ -188,9 +188,9 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
             PcapDumper pcapDumper = pcapHandle.dumpOpen(finalPcapPath.toString());
             while (true) {
                 try {
-                    Packet p = pcapHandle.getNextPacketEx();
-                    if (p != null) {
-                        pcapDumper.dump(p, pcapHandle.getTimestamp());
+                    Packet incomingPacket = pcapHandle.getNextPacketEx();
+                    if (incomingPacket != null) {
+                        pcapDumper.dump(incomingPacket, pcapHandle.getTimestamp());
                     }
                 } catch (EOFException e) {
                     // break on end of file
