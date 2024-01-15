@@ -16,7 +16,7 @@ import de.rub.nds.anvilcore.constants.TestEndpointType;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.teststate.TestResult;
 import java.util.Date;
-import java.util.LinkedList;
+import java.util.HashSet;
 
 public class AnvilReport {
     @JsonProperty("ElapsedTime")
@@ -74,23 +74,23 @@ public class AnvilReport {
         this.date = context.getCreationTime();
         this.testsDisabled =
                 context.getResultTestMap()
-                        .computeIfAbsent(TestResult.DISABLED, k -> new LinkedList<>())
+                        .computeIfAbsent(TestResult.DISABLED, k -> new HashSet<>())
                         .size();
         this.testsFullyFailed =
                 context.getResultTestMap()
-                        .computeIfAbsent(TestResult.FULLY_FAILED, k -> new LinkedList<>())
+                        .computeIfAbsent(TestResult.FULLY_FAILED, k -> new HashSet<>())
                         .size();
         this.testsStrictlySucceeded =
                 context.getResultTestMap()
-                        .computeIfAbsent(TestResult.STRICTLY_SUCCEEDED, k -> new LinkedList<>())
+                        .computeIfAbsent(TestResult.STRICTLY_SUCCEEDED, k -> new HashSet<>())
                         .size();
         this.testsPartiallyFailed =
                 context.getResultTestMap()
-                        .computeIfAbsent(TestResult.PARTIALLY_FAILED, k -> new LinkedList<>())
+                        .computeIfAbsent(TestResult.PARTIALLY_FAILED, k -> new HashSet<>())
                         .size();
         this.testsConceptuallySucceeded =
                 context.getResultTestMap()
-                        .computeIfAbsent(TestResult.CONCEPTUALLY_SUCCEEDED, k -> new LinkedList<>())
+                        .computeIfAbsent(TestResult.CONCEPTUALLY_SUCCEEDED, k -> new HashSet<>())
                         .size();
         this.totalTests = context.getTotalTests();
         this.finishedTests = context.getTestsDone();
