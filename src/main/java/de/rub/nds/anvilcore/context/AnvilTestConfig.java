@@ -103,6 +103,7 @@ public class AnvilTestConfig {
     private boolean disableTcpDump = false;
 
     private TestEndpointType endpointMode;
+    private String generalPcapFilter = "";
 
     public List<String> getProfiles() {
         return profiles;
@@ -265,5 +266,13 @@ public class AnvilTestConfig {
             LOGGER.error("Error deserializing string to config. ", e);
             throw new RuntimeException(e);
         }
+    }
+
+    public String getGeneralPcapFilter() {
+        return generalPcapFilter;
+    }
+
+    public void setGeneralPcapFilter(String generalPcapFilter) {
+        this.generalPcapFilter = generalPcapFilter;
     }
 }

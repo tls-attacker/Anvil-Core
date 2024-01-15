@@ -46,8 +46,8 @@ public class WorkerClient implements AnvilListener {
         PAUSED
     }
 
+    private String workerName = "Worker Client";
     private final String hostname;
-    private final String testPackage;
     private final ParameterIdentifierProvider parameterIdentifierProvider;
     private final HttpClient client;
     private final ObjectMapper mapper;
@@ -62,9 +62,13 @@ public class WorkerClient implements AnvilListener {
 
     private AnvilListener listener;
 
-    public WorkerClient(String hostname, String packageName, ParameterIdentifierProvider provider) {
+    public WorkerClient(String hostname, ParameterIdentifierProvider provider, String workerName) {
+        this(hostname, provider);
+        this.workerName = workerName;
+    }
+
+    public WorkerClient(String hostname, ParameterIdentifierProvider provider) {
         this.hostname = hostname;
-        this.testPackage = packageName;
         this.parameterIdentifierProvider = provider;
         this.client =
                 HttpClient.newBuilder()
@@ -118,7 +122,7 @@ public class WorkerClient implements AnvilListener {
         LOGGER.info("Connecting to backend...");
         Map<String, String> body = new LinkedHashMap<>();
 
-        body.put("name", "testWorker");
+        body.put("name", this.workerName);
         try {
             Map<?, ?> registerResponse = postRequest("worker/register", body);
             this.workerId = (String) registerResponse.get("id");
@@ -293,12 +297,27 @@ public class WorkerClient implements AnvilListener {
         if (listener != null) {
             listener.onTestCaseFinished(testCase, testId);
         }
-        Map<String, Object> stateUpdate = new LinkedHashMap<>();
-        stateUpdate.put("jobId", activeJobId);
-        stateUpdate.put("testId", testId);
-        stateUpdate.put("testCase", testCase);
+        Map<String, Object> testCaseUpdate = new LinkedHashMap<>();
+        testCaseUpdate.put("jobId", activeJobId);
+        testCaseUpdate.put("testId", testId);
+        testCaseUpdate.put("testCase", testCase);
 
-        postUpdateAsync("worker/update/testcase", stateUpdate);
+        postUpdateAsync("worker/update/testcase", testCaseUpdate);
+    }
+
+    @Override
+    public void onPcapCaptured(AnvilTestCase testCase, byte[] pcapData) {
+        if (listener != null) {
+            listener.onPcapCaptured(testCase, pcapData);
+        }
+
+        Map<String, Object> pcapUpdate = new LinkedHashMap<>();
+        pcapUpdate.put("jobId", activeJobId);
+        pcapUpdate.put("testId", testCase.getAssociatedContainer().getTestId());
+        pcapUpdate.put("uuid", testCase.getUuid());
+        pcapUpdate.put("pcapData", Base64.getEncoder().encodeToString(pcapData));
+
+        postUpdateAsync("worker/update/pcap", pcapUpdate);
     }
 
     @Override
@@ -309,6 +328,7 @@ public class WorkerClient implements AnvilListener {
         Map<String, Object> testUpdate = new LinkedHashMap<>();
         testUpdate.put("jobId", activeJobId);
         testUpdate.put("testRun", testRun);
+        testUpdate.put("finished", true);
 
         postUpdateAsync("worker/update/testrun", testUpdate);
     }
@@ -393,7 +413,6 @@ public class WorkerClient implements AnvilListener {
         HttpResponse<String> response =
                 this.client.send(request, HttpResponse.BodyHandlers.ofString());
         String body = response.body();
-        System.out.println("Receiving: " + body);
         return mapper.readValue(body, Map.class);
     }
 
@@ -411,8 +430,6 @@ public class WorkerClient implements AnvilListener {
                             if (exception != null) {
                                 LOGGER.error(
                                         "Error posting update to backend: " + exception.toString());
-                            } else {
-                                LOGGER.info("Posted update to backend.");
                             }
                         });
     }
