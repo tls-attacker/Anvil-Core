@@ -11,6 +11,7 @@ package de.rub.nds.anvilcore.context;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.rub.nds.anvilcore.execution.AnvilListener;
 import de.rub.nds.anvilcore.model.ParameterIdentifierProvider;
+import de.rub.nds.anvilcore.teststate.AnvilTestCase;
 import de.rub.nds.anvilcore.teststate.AnvilTestRun;
 import de.rub.nds.anvilcore.teststate.TestResult;
 import de.rub.nds.anvilcore.teststate.reporting.AnvilJsonMapper;
@@ -43,9 +44,23 @@ public class AnvilContext {
     @JsonProperty("Score")
     private final ScoreContainer overallScoreContainer = new ScoreContainer();
 
+    /**
+     * A Map that keeps track of all the active test runs in the current context. The keys in this
+     * map are String objects representing unique IDs of test runs, and the values are AnvilTestRun
+     * objects representing the test runs themselves.
+     */
     private final Map<String, AnvilTestRun> activeTestRuns = new HashMap<>();
+    /**
+     * A Map that holds the test results. The keys are TestResult objects, and the values are
+     * List<String> objects representing the names of the tests.
+     */
     private final Map<TestResult, List<String>> resultTestMap = new HashMap<>();
+    /**
+     * A Map that holds the finished tests. The keys are String objects representing unique IDs of
+     * tests, and the values are Boolean objects indicating whether the test is finished.
+     */
     private final Map<String, Boolean> finishedTests = new HashMap<>();
+
     private boolean aborted = false;
 
     public static synchronized AnvilContext getInstance() {
@@ -105,14 +120,53 @@ public class AnvilContext {
         long minutes = TimeUnit.MILLISECONDS.toMinutes(timediff);
         long remainingSecondsInMillis = timediff - TimeUnit.MINUTES.toMillis(minutes);
         long seconds = TimeUnit.MILLISECONDS.toSeconds(remainingSecondsInMillis);
+        String uniqueIdCompact =
+                uniqueId.replaceAll(
+                        "\\[engine:junit-jupiter]/|\\(org\\.junit\\.jupiter\\.params\\.aggregator\\.ArgumentsAccessor, de\\.rub\\.nds\\.tlstest\\.framework\\.execution\\.WorkflowRunner\\)",
+                        "");
+
         LOGGER.info(
                 String.format(
-                        "%d/%d Tests finished (in %02d:%02d)",
-                        testsDone, totalTests, minutes, seconds));
+                        "%d/%d Tests finished (in %02d:%02d). Method: %s",
+                        testsDone, totalTests, minutes, seconds, uniqueIdCompact));
 
         if (listener != null) {
             listener.onTestRunFinished(finishedContainer);
         }
+        if (testsDone == totalTests) {
+            testRunsSummary();  // todo: wrong logging order due to concurrency
+        }
+    }
+
+    public synchronized void testRunsSummary() {
+        // group test cases of all test runs by result
+        Map<TestResult, List<AnvilTestCase>> testCasesByResult = new EnumMap<>(TestResult.class);
+        for (AnvilTestRun testRun : activeTestRuns.values()) {
+            for (AnvilTestCase testCase : testRun.getTestCases()) {
+                TestResult result = testCase.getTestResult();
+                testCasesByResult.computeIfAbsent(result, k -> new LinkedList<>()).add(testCase);
+            }
+        }
+
+        StringBuilder logMessage = new StringBuilder("Test run summary:");
+        List<TestResult> failureResults =
+                Arrays.asList(TestResult.FULLY_FAILED, TestResult.PARTIALLY_FAILED);
+
+        for (TestResult result : TestResult.values()) {
+            List<AnvilTestCase> testCases = testCasesByResult.get(result);
+            logMessage.append(
+                    String.format(
+                            "%d/%d test cases %s",
+                            testCases.size(), totalTests, result.toString()));
+            if (failureResults.contains(result)) {
+                // find unique test cases. They are unique by their failure reason and additional
+                // result information
+                List<AnvilTestCase> uniqueTestCases = new ArrayList<>();
+
+                // todo
+            }
+        }
+        LOGGER.info(logMessage.toString());
     }
 
     public synchronized Map<String, Boolean> getFinishedTests() {
@@ -159,7 +213,7 @@ public class AnvilContext {
         return resultTestMap;
     }
 
-    public void addTestResult(TestResult result, String testName) {
+    public synchronized void addTestResult(TestResult result, String testName) {
         getResultTestMap().computeIfAbsent(result, k -> new LinkedList<>());
         getResultTestMap().get(result).add(testName);
     }
