@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.StringJoiner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -75,7 +76,18 @@ public class ParameterCombination {
                 return parameter;
             }
         }
-        return null;
+        throw new NoSuchElementException(
+                "Found no Parameter for requested identifier " + parameterIdentifier);
+    }
+
+    public boolean hasParameter(ParameterIdentifier parameterIdentifier) {
+        return getParameterValues().stream()
+                .map(DerivationParameter::getParameterIdentifier)
+                .anyMatch(parameterIdentifier::equals);
+    }
+
+    public boolean hasParameter(Class<?> clazz) {
+        return getParameterValues().stream().map(Object::getClass).anyMatch(clazz::equals);
     }
 
     public <T extends DerivationParameter<?, ?>> T getParameter(Class<T> clazz) {
@@ -94,7 +106,7 @@ public class ParameterCombination {
         }
 
         if (matchingFound == null) {
-            throw new IllegalArgumentException("Found no Parameter for requested class " + clazz);
+            throw new NoSuchElementException("Found no Parameter for requested class " + clazz);
         }
         return matchingFound;
     }
