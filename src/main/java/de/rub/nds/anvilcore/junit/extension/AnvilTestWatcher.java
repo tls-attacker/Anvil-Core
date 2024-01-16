@@ -102,6 +102,13 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
 
         if (cause != null) {
             testRun.setFailedReason(cause.toString());
+            if (!(cause instanceof AssertionError)) {
+                LOGGER.error(
+                        "Test failed without AssertionError {}\n",
+                        extensionContext.getDisplayName(),
+                        cause);
+                testRun.setResultRaw(TestResult.TEST_SUITE_ERROR.getValue());
+            }
         }
 
         testRun.finish();
@@ -128,12 +135,6 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         if (AnvilContext.getInstance().isAborted()) {
             return;
         }
-        if (!(cause instanceof AssertionError)) {
-            LOGGER.error(
-                    "Test failed without AssertionError {}\n",
-                    extensionContext.getDisplayName(),
-                    cause);
-        }
         AnvilTestRun testRun =
                 AnvilContext.getInstance()
                         .getTestRun(
@@ -151,8 +152,16 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             if (cause != null
                     && (testCase.getTestResult() == null
                             || testCase.getTestResult() == TestResult.NOT_SPECIFIED)) {
-                // default to failed for all thrown exceptions
-                testCase.setTestResult(TestResult.FULLY_FAILED);
+                if (!(cause instanceof AssertionError)) {
+                    LOGGER.error(
+                            "Test failed without AssertionError {}\n",
+                            extensionContext.getDisplayName(),
+                            cause);
+                    testCase.setTestResult(TestResult.TEST_SUITE_ERROR);
+                } else {
+                    // default to failed for all AssertionErrors
+                    testCase.setTestResult(TestResult.FULLY_FAILED);
+                }
             }
             testRun.setFailedReason(cause.toString());
 
@@ -305,7 +314,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
     @Override
     public void executionFinished(
             TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
-        if (testExecutionResult.getThrowable().isPresent()) {
+        if (testExecutionResult.getThrowable().isPresent() && testIdentifier.isContainer()) {
             handleFailedTestInitialization(testIdentifier, testExecutionResult);
         }
         LOGGER.trace(testIdentifier.getDisplayName() + " finished");
