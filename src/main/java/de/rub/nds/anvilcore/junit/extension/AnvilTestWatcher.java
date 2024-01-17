@@ -15,6 +15,7 @@ import de.rub.nds.anvilcore.teststate.AnvilTestCase;
 import de.rub.nds.anvilcore.teststate.AnvilTestRun;
 import de.rub.nds.anvilcore.teststate.TestResult;
 import de.rub.nds.anvilcore.teststate.reporting.AnvilReport;
+import de.rub.nds.anvilcore.util.TestIdResolver;
 import de.rwth.swc.coffee4j.model.Combination;
 import de.rwth.swc.coffee4j.model.TestInputGroupContext;
 import de.rwth.swc.coffee4j.model.report.ExecutionReporter;
@@ -26,6 +27,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestWatcher;
 import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
@@ -163,7 +165,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
                     testCase.setTestResult(TestResult.FULLY_FAILED);
                 }
             }
-            testRun.setFailedReason(cause.toString());
+            testRun.setFailedReason(retrieveThrowableReason(cause));
 
             if (AnvilContext.getInstance().getListener() != null) {
                 AnvilContext.getInstance()
@@ -297,7 +299,19 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
      */
     @Override
     public void executionStarted(TestIdentifier testIdentifier) {
-        LOGGER.trace(testIdentifier.getDisplayName() + " started");
+        if (!testIdentifier.isContainer()
+                && testIdentifier.getSource().isPresent()
+                && testIdentifier.getSource().get() instanceof MethodSource) {
+            LOGGER.trace(
+                    testIdentifier.getDisplayName()
+                            + " of test "
+                            + TestIdResolver.resolveTestId(
+                                    ((MethodSource) testIdentifier.getSource().get())
+                                            .getJavaMethod())
+                            + " started");
+        } else {
+            LOGGER.trace(testIdentifier.getDisplayName() + " started");
+        }
         if (testIdentifier.isContainer()) {
             elapsedTimes.put(testIdentifier.getUniqueId(), System.currentTimeMillis());
         }
@@ -317,7 +331,19 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         if (testExecutionResult.getThrowable().isPresent() && testIdentifier.isContainer()) {
             handleFailedTestInitialization(testIdentifier, testExecutionResult);
         }
-        LOGGER.trace(testIdentifier.getDisplayName() + " finished");
+        if (!testIdentifier.isContainer()
+                && testIdentifier.getSource().isPresent()
+                && testIdentifier.getSource().get() instanceof MethodSource) {
+            LOGGER.trace(
+                    testIdentifier.getDisplayName()
+                            + " of test "
+                            + TestIdResolver.resolveTestId(
+                                    ((MethodSource) testIdentifier.getSource().get())
+                                            .getJavaMethod())
+                            + " started");
+        } else {
+            LOGGER.trace(testIdentifier.getDisplayName() + " finished");
+        }
         if (testIdentifier.isContainer()) {
             Long startTime = elapsedTimes.get(testIdentifier.getUniqueId());
             if (startTime != null) {
@@ -340,12 +366,21 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         AnvilTestRun testRun = AnvilTestRun.forFailedInitialization(testIdentifier);
         AnvilContext.getInstance().addActiveTestRun(testRun);
         testRun.setResultRaw(TestResult.TEST_SUITE_ERROR.getValue());
-        StringWriter stringWriter = new StringWriter();
-        PrintWriter printWriter = new PrintWriter(stringWriter);
-        testExecutionResult.getThrowable().get().printStackTrace(printWriter);
-        testRun.setFailedReason(stringWriter.toString());
+        testRun.setFailedReason(retrieveThrowableReason(testExecutionResult.getThrowable().get()));
         // Finalize artificial result immediately
         testRun.setReadyForCompletion(true);
         testRun.finish();
+    }
+
+    private String retrieveThrowableReason(Throwable thrown) {
+        if (thrown instanceof AssertionError) {
+            return thrown.toString();
+        } else {
+            // add extensive stack trace for all unexpected cases
+            StringWriter stringWriter = new StringWriter();
+            PrintWriter printWriter = new PrintWriter(stringWriter);
+            thrown.printStackTrace(printWriter);
+            return stringWriter.toString();
+        }
     }
 }
