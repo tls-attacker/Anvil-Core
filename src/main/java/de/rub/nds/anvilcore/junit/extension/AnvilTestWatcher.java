@@ -151,21 +151,20 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
                 LOGGER.error("TestCase should not be null.");
                 return;
             }
-            if (cause != null
-                    && (testCase.getTestResult() == null
-                            || testCase.getTestResult() == TestResult.NOT_SPECIFIED)) {
+            if (cause != null) {
                 if (!(cause instanceof AssertionError)) {
                     LOGGER.error(
                             "Test failed without AssertionError {}\n",
                             extensionContext.getDisplayName(),
                             cause);
                     testCase.setTestResult(TestResult.TEST_SUITE_ERROR);
-                } else {
+                } else if (testCase.getTestResult() == null
+                        || testCase.getTestResult() == TestResult.NOT_SPECIFIED) {
                     // default to failed for all AssertionErrors
                     testCase.setTestResult(TestResult.FULLY_FAILED);
                 }
+                testRun.setFailedReason(retrieveThrowableReason(cause));
             }
-            testRun.setFailedReason(retrieveThrowableReason(cause));
 
             if (AnvilContext.getInstance().getListener() != null) {
                 AnvilContext.getInstance()
