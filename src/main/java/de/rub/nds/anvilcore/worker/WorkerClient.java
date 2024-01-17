@@ -97,9 +97,7 @@ public class WorkerClient implements AnvilListener {
 
         // create our own logger, for sending logs to the backend
         PatternLayout layout =
-                PatternLayout.newBuilder()
-                        .withPattern("%d{HH:mm:ss}{GMT+0} %-5level: %msg%n")
-                        .build();
+                PatternLayout.newBuilder().withPattern("%d{HH:mm:ss} %-5level: %msg%n").build();
         logWriter = new StringWriter();
         WriterAppender appender =
                 WriterAppender.newBuilder()
