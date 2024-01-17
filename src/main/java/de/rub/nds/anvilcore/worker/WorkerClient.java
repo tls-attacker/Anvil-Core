@@ -22,7 +22,7 @@ import de.rub.nds.anvilcore.model.ParameterIdentifierProvider;
 import de.rub.nds.anvilcore.teststate.AnvilTestCase;
 import de.rub.nds.anvilcore.teststate.AnvilTestRun;
 import de.rub.nds.anvilcore.teststate.reporting.AnvilReport;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -32,6 +32,10 @@ import java.util.*;
 import java.util.concurrent.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.appender.WriterAppender;
+import org.apache.logging.log4j.core.config.AppenderRef;
+import org.apache.logging.log4j.core.config.LoggerConfig;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.junit.platform.launcher.TestPlan;
 
 public class WorkerClient implements AnvilListener {
@@ -51,6 +55,7 @@ public class WorkerClient implements AnvilListener {
     private final ParameterIdentifierProvider parameterIdentifierProvider;
     private final HttpClient client;
     private final ObjectMapper mapper;
+    private StringWriter logWriter;
 
     private String workerId;
     private boolean alive;
@@ -89,6 +94,30 @@ public class WorkerClient implements AnvilListener {
         this.alive = false;
         this.status = WorkerStatus.IDLE;
         this.jobs = new LinkedHashMap<>();
+
+        // create our own logger, for sending logs to the backend
+        PatternLayout layout =
+                PatternLayout.newBuilder().withPattern("%d{HH:mm:ss} %-5level: %msg%n").build();
+        logWriter = new StringWriter();
+        WriterAppender appender =
+                WriterAppender.newBuilder()
+                        .setName("Anvil-Controller")
+                        .setTarget(logWriter)
+                        .setLayout(layout)
+                        .build();
+        appender.start();
+        org.apache.logging.log4j.core.Logger coreLogger =
+                (org.apache.logging.log4j.core.Logger) LOGGER;
+        Collection<LoggerConfig> loggerConfigurations =
+                coreLogger.getContext().getConfiguration().getLoggers().values();
+        // configure our logger the same way as the console logger
+        for (LoggerConfig configuration : loggerConfigurations) {
+            for (AppenderRef ref : configuration.getAppenderRefs()) {
+                if (ref.getRef().equals("Console")) {
+                    configuration.addAppender(appender, ref.getLevel(), ref.getFilter());
+                }
+            }
+        }
     }
 
     public AnvilListener getListener() {
@@ -138,6 +167,8 @@ public class WorkerClient implements AnvilListener {
         Map<String, String> body = new LinkedHashMap<>();
         body.put("id", this.workerId);
         body.put("status", this.status.toString());
+        body.put("logs", logWriter.toString());
+        logWriter.getBuffer().delete(0, logWriter.getBuffer().length());
         try {
             Map<?, ?> command = postRequest("worker/fetch", body);
             queueCommand(command);
