@@ -36,7 +36,6 @@ public class ParameterCombination {
     public ParameterCombination(
             List<DerivationParameter> parameters, DerivationScope derivationScope) {
         this.parameterValues = parameters;
-        this.parameterValues.addAll(IpmProvider.getStaticParameterValues(derivationScope));
         this.derivationScope = derivationScope;
     }
 
