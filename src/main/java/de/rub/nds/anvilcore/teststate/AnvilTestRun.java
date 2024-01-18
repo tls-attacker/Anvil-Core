@@ -193,8 +193,6 @@ public class AnvilTestRun {
             LOGGER.info("{} is disable because {}", getTestMethodName(), getDisabledReason());
         }
         scoreContainer.updateForResult(result);
-        AnvilContext.getInstance()
-                .addTestResult(result, testClass.getName() + "." + testMethod.getName());
         // AnvilContext.getInstance().testFinished(uniqueId);
         if (result != TestResult.DISABLED && testMethod.getAnnotation(AnvilTest.class) != null) {
             try {
