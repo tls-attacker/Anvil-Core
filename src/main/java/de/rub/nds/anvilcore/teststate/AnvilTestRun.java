@@ -11,12 +11,11 @@ package de.rub.nds.anvilcore.teststate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
-import de.rub.nds.anvilcore.annotation.AnvilTest;
-import de.rub.nds.anvilcore.annotation.NonCombinatorialAnvilTest;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.junit.Utils;
 import de.rub.nds.anvilcore.model.ParameterCombination;
 import de.rub.nds.anvilcore.teststate.reporting.ScoreContainer;
+import de.rub.nds.anvilcore.util.TestIdResolver;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -143,20 +142,8 @@ public class AnvilTestRun {
                 Utils.getTemplateContainerExtensionContext(extensionContext)
                         .getTestMethod()
                         .orElseThrow();
-        resolveTestId();
+        this.testId = TestIdResolver.resolveTestId(testMethod);
         this.scoreContainer = new ScoreContainer(testId);
-    }
-
-    private void resolveTestId() {
-        NonCombinatorialAnvilTest nonCombinatorialAnvilTest =
-                this.testMethod.getAnnotation(NonCombinatorialAnvilTest.class);
-        AnvilTest anvilTest = this.testMethod.getAnnotation(AnvilTest.class);
-        this.testId = getTestMethodName(); // fallback
-        if (nonCombinatorialAnvilTest != null && !nonCombinatorialAnvilTest.id().isEmpty()) {
-            testId = nonCombinatorialAnvilTest.id();
-        } else if (anvilTest != null && !anvilTest.id().isEmpty()) {
-            testId = anvilTest.id();
-        }
     }
 
     /**
@@ -171,7 +158,7 @@ public class AnvilTestRun {
         this.uniqueId = testClass.getName() + "." + testMethod.getName();
         this.testClass = testClass;
         this.testMethod = testMethod;
-        resolveTestId();
+        this.testId = TestIdResolver.resolveTestId(testMethod);
         this.scoreContainer = new ScoreContainer(testId);
     }
 
@@ -224,6 +211,10 @@ public class AnvilTestRun {
     public TestResult resolveFinalResult() {
         Set<TestResult> uniqueResultTypes =
                 testCases.stream().map(AnvilTestCase::getTestResult).collect(Collectors.toSet());
+
+        if (uniqueResultTypes.contains(TestResult.TEST_SUITE_ERROR)) {
+            return TestResult.TEST_SUITE_ERROR;
+        }
         if (uniqueResultTypes.contains(TestResult.FULLY_FAILED)
                 || uniqueResultTypes.contains(TestResult.PARTIALLY_FAILED)) {
             if (uniqueResultTypes.size() > 1) {

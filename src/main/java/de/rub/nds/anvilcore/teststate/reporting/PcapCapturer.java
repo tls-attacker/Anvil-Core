@@ -182,7 +182,8 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
         Path finalPcapPath =
                 tmpFile.getParent().resolve(String.format("dump_%s.pcap", testCase.getUuid()));
         try (PcapHandle pcapHandle = Pcaps.openOffline(this.tmpFilepath)) {
-            if (!testCase.getCaseSpecificPcapFilter().isEmpty()) {
+            if (testCase.getCaseSpecificPcapFilter() != null
+                    && !testCase.getCaseSpecificPcapFilter().isEmpty()) {
                 pcapHandle.setFilter(testCase.getCaseSpecificPcapFilter(), BpfCompileMode.OPTIMIZE);
             }
             PcapDumper pcapDumper = pcapHandle.dumpOpen(finalPcapPath.toString());

@@ -49,6 +49,9 @@ public class AnvilReport {
     @JsonProperty("FullyFailedTests")
     private long testsFullyFailed;
 
+    @JsonProperty("TestSuiteErrorTests")
+    private long testsTestSuiteError;
+
     @JsonProperty("AdditionalConfig")
     private String configString;
 
@@ -91,6 +94,10 @@ public class AnvilReport {
         this.testsConceptuallySucceeded =
                 context.getResultTestMap()
                         .computeIfAbsent(TestResult.CONCEPTUALLY_SUCCEEDED, k -> new LinkedList<>())
+                        .size();
+        this.testsTestSuiteError =
+                context.getResultTestMap()
+                        .computeIfAbsent(TestResult.TEST_SUITE_ERROR, k -> new LinkedList<>())
                         .size();
         this.totalTests = context.getTotalTests();
         this.finishedTests = context.getTestsDone();
