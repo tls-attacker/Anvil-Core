@@ -111,136 +111,132 @@
 
     </dependencies>
     <build>
-        <pluginManagement>
-            <plugins>
-                <!--################# default lifecycle plugins #################-->
-                <!-- Plugin to compile source files -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <configuration>
-                        <source>${maven.compiler.source}</source>
-                        <target>${maven.compiler.target}</target>
-                    </configuration>
-                </plugin>
-                <!-- Plugin to execute unit tests -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <configuration>
-                        <trimStackTrace>false</trimStackTrace>
-                        <includes>
-                            <include>**/*.java</include>
-                        </includes>
-                        <!-- Allow parallel execution of unit tests (execution in series within test classes) -->
-                        <parallel>classes</parallel>
-                        <!-- Can be adjusted depending on the local system, 3 should be a fair default value -->
-                        <forkCount>3</forkCount>
-                        <reuseForks>true</reuseForks>
-                        <!-- By default we include all but integration tests during surefire execution -->
-                        <skipTests>${skip.surefire.tests}</skipTests>
-                    </configuration>
-                </plugin>
-                <!-- Plugin to compile javadoc -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-javadoc-plugin</artifactId>
-                    <configuration>
-                        <source>${maven.compiler.source}</source>
-                        <javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <id>attach-javadocs</id>
-                            <goals>
-                                <goal>jar</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-                <!-- Pack source files to jar archive -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-source-plugin</artifactId>
-                    <executions>
-                        <execution>
-                            <id>attach-sources</id>
-                            <goals>
-                                <goal>jar-no-fork</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-                <!-- Plugin to copy artifacts to apps folder -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-dependency-plugin</artifactId>
-                    <executions>
-                        <execution>
-                            <id>copy</id>
-                            <goals>
-                                <goal>copy</goal>
-                            </goals>
-                            <phase>package</phase>
-                            <configuration>
-                                <artifactItems>
-                                    <artifactItem>
-                                        <groupId>${project.groupId}</groupId>
-                                        <artifactId>${project.artifactId}</artifactId>
-                                        <version>${project.version}</version>
-                                        <type>${project.packaging}</type>
-                                        <destFileName>${project.build.finalName}.${project.packaging}</destFileName>
-                                    </artifactItem>
-                                </artifactItems>
-                                <!--suppress UnresolvedMavenProperty -->
-                                <outputDirectory>${maven.multiModuleProjectDirectory}/apps</outputDirectory>
-                            </configuration>
-                        </execution>
-                        <execution>
-                            <id>copy-dependencies</id>
-                            <goals>
-                                <goal>copy-dependencies</goal>
-                            </goals>
-                            <phase>package</phase>
-                            <configuration>
-                                <outputDirectory>${maven.multiModuleProjectDirectory}/apps/lib</outputDirectory>
-                                <!--Ensures only runnable dependencies are included-->
-                                <includeScope>compile</includeScope>
-                            </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
-                <!-- Plugin to execute integration tests -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-failsafe-plugin</artifactId>
-                    <configuration>
-                        <!-- By default, the Failsafe plugin excludes various files. We have to override that. -->
-                        <includes>
-                            <include>**/*.java</include>
-                        </includes>
-                        <skipITs>${skip.failsafe.tests}</skipITs>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <id>run-integration-tests</id>
-                            <goals>
-                                <goal>integration-test</goal>
-                            </goals>
-                            <phase>integration-test</phase>
-                        </execution>
-                        <execution>
-                            <id>verify-integration-tests</id>
-                            <goals>
-                                <goal>verify</goal>
-                            </goals>
-                            <phase>verify</phase>
-                        </execution>
-                    </executions>
-                </plugin>
-            </plugins>
-        </pluginManagement>
         <plugins>
+            <!--################# default lifecycle plugins #################-->
+            <!-- Plugin to compile source files -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                </configuration>
+            </plugin>
+            <!-- Plugin to execute unit tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <trimStackTrace>false</trimStackTrace>
+                    <includes>
+                        <include>**/*.java</include>
+                    </includes>
+                    <!-- Allow parallel execution of unit tests (execution in series within test classes) -->
+                    <parallel>classes</parallel>
+                    <!-- Can be adjusted depending on the local system, 3 should be a fair default value -->
+                    <forkCount>3</forkCount>
+                    <reuseForks>true</reuseForks>
+                    <!-- By default we include all but integration tests during surefire execution -->
+                    <skipTests>${skip.surefire.tests}</skipTests>
+                </configuration>
+            </plugin>
+            <!-- Plugin to compile javadoc -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Pack source files to jar archive -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Plugin to copy artifacts to apps folder -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy</id>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>${project.artifactId}</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>${project.packaging}</type>
+                                    <destFileName>${project.build.finalName}.${project.packaging}</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                            <!--suppress UnresolvedMavenProperty -->
+                            <outputDirectory>${maven.multiModuleProjectDirectory}/apps</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <outputDirectory>${maven.multiModuleProjectDirectory}/apps/lib</outputDirectory>
+                            <!--Ensures only runnable dependencies are included-->
+                            <includeScope>compile</includeScope>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Plugin to execute integration tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <!-- By default, the Failsafe plugin excludes various files. We have to override that. -->
+                    <includes>
+                        <include>**/*.java</include>
+                    </includes>
+                    <skipITs>${skip.failsafe.tests}</skipITs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>run-integration-tests</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                        <phase>integration-test</phase>
+                    </execution>
+                    <execution>
+                        <id>verify-integration-tests</id>
+                        <goals>
+                            <goal>verify</goal>
+                        </goals>
+                        <phase>verify</phase>
+                    </execution>
+                </executions>
+            </plugin>
             <!--################## clean lifecycle plugins ##################-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
