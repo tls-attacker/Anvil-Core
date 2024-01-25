@@ -35,9 +35,9 @@ Similar to Coffee4J, you can write combinatorial tests here, as well as normal, 
 To create your own Anvil Integration you will have to:
 
 - Implement your ParameterTypes as enum
-    - (opt. implement ParameterScopes)
-    - (opt. for every type, create a DerivationParameter class)
-    - every type should return an instance of a DerivationParemeter, that itself should return a list of all its parameter values
+  - (opt. implement ParameterScopes)
+  - (opt. for every type, create a DerivationParameter class)
+  - every type should return an instance of a DerivationParemeter, that itself should return a list of all its parameter values
 
 ```java
 public enum MyProtocolParameterType implements ParameterType {
@@ -52,8 +52,8 @@ public enum MyProtocolParameterType implements ParameterType {
 ```
 
 - Create a PrameterIdentifierProvider
-    - returns all your Types as ParameterIdentifiers here
-    - a ParameterIdentifier is a combination of ParameterType and an optional Scope
+  - returns all your Types as ParameterIdentifiers here
+  - a ParameterIdentifier is a combination of ParameterType and an optional Scope
 
 ```java
 public class MyProtocolParameterIdentifierProvider extends ParameterIdentifierProvider {
@@ -61,21 +61,21 @@ public class MyProtocolParameterIdentifierProvider extends ParameterIdentifierPr
     @Override
     public List<ParameterIdentifier> generateAllParameterIdentifiers() {
         List<ParameterIdentifier> allMyParameters = new ArrayList();
-        allMyParameters.add(new ParameterIdentifier(NO_SCOPE, new MyDerivation()));
+        allMyParameters.add(new ParameterIdentifier(MY_PARAMETER_TYPE));
         return allMyParameters;
     }
 }
 ```
 
 - Create your own tests templates
-    - annotate with @AnvilTest or @NonCombinatorialAnvilTest
-    - each test should create a AnvilTestCase object, where you store your result
+  - annotate with @AnvilTest or @NonCombinatorialAnvilTest
+  - each test should create a AnvilTestCase object, where you store your result
 
 ```java
 public class MyTestClass extends CombinatorialAnvilTest {
 
     @AnvilTest(id = "myId_1")
-    public void myTest(ArgumentsAccessor argumentAccessor, ExtensionContext context) {
+    public void myTest(ArgumentsAccessor argumentAccessor) {
         ParameterCombination paraComb = ParameterCombination.fromArgumentsAccessor(argumentAccessor, new DerivationScope(extensionContext));
         // do the test
         AnvilTestCase result = new AnvilTestCase(paraComb, context);
@@ -94,10 +94,10 @@ TestRunner runner = new TestRunner(anvilConfig, "", new MyProtocolParameterIdent
 runner.runTests();
 ```
 
-**More details can be found in the wiki under "Integration" (TODO).**
+**More details can be found in the wiki under "Integration" (WIP).**
 
 ## Development
 
 Anvil-Core is an open source project and participation is welcome. To set up the development-environment, you will find help here: <https://github.com/tls-attacker/TLS-Attacker-Description>
 
-**To learn more about how Anvil-Core works please read the wiki page under "Development" (TODO).**
+**To learn more about how Anvil-Core works please read the wiki page under "Development" (WIP).**
