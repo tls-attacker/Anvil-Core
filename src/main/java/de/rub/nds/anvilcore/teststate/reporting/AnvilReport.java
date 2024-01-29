@@ -14,9 +14,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.rub.nds.anvilcore.constants.TestEndpointType;
 import de.rub.nds.anvilcore.context.AnvilContext;
+import de.rub.nds.anvilcore.teststate.AnvilTestCase;
 import de.rub.nds.anvilcore.teststate.TestResult;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class AnvilReport {
     @JsonProperty("ElapsedTime")
@@ -49,6 +52,12 @@ public class AnvilReport {
     @JsonProperty("FullyFailedTests")
     private long testsFullyFailed;
 
+    @JsonProperty("DetailsFullyFailedTestCases")
+    private Map<String, Integer> detailsFullyFailedTestCases;
+
+    @JsonProperty("DetailsPartiallyFailedTestCases")
+    private Map<String, Integer> detailsPartiallyFailedTestCases;
+
     @JsonProperty("TestSuiteErrorTests")
     private long testsTestSuiteError;
 
@@ -76,27 +85,43 @@ public class AnvilReport {
         this.identifier = context.getConfig().getIdentifier();
         this.date = context.getCreationTime();
         this.testsDisabled =
-                context.getResultTestMap()
+                context.getResultsTestRuns()
                         .computeIfAbsent(TestResult.DISABLED, k -> new LinkedList<>())
                         .size();
         this.testsFullyFailed =
-                context.getResultTestMap()
+                context.getResultsTestRuns()
                         .computeIfAbsent(TestResult.FULLY_FAILED, k -> new LinkedList<>())
                         .size();
         this.testsStrictlySucceeded =
-                context.getResultTestMap()
+                context.getResultsTestRuns()
                         .computeIfAbsent(TestResult.STRICTLY_SUCCEEDED, k -> new LinkedList<>())
                         .size();
         this.testsPartiallyFailed =
-                context.getResultTestMap()
+                context.getResultsTestRuns()
                         .computeIfAbsent(TestResult.PARTIALLY_FAILED, k -> new LinkedList<>())
                         .size();
         this.testsConceptuallySucceeded =
-                context.getResultTestMap()
+                context.getResultsTestRuns()
                         .computeIfAbsent(TestResult.CONCEPTUALLY_SUCCEEDED, k -> new LinkedList<>())
                         .size();
+        this.detailsFullyFailedTestCases =
+                context
+                        .getResultsTestRuns()
+                        .computeIfAbsent(TestResult.FULLY_FAILED, k -> new LinkedList<>())
+                        .stream()
+                        .flatMap(testRun -> testRun.getTestCases().stream())
+                        .map(AnvilTestCase::getTestCaseFailureDetails)
+                        .collect(Collectors.toMap(String::toString, detail -> 1, Integer::sum));
+        this.detailsPartiallyFailedTestCases =
+                context
+                        .getResultsTestRuns()
+                        .computeIfAbsent(TestResult.PARTIALLY_FAILED, k -> new LinkedList<>())
+                        .stream()
+                        .flatMap(testRun -> testRun.getTestCases().stream())
+                        .map(AnvilTestCase::getTestCaseFailureDetails)
+                        .collect(Collectors.toMap(String::toString, detail -> 1, Integer::sum));
         this.testsTestSuiteError =
-                context.getResultTestMap()
+                context.getResultsTestRuns()
                         .computeIfAbsent(TestResult.TEST_SUITE_ERROR, k -> new LinkedList<>())
                         .size();
         this.totalTests = context.getTotalTests();
