@@ -157,37 +157,12 @@ public class AnvilTestRun {
         List<AnvilTestCase> failedTestCases = filterTestCasesByResult(testResult);
 
         // create a frequency map of failure details for all failed test cases
-        for (AnvilTestCase failedTestCase : failedTestCases) {
-            String failureDetail = getTestCaseFailureDetails(failedTestCase);
-            failedTestCasesDetails.merge(failureDetail, 1, Integer::sum);
-        }
+        failedTestCases.forEach(
+                failedTestCase ->
+                        failedTestCasesDetails.merge(
+                                failedTestCase.getTestCaseFailureDetails(), 1, Integer::sum));
 
         return failedTestCasesDetails;
-    }
-
-    /**
-     * Generates a string containing the failure reason and additional result information of a
-     * failed test case.
-     *
-     * @param failedTestCase The failed test case
-     * @return The generated string
-     */
-    private String getTestCaseFailureDetails(AnvilTestCase failedTestCase) {
-        StringBuilder logMessage = new StringBuilder();
-        logMessage.append(
-                String.format(
-                        "Failure reason: %s.",
-                        failedTestCase.getFailedReason() != null
-                                ? failedTestCase.getFailedReason()
-                                : "undefined"));
-        if (failedTestCase.getAdditionalResultInformation() != null) {
-            logMessage.append(
-                    String.format(
-                            "Additional result info: %s.",
-                            failedTestCase.getAdditionalResultInformation()));
-        }
-
-        return logMessage.toString();
     }
 
     /**
@@ -207,7 +182,7 @@ public class AnvilTestRun {
                 (detailMessage, detailCount) ->
                         logMessage.add(
                                 String.format(
-                                        "%d/%d test cases %s. %s",
+                                        "\t%d/%d test cases %s with %s",
                                         detailCount,
                                         totalFailures,
                                         testResult.toString(),
@@ -229,7 +204,7 @@ public class AnvilTestRun {
                 (testResult, mappedTestCases) -> {
                     logMessage.add(
                             String.format(
-                                    "%d/%d test cases %s.",
+                                    "\t%d/%d test cases %s.",
                                     mappedTestCases.size(), testCasesSize, testResult.toString()));
                 });
 
@@ -240,18 +215,18 @@ public class AnvilTestRun {
         Map<TestResult, List<AnvilTestCase>> testCasesByResult = groupTestCasesByResult();
         StringBuilder logMessage = new StringBuilder();
 
-        // log details of failed test cases
-        List<TestResult> failureResults = getFailureTestResults();
-        if (testCasesByResult.keySet().stream().anyMatch(failureResults::contains)) {
+        // add details of failed test cases if there are any
+        if (testCasesByResult.keySet().stream().anyMatch(getFailureTestResults()::contains)) {
             logMessage.append("\nDetails of failed test cases:\n");
-            for (TestResult failureResult : failureResults) {
-                if (testCasesByResult.get(failureResult) != null) {
-                    logMessage.append(
-                            buildTestCaseFailureDetailsSummary(
-                                    failureResult, filterUniqueFailedTestCases(failureResult)));
-                }
-            }
         }
+        getFailureTestResults().stream()
+                .filter(testCasesByResult::containsKey)
+                .forEach(
+                        failureResult ->
+                                logMessage.append(
+                                        buildTestCaseFailureDetailsSummary(
+                                                failureResult,
+                                                filterUniqueFailedTestCases(failureResult))));
 
         return logMessage.toString();
     }
@@ -347,11 +322,11 @@ public class AnvilTestRun {
             result = resolveFinalResult();
         }
         scoreContainer.updateForResult(result);
-        AnvilContext.getInstance()
-                .addTestResult(result, testClass.getName() + "." + testMethod.getName());
+        AnvilContext.getInstance().addTestResult(result, this);
         AnvilContext.getInstance().getMapper().saveTestRunToPath(this);
         AnvilContext.getInstance().testFinished(uniqueId);
 
+        // log test run summary
         if (result == TestResult.DISABLED) {
             LOGGER.info(
                     "{} is disabled because {}",

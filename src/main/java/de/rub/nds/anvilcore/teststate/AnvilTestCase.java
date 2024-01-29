@@ -125,12 +125,12 @@ public class AnvilTestCase {
         StringBuilder logMessage = new StringBuilder();
         logMessage.append(
                 String.format(
-                        "Failure reason: %s.",
+                        "failure reason: %s.",
                         getFailedReason() != null ? getFailedReason().getMessage() : "undefined"));
         if (getAdditionalResultInformation() != null) {
             logMessage.append(
                     String.format(
-                            "Additional result info: %s.",
+                            " Additional result info: %s.",
                             getAdditionalResultInformation().toString()));
         }
 

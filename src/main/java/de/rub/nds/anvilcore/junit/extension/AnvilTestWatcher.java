@@ -19,6 +19,7 @@ import de.rwth.swc.coffee4j.model.Combination;
 import de.rwth.swc.coffee4j.model.TestInputGroupContext;
 import de.rwth.swc.coffee4j.model.report.ExecutionReporter;
 import java.util.*;
+import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -255,6 +256,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
     @Override
     public void testPlanExecutionFinished(TestPlan testPlan) {
         LOGGER.trace("Execution of " + testPlan.toString() + " finished");
+        logTestPlanExecutionSummary(AnvilContext.getInstance());
         AnvilReport anvilReport = new AnvilReport(AnvilContext.getInstance(), false);
         AnvilContext.getInstance().getMapper().saveReportToPath(anvilReport);
         if (AnvilContext.getInstance().getListener() != null) {
@@ -319,5 +321,62 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         } else {
             LOGGER.trace(testIdentifier.getDisplayName() + " finished");
         }
+    }
+
+    /**
+     * Logs a summary of all test runs and in case of failure, the details of the failed test cases.
+     *
+     * @param context AnvilContext containing all test runs and their results
+     */
+    public void logTestPlanExecutionSummary(AnvilContext context) {
+        StringBuilder logMessage = new StringBuilder("\nTest plan execution summary:");
+        context.getResultsTestRuns()
+                .forEach(
+                        (testRunResult, testRuns) -> {
+                            logMessage.append(
+                                    String.format(
+                                            "\n\t%d test runs %s", testRuns.size(), testRunResult));
+
+                            logMessage.append(
+                                    buildTestCaseFailureDetailsSummary(testRunResult, testRuns));
+                        });
+
+        LOGGER.info(logMessage.toString());
+    }
+
+    /**
+     * Builds a summary of the failure details of all failed test cases of a test run.
+     *
+     * @param testRunResult The result of the test run
+     * @param testRuns The list of test runs associated with the test run result
+     * @return A string containing the summary of the failure details of all failed test cases of a
+     *     test run. Returns an empty string if the test run result is not failed.
+     */
+    private String buildTestCaseFailureDetailsSummary(
+            TestResult testRunResult, List<AnvilTestRun> testRuns) {
+        StringBuilder logMessage = new StringBuilder();
+
+        if (testRunResult == TestResult.FULLY_FAILED
+                || testRunResult == TestResult.PARTIALLY_FAILED) {
+            Map<String, Long> failedTestCasesDetails =
+                    testRuns.stream()
+                            .flatMap(testRun -> testRun.getTestCases().stream())
+                            .collect(
+                                    Collectors.groupingBy(
+                                            AnvilTestCase::getTestCaseFailureDetails,
+                                            Collectors.counting()));
+
+            logMessage.append("\n\t\tDetails of failed test cases:");
+            failedTestCasesDetails.entrySet().stream()
+                    .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
+                    .forEach(
+                            entry ->
+                                    logMessage.append(
+                                            String.format(
+                                                    "\n\t\t\t%d failed with %s",
+                                                    entry.getValue(), entry.getKey())));
+        }
+
+        return logMessage.toString();
     }
 }
