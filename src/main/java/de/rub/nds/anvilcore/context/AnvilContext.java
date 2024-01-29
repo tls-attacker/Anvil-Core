@@ -99,7 +99,7 @@ public class AnvilContext {
         return activeTestRuns;
     }
 
-    public synchronized AnvilTestRun getTestResult(String uniqueId) {
+    public synchronized AnvilTestRun getTestRun(String uniqueId) {
         return activeTestRuns.get(uniqueId);
     }
 
