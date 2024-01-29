@@ -10,7 +10,6 @@ package de.rub.nds.anvilcore.execution;
 
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.teststate.AnvilTestCase;
-import de.rub.nds.anvilcore.teststate.AnvilTestRun;
 import de.rub.nds.anvilcore.teststate.reporting.PcapCapturer;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -37,11 +36,7 @@ public class PcapCapturingInvocationInterceptor implements InvocationInterceptor
             return;
         }
 
-        AnvilTestCase testCase =
-                AnvilTestRun.forExtensionContext(extensionContext).getTestCases().stream()
-                        .filter(tC -> tC.getExtensionContext() == extensionContext)
-                        .findFirst()
-                        .get();
+        AnvilTestCase testCase = AnvilTestCase.fromExtensionContext(extensionContext);
 
         // start capturing - auto closes when test is done
         try (PcapCapturer pcapCapturer = new PcapCapturer(testCase)) {
