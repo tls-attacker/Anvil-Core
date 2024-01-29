@@ -11,7 +11,6 @@ package de.rub.nds.anvilcore.context;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.rub.nds.anvilcore.execution.AnvilListener;
 import de.rub.nds.anvilcore.model.ParameterIdentifierProvider;
-import de.rub.nds.anvilcore.teststate.AnvilTestCase;
 import de.rub.nds.anvilcore.teststate.AnvilTestRun;
 import de.rub.nds.anvilcore.teststate.TestResult;
 import de.rub.nds.anvilcore.teststate.reporting.AnvilJsonMapper;
@@ -54,12 +53,13 @@ public class AnvilContext {
      * A Map that holds the test results. The keys are TestResult objects, and the values are
      * List<String> objects representing the names of the tests.
      */
-    private final Map<TestResult, List<String>> resultTestMap = new HashMap<>();
+    private final Map<TestResult, List<AnvilTestRun>> resultsTestRuns =
+            new HashMap<TestResult, List<AnvilTestRun>>();
     /**
      * A Map that holds the finished tests. The keys are String objects representing unique IDs of
      * tests, and the values are Boolean objects indicating whether the test is finished.
      */
-    private final Map<String, Boolean> finishedTests = new HashMap<>();
+    private final Map<String, Boolean> finishedTestRuns = new HashMap<>();
 
     private boolean aborted = false;
 
@@ -108,7 +108,7 @@ public class AnvilContext {
     }
 
     public synchronized void testFinished(String uniqueId) {
-        finishedTests.put(uniqueId, true);
+        finishedTestRuns.put(uniqueId, true);
         overallScoreContainer.merge(activeTestRuns.get(uniqueId).getScoreContainer());
         AnvilTestRun finishedContainer = activeTestRuns.remove(uniqueId);
         testsDone++;
@@ -133,48 +133,14 @@ public class AnvilContext {
         if (listener != null) {
             listener.onTestRunFinished(finishedContainer);
         }
-        if (testsDone == totalTests) {
-            testRunsSummary();  // todo: wrong logging order due to concurrency
-        }
     }
 
-    public synchronized void testRunsSummary() {
-        // group test cases of all test runs by result
-        Map<TestResult, List<AnvilTestCase>> testCasesByResult = new EnumMap<>(TestResult.class);
-        for (AnvilTestRun testRun : activeTestRuns.values()) {
-            for (AnvilTestCase testCase : testRun.getTestCases()) {
-                TestResult result = testCase.getTestResult();
-                testCasesByResult.computeIfAbsent(result, k -> new LinkedList<>()).add(testCase);
-            }
-        }
-
-        StringBuilder logMessage = new StringBuilder("Test run summary:");
-        List<TestResult> failureResults =
-                Arrays.asList(TestResult.FULLY_FAILED, TestResult.PARTIALLY_FAILED);
-
-        for (TestResult result : TestResult.values()) {
-            List<AnvilTestCase> testCases = testCasesByResult.get(result);
-            logMessage.append(
-                    String.format(
-                            "%d/%d test cases %s",
-                            testCases.size(), totalTests, result.toString()));
-            if (failureResults.contains(result)) {
-                // find unique test cases. They are unique by their failure reason and additional
-                // result information
-                List<AnvilTestCase> uniqueTestCases = new ArrayList<>();
-
-                // todo
-            }
-        }
-        LOGGER.info(logMessage.toString());
-    }
-
-    public synchronized Map<String, Boolean> getFinishedTests() {
-        return finishedTests;
+    public synchronized Map<String, Boolean> getFinishedTestRuns() {
+        return finishedTestRuns;
     }
 
     public synchronized boolean testIsFinished(String uniqueId) {
-        return finishedTests.containsKey(uniqueId);
+        return finishedTestRuns.containsKey(uniqueId);
     }
 
     public synchronized Date getCreationTime() {
@@ -209,13 +175,13 @@ public class AnvilContext {
         return overallScoreContainer;
     }
 
-    public Map<TestResult, List<String>> getResultTestMap() {
-        return resultTestMap;
+    public Map<TestResult, List<AnvilTestRun>> getResultsTestRuns() {
+        return resultsTestRuns;
     }
 
-    public synchronized void addTestResult(TestResult result, String testName) {
-        getResultTestMap().computeIfAbsent(result, k -> new LinkedList<>());
-        getResultTestMap().get(result).add(testName);
+    public synchronized void addTestResult(TestResult result, AnvilTestRun testRun) {
+        getResultsTestRuns().computeIfAbsent(result, k -> new LinkedList<>());
+        getResultsTestRuns().get(result).add(testRun);
     }
 
     public AnvilListener getListener() {
