@@ -70,9 +70,10 @@ public class MyProtocolParameterIdentifierProvider extends ParameterIdentifierPr
 - Create your own tests templates
   - annotate with @AnvilTest or @NonCombinatorialAnvilTest
   - each test should create a AnvilTestCase object, where you store your result
+  - each test also needs an entry in the `metadata.json` file placed in your resources folder
 
 ```java
-public class MyTestClass extends CombinatorialAnvilTest {
+public class MyTestClass extends AnvilTestBaseClass {
 
     @AnvilTest(id = "myId_1")
     public void myTest(ArgumentsAccessor argumentAccessor) {
@@ -81,6 +82,19 @@ public class MyTestClass extends CombinatorialAnvilTest {
         AnvilTestCase result = new AnvilTestCase(paraComb, context);
         result.setTestResult(...);
     }
+}
+```
+
+**metadata.json**
+
+```json
+{
+  "myId_1": {
+    "description": "My test description",
+    "severityLevels": {
+      "SOME_LEVEL": 42
+    }
+  }
 }
 ```
 
