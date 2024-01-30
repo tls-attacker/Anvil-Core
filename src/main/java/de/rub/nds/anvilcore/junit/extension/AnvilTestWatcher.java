@@ -72,7 +72,8 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
                 LOGGER.error("TestCase sould not be null");
                 return;
             }
-            if (testCase.getTestResult() == null || testCase.getTestResult() == TestResult.NOT_SPECIFIED) {
+            if (testCase.getTestResult() == null
+                    || testCase.getTestResult() == TestResult.NOT_SPECIFIED) {
                 // test template did not yield a reason why this test did not succeed
                 testCase.setTestResult(TestResult.STRICTLY_SUCCEEDED);
             }

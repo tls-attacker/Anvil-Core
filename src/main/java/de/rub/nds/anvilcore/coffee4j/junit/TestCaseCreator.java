@@ -8,6 +8,7 @@
  */
 package de.rub.nds.anvilcore.coffee4j.junit;
 
+import de.rub.nds.anvilcore.model.DerivationScope;
 import de.rub.nds.anvilcore.model.ParameterCombination;
 import de.rub.nds.anvilcore.teststate.AnvilTestCase;
 import de.rwth.swc.coffee4j.model.Combination;
@@ -26,7 +27,9 @@ public class TestCaseCreator implements BeforeTestExecutionCallback {
     public void beforeTestExecution(ExtensionContext extensionContext) throws Exception {
         AnvilTestCase testCase =
                 new AnvilTestCase(
-                        ParameterCombination.fromCombination(testInput), extensionContext);
+                        ParameterCombination.fromCombination(
+                                testInput, new DerivationScope(extensionContext)),
+                        extensionContext);
         extensionContext
                 .getStore(ExtensionContext.Namespace.GLOBAL)
                 .put(AnvilTestCase.class.getName(), testCase);

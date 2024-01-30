@@ -9,22 +9,12 @@
 package de.rub.nds.anvilcore.coffee4j.junit;
 
 import de.rub.nds.anvilcore.teststate.AnvilTestCase;
-import de.rwth.swc.coffee4j.junit.CombinatorialTestMethodContext;
-import de.rwth.swc.coffee4j.model.Combination;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 
 public class TestCaseResolver implements ParameterResolver {
-
-    private final CombinatorialTestMethodContext methodContext;
-    private final Combination testInput;
-
-    TestCaseResolver(CombinatorialTestMethodContext methodContext, Combination testInput) {
-        this.methodContext = methodContext;
-        this.testInput = testInput;
-    }
 
     @Override
     public boolean supportsParameter(
@@ -37,8 +27,20 @@ public class TestCaseResolver implements ParameterResolver {
     public Object resolveParameter(
             ParameterContext parameterContext, ExtensionContext extensionContext)
             throws ParameterResolutionException {
-        return extensionContext
-                .getStore(ExtensionContext.Namespace.GLOBAL)
-                .get(AnvilTestCase.class.getName());
+        AnvilTestCase testCase =
+                (AnvilTestCase)
+                        extensionContext
+                                .getStore(ExtensionContext.Namespace.GLOBAL)
+                                .get(AnvilTestCase.class.getName());
+        if (testCase != null) {
+            return testCase;
+        } else {
+            // for non-combinatorial tests, that want to use a testcase, we generate an empty one
+            AnvilTestCase emptyCase = new AnvilTestCase(null, extensionContext);
+            extensionContext
+                    .getStore(ExtensionContext.Namespace.GLOBAL)
+                    .put(AnvilTestCase.class.getName(), emptyCase);
+            return emptyCase;
+        }
     }
 }

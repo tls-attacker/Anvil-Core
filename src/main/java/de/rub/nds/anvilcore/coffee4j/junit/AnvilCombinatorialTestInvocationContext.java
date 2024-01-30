@@ -38,7 +38,7 @@ public class AnvilCombinatorialTestInvocationContext implements TestTemplateInvo
     public List<Extension> getAdditionalExtensions() {
         return Arrays.asList(
                 new TestCaseCreator(this.testInput),
-                new TestCaseResolver(this.methodContext, this.testInput),
+                new TestCaseResolver(),
                 new CombinatorialTestExecutionCallback(this.testInput));
     }
 }

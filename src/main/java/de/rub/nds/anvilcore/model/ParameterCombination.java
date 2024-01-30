@@ -40,6 +40,11 @@ public class ParameterCombination {
     }
 
     public static ParameterCombination fromCombination(Combination combination) {
+        return fromCombination(combination, null);
+    }
+
+    public static ParameterCombination fromCombination(
+            Combination combination, DerivationScope derivationScope) {
         List<DerivationParameter> parameters = new ArrayList<>();
         combination
                 .getParameterValueMap()
@@ -53,7 +58,7 @@ public class ParameterCombination {
                                 LOGGER.warn("Unsupported parameter type ignored");
                             }
                         });
-        return new ParameterCombination(parameters);
+        return new ParameterCombination(parameters, derivationScope);
     }
 
     public static ParameterCombination fromArgumentsAccessor(
