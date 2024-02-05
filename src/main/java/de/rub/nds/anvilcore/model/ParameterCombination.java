@@ -12,13 +12,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import de.rwth.swc.coffee4j.model.Combination;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.StringJoiner;
+import java.util.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.params.aggregator.ArgumentsAccessor;
@@ -157,9 +151,9 @@ public class ParameterCombination {
     @Override
     public String toString() {
         StringJoiner joiner = new StringJoiner(", ");
-        for (DerivationParameter derivationParameter : getParameterValues()) {
-            joiner.add(derivationParameter.toString());
-        }
+        getParameterValues().stream()
+                .sorted(Comparator.comparing(dP -> dP.getParameterIdentifier().toString()))
+                .forEach((derivationParameter) -> joiner.add(derivationParameter.toString()));
         return joiner.toString();
     }
 
