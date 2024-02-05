@@ -348,13 +348,19 @@ public class AnvilTestRun {
         AnvilContext.getInstance().testFinished(uniqueId);
 
         // log test run summary
-        if (result == TestResult.DISABLED) {
-            LOGGER.info(
-                    "{} is disabled because {}",
-                    getTestMethodName() != null ? getTestMethodName() : "undefined",
-                    disabledReason != null ? disabledReason : "undefined");
-        } else {
-            logTestRun();
+        switch (result) {
+            case STRICTLY_SUCCEEDED:
+            case CONCEPTUALLY_SUCCEEDED:
+                break; // skip live logging for any successful test
+            case DISABLED:
+                LOGGER.info(
+                        "{} is disabled because {}",
+                        getTestMethodName() != null ? getTestMethodName() : "undefined",
+                        disabledReason != null ? disabledReason : "undefined");
+                break;
+            default:
+                logTestRun();
+                break;
         }
     }
 
