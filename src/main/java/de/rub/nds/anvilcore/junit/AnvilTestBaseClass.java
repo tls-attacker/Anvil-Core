@@ -43,7 +43,7 @@ public abstract class AnvilTestBaseClass {
     protected ParameterCombination resolveParameterCombination(
             ArgumentsAccessor argumentsAccessor) {
         return ParameterCombination.fromArgumentsAccessor(
-                argumentsAccessor, new DerivationScope(extensionContext));
+                argumentsAccessor, DerivationScope.fromExtensionContext(extensionContext));
     }
 
     protected ParameterCombination resolveParameterCombination(

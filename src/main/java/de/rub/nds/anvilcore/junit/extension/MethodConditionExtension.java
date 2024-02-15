@@ -19,48 +19,55 @@ import org.junit.jupiter.api.extension.ConditionEvaluationResult;
 import org.junit.jupiter.api.extension.ExecutionCondition;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-public class MethodConditionExtension implements ExecutionCondition {
+public class MethodConditionExtension extends SingleCheckCondition implements ExecutionCondition {
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
     public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext extensionContext) {
-        Class<?> requiredTestClass = extensionContext.getRequiredTestClass();
+        ConditionEvaluationResult evalResult = createInstance(extensionContext);
+        if (evalResult == null) {
+            Class<?> requiredTestClass = extensionContext.getRequiredTestClass();
 
-        if (extensionContext.getTestMethod().isEmpty()) {
-            return ConditionEvaluationResult.enabled("");
-        }
-        Method testMethod = extensionContext.getTestMethod().get();
+            if (extensionContext.getTestMethod().isEmpty()) {
+                evalResult = ConditionEvaluationResult.enabled("");
+            } else {
+                Method testMethod = extensionContext.getTestMethod().get();
 
-        Method classConditionMethod = null; // From test class annotation
-        Method methodConditionMethod = null; // From test method annotation
-        if (requiredTestClass.isAnnotationPresent(MethodCondition.class)) {
-            MethodCondition methodConditionAnnotation =
-                    requiredTestClass.getAnnotation(MethodCondition.class);
-            classConditionMethod =
-                    getMethodForAnnotation(methodConditionAnnotation, requiredTestClass);
-        }
-        if (testMethod.isAnnotationPresent(MethodCondition.class)) {
-            MethodCondition methodConditionAnnotation =
-                    testMethod.getAnnotation(MethodCondition.class);
-            methodConditionMethod =
-                    getMethodForAnnotation(methodConditionAnnotation, requiredTestClass);
-        }
+                Method classConditionMethod = null; // From test class annotation
+                Method methodConditionMethod = null; // From test method annotation
+                if (requiredTestClass.isAnnotationPresent(MethodCondition.class)) {
+                    MethodCondition methodConditionAnnotation =
+                            requiredTestClass.getAnnotation(MethodCondition.class);
+                    classConditionMethod =
+                            getMethodForAnnotation(methodConditionAnnotation, requiredTestClass);
+                }
+                if (testMethod.isAnnotationPresent(MethodCondition.class)) {
+                    MethodCondition methodConditionAnnotation =
+                            testMethod.getAnnotation(MethodCondition.class);
+                    methodConditionMethod =
+                            getMethodForAnnotation(methodConditionAnnotation, requiredTestClass);
+                }
 
-        ConditionEvaluationResult currentEvalResult = null;
+                if (methodConditionMethod == null && classConditionMethod == null) {
+                    evalResult = ConditionEvaluationResult.enabled("No MethodCondition found");
+                } else {
 
-        if (methodConditionMethod == null && classConditionMethod == null) {
-            return ConditionEvaluationResult.enabled("No MethodCondition found");
-        }
+                    if (methodConditionMethod != null) {
+                        evalResult = invokeMethod(methodConditionMethod, extensionContext);
+                    }
 
-        if (methodConditionMethod != null) {
-            currentEvalResult = invokeMethod(methodConditionMethod, extensionContext);
-        }
+                    if (classConditionMethod != null
+                            && (evalResult == null || !evalResult.isDisabled())) {
+                        evalResult = invokeMethod(classConditionMethod, extensionContext);
+                    }
+                }
+            }
+            cacheEvalResult(extensionContext, evalResult);
+            return evalResult;
 
-        if (classConditionMethod != null
-                && (currentEvalResult == null || !currentEvalResult.isDisabled())) {
-            currentEvalResult = invokeMethod(classConditionMethod, extensionContext);
+        } else {
+            return evalResult;
         }
-        return currentEvalResult;
     }
 
     public static Method getMethodForAnnotation(
