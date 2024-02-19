@@ -14,14 +14,18 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.rub.nds.anvilcore.constants.TestEndpointType;
 import de.rub.nds.anvilcore.context.AnvilContext;
-import de.rub.nds.anvilcore.teststate.AnvilTestCase;
 import de.rub.nds.anvilcore.teststate.TestResult;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class AnvilReport {
+    private static final Logger LOGGER = LogManager.getLogger();
+
     @JsonProperty("ElapsedTime")
     private long elapsedTime;
 
@@ -52,11 +56,8 @@ public class AnvilReport {
     @JsonProperty("FullyFailedTests")
     private long testsFullyFailed;
 
-    @JsonProperty("DetailsFullyFailedTestCases")
-    private Map<String, Integer> detailsFullyFailedTestCases;
-
-    @JsonProperty("DetailsPartiallyFailedTestCases")
-    private Map<String, Integer> detailsPartiallyFailedTestCases;
+    @JsonProperty("DetailsFailedTestCases")
+    private Map<String, Integer> detailsFailedTestCases;
 
     @JsonProperty("TestSuiteErrorTests")
     private long testsTestSuiteError;
@@ -104,26 +105,16 @@ public class AnvilReport {
                 context.getResultsTestRuns()
                         .computeIfAbsent(TestResult.CONCEPTUALLY_SUCCEEDED, k -> new LinkedList<>())
                         .size();
-        this.detailsFullyFailedTestCases =
-                context
-                        .getResultsTestRuns()
-                        .computeIfAbsent(TestResult.FULLY_FAILED, k -> new LinkedList<>())
-                        .stream()
-                        .flatMap(testRun -> testRun.getTestCases().stream())
-                        .map(AnvilTestCase::getTestCaseFailureDetails)
-                        .collect(Collectors.toMap(String::toString, detail -> 1, Integer::sum));
-        this.detailsPartiallyFailedTestCases =
-                context
-                        .getResultsTestRuns()
-                        .computeIfAbsent(TestResult.PARTIALLY_FAILED, k -> new LinkedList<>())
-                        .stream()
-                        .flatMap(testRun -> testRun.getTestCases().stream())
-                        .map(AnvilTestCase::getTestCaseFailureDetails)
-                        .collect(Collectors.toMap(String::toString, detail -> 1, Integer::sum));
         this.testsTestSuiteError =
                 context.getResultsTestRuns()
                         .computeIfAbsent(TestResult.TEST_SUITE_ERROR, k -> new LinkedList<>())
                         .size();
+        this.detailsFailedTestCases =
+                context.getDetailsFailedTestCases().values().stream()
+                        .flatMap(List::stream)
+                        .collect(
+                                Collectors.groupingBy(
+                                        String::toString, Collectors.summingInt(detail -> 1)));
         this.totalTests = context.getTotalTests();
         this.finishedTests = context.getTestsDone();
         this.testCaseCount = context.getTestCases();
@@ -132,7 +123,7 @@ public class AnvilReport {
         try {
             this.anvilConfigString = new ObjectMapper().writeValueAsString(context.getConfig());
         } catch (JsonProcessingException e) {
-
+            LOGGER.error("Error occurred while processing anvil test config to JSON string. ", e);
         }
         this.endpointType = context.getConfig().getEndpointMode();
         this.running = running;

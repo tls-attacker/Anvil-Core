@@ -147,7 +147,7 @@ public class AnvilTestCase {
      *
      * @return The generated string
      */
-    public String getTestCaseFailureDetails() {
+    public String getFailureDetails() {
         StringBuilder logMessage = new StringBuilder();
         logMessage.append(
                 String.format(

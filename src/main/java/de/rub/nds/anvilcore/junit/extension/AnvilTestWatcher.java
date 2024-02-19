@@ -390,17 +390,23 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
      *
      * @param context AnvilContext containing all test runs and their results
      */
-    public void logTestPlanExecutionSummary(AnvilContext context) {
+    public synchronized void logTestPlanExecutionSummary(AnvilContext context) {
         StringBuilder logMessage = new StringBuilder("\nTest plan execution summary:");
-        context.getResultsTestRuns()
+        context.getResultsTestRuns().entrySet().stream()
+                .sorted(
+                        Map.Entry.comparingByKey(
+                                Comparator.comparing(TestResult::getValue).reversed()))
                 .forEach(
-                        (testRunResult, testRuns) -> {
+                        entry -> {
+                            TestResult testRunResult = entry.getKey();
+                            List<String> testRunsUniqueIds = entry.getValue();
                             logMessage.append(
                                     String.format(
-                                            "\n\t%d test runs %s", testRuns.size(), testRunResult));
-
+                                            "\n\t%d test runs %s",
+                                            testRunsUniqueIds.size(), testRunResult));
                             logMessage.append(
-                                    buildTestCaseFailureDetailsSummary(testRunResult, testRuns));
+                                    buildTestCaseFailureDetailsSummary(
+                                            testRunResult, testRunsUniqueIds));
                         });
 
         LOGGER.info(logMessage.toString());
@@ -410,26 +416,26 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
      * Builds a summary of the failure details of all failed test cases of a test run.
      *
      * @param testRunResult The result of the test run
-     * @param testRuns The list of test runs associated with the test run result
+     * @param testRunsUniqueIds The list of test runs unique IDs associated with the test run result
      * @return A string containing the summary of the failure details of all failed test cases of a
      *     test run. Returns an empty string if the test run result is not failed.
      */
     private String buildTestCaseFailureDetailsSummary(
-            TestResult testRunResult, List<AnvilTestRun> testRuns) {
+            TestResult testRunResult, List<String> testRunsUniqueIds) {
         StringBuilder logMessage = new StringBuilder();
 
         if (testRunResult == TestResult.FULLY_FAILED
                 || testRunResult == TestResult.PARTIALLY_FAILED) {
-            Map<String, Long> failedTestCasesDetails =
-                    testRuns.stream()
-                            .flatMap(testRun -> testRun.getTestCases().stream())
+            Map<String, Long> failedTestCasesDetailsSummary =
+                    AnvilContext.getInstance().getDetailsFailedTestCases().entrySet().stream()
+                            .filter(entry -> testRunsUniqueIds.contains(entry.getKey()))
+                            .map(Map.Entry::getValue)
+                            .flatMap(Collection::stream)
                             .collect(
-                                    Collectors.groupingBy(
-                                            AnvilTestCase::getTestCaseFailureDetails,
-                                            Collectors.counting()));
+                                    Collectors.groupingBy(String::toString, Collectors.counting()));
 
             logMessage.append("\n\t\tDetails of failed test cases:");
-            failedTestCasesDetails.entrySet().stream()
+            failedTestCasesDetailsSummary.entrySet().stream()
                     .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
                     .forEach(
                             entry ->

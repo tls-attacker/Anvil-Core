@@ -161,7 +161,7 @@ public class AnvilTestRun {
         failedTestCases.forEach(
                 failedTestCase ->
                         failedTestCasesDetails.merge(
-                                failedTestCase.getTestCaseFailureDetails(), 1, Integer::sum));
+                                failedTestCase.getFailureDetails(), 1, Integer::sum));
 
         return failedTestCasesDetails;
     }
@@ -345,7 +345,7 @@ public class AnvilTestRun {
         scoreContainer.updateForResult(result);
         AnvilContext.getInstance().addTestResult(result, this);
         AnvilContext.getInstance().getMapper().saveTestRunToPath(this);
-        AnvilContext.getInstance().testFinished(uniqueId);
+        AnvilContext.getInstance().testFinished(this);
 
         // log test run summary
         switch (result) {
