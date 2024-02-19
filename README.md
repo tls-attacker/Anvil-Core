@@ -69,7 +69,7 @@ public class MyProtocolParameterIdentifierProvider extends ParameterIdentifierPr
 
 - Create your own tests templates
   - annotate with @AnvilTest or @NonCombinatorialAnvilTest
-  - you can use AnvilTestCase as a parameter for the test to get the ParameterCombination or manually set a test result 
+  - you can use AnvilTestCase as a parameter for the test to get the ParameterCombination or manually set a test result
   - each test should have an entry in the `metadata.json` file, placed in your resources folder
 
 ```java
