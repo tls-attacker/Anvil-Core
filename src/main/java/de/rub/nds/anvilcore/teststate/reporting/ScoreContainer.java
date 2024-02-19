@@ -27,7 +27,10 @@ public class ScoreContainer {
     public ScoreContainer(String testId) {
         Map<String, Integer> severityLevels =
                 AnvilContext.getInstance().getMetadataFetcher().getTestSeverityLevels(testId);
-        if (severityLevels == null) throw new RuntimeException("Metadata not found!");
+        if (severityLevels == null) {
+            LOGGER.error("No severity levels set for test with id: " + testId);
+            return;
+        }
         for (Map.Entry<String, Integer> t : severityLevels.entrySet()) {
             scoreMap.put(t.getKey(), new Score(t.getValue()));
         }
