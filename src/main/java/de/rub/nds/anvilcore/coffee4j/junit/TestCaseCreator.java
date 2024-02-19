@@ -28,7 +28,7 @@ public class TestCaseCreator implements BeforeTestExecutionCallback {
         AnvilTestCase testCase =
                 new AnvilTestCase(
                         ParameterCombination.fromCombination(
-                                testInput, new DerivationScope(extensionContext)),
+                                testInput, DerivationScope.fromExtensionContext(extensionContext)),
                         extensionContext);
         extensionContext
                 .getStore(ExtensionContext.Namespace.GLOBAL)
