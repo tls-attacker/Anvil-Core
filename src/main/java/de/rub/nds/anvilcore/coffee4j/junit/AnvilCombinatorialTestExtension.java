@@ -91,6 +91,6 @@ public class AnvilCombinatorialTestExtension extends CombinatorialTestExtension 
             CombinatorialTestNameFormatter nameFormatter,
             CombinatorialTestMethodContext methodContext,
             Combination testInput) {
-        return new CombinatorialTestInvocationContext(nameFormatter, methodContext, testInput);
+        return new AnvilCombinatorialTestInvocationContext(nameFormatter, methodContext, testInput);
     }
 }
