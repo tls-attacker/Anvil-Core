@@ -16,14 +16,13 @@ import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
-import org.junit.jupiter.api.extension.ExecutionCondition;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-public class MethodConditionExtension extends SingleCheckCondition implements ExecutionCondition {
+public class MethodConditionExtension extends SingleCheckCondition {
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
-    public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext extensionContext) {
+    public ConditionEvaluationResult evaluateUncachedCondition(ExtensionContext extensionContext) {
         ConditionEvaluationResult evalResult = createInstance(extensionContext);
         if (evalResult == null) {
             Class<?> requiredTestClass = extensionContext.getRequiredTestClass();

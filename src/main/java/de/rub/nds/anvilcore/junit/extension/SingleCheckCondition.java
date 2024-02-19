@@ -9,9 +9,30 @@
 package de.rub.nds.anvilcore.junit.extension;
 
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
+import org.junit.jupiter.api.extension.ExecutionCondition;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-public abstract class SingleCheckCondition {
+public abstract class SingleCheckCondition implements ExecutionCondition {
+
+    @Override
+    public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext extensionContext) {
+        ConditionEvaluationResult evalResult = null;
+        if (extensionContext.getTestMethod().isPresent()) {
+            evalResult = getPreviousEvaluationResult(extensionContext);
+        }
+        if (evalResult == null) {
+            evalResult = evaluateUncachedCondition(extensionContext);
+            cacheEvalResult(extensionContext, evalResult);
+            System.out.println("Creating new instance");
+        } else {
+            System.out.println("Using cache");
+        }
+        return evalResult;
+    }
+
+    protected abstract ConditionEvaluationResult evaluateUncachedCondition(
+            ExtensionContext extensionContext);
+
     public ConditionEvaluationResult getPreviousEvaluationResult(
             ExtensionContext extensionContext) {
         ExtensionContext.Namespace namespace =
@@ -42,7 +63,7 @@ public abstract class SingleCheckCondition {
         ConditionEvaluationResult evalResult = null;
         if (extensionContext.getTestMethod().isPresent()) {
             // only check for methods as containers will always only be evaluated once
-            evalResult = getPreviousEvaluationResult(extensionContext);
+
         }
         return evalResult;
     }

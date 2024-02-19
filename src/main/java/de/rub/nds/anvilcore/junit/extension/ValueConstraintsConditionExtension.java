@@ -13,14 +13,12 @@ import de.rub.nds.anvilcore.model.constraint.ValueConstraint;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
-import org.junit.jupiter.api.extension.ExecutionCondition;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-public class ValueConstraintsConditionExtension extends SingleCheckCondition
-        implements ExecutionCondition {
+public class ValueConstraintsConditionExtension extends SingleCheckCondition {
 
     @Override
-    public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext extensionContext) {
+    public ConditionEvaluationResult evaluateUncachedCondition(ExtensionContext extensionContext) {
         ConditionEvaluationResult evalResult = createInstance(extensionContext);
         if (evalResult == null) {
             if (extensionContext.getTestMethod().isEmpty()) {
