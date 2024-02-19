@@ -23,9 +23,6 @@ public abstract class SingleCheckCondition implements ExecutionCondition {
         if (evalResult == null) {
             evalResult = evaluateUncachedCondition(extensionContext);
             cacheEvalResult(extensionContext, evalResult);
-            System.out.println("Creating new instance");
-        } else {
-            System.out.println("Using cache");
         }
         return evalResult;
     }

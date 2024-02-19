@@ -19,44 +19,30 @@ public class ValueConstraintsConditionExtension extends SingleCheckCondition {
 
     @Override
     public ConditionEvaluationResult evaluateUncachedCondition(ExtensionContext extensionContext) {
-        ConditionEvaluationResult evalResult = createInstance(extensionContext);
-        if (evalResult == null) {
-            if (extensionContext.getTestMethod().isEmpty()) {
-                evalResult =
-                        ConditionEvaluationResult.enabled("Class annotations are not relevant");
-            } else {
-
-                DerivationScope derivationScope =
-                        DerivationScope.fromExtensionContext(extensionContext);
-                for (ValueConstraint valueConstraint : derivationScope.getValueConstraints()) {
-                    DerivationParameter derivationParameter =
-                            valueConstraint.getAffectedParameter().getInstance();
-                    if (derivationParameter.hasNoApplicableValues(derivationScope)) {
-                        evalResult =
-                                ConditionEvaluationResult.disabled(
-                                        "No values supported required for parameter "
-                                                + derivationParameter.getParameterIdentifier());
-                    }
-                }
-                for (ParameterIdentifier explicitParameterIdentifier :
-                        derivationScope.getExplicitValues().keySet()) {
-                    DerivationParameter derivationParameter =
-                            explicitParameterIdentifier.getInstance();
-                    if (derivationParameter.hasNoApplicableValues(derivationScope)) {
-                        evalResult =
-                                ConditionEvaluationResult.disabled(
-                                        "No values supported required for parameter "
-                                                + explicitParameterIdentifier);
-                    }
-                }
-            }
-            if (evalResult == null) {
-                evalResult = ConditionEvaluationResult.enabled("");
-            }
-            cacheEvalResult(extensionContext, evalResult);
-            return evalResult;
+        if (extensionContext.getTestMethod().isEmpty()) {
+            return ConditionEvaluationResult.enabled("Class annotations are not relevant");
         } else {
-            return evalResult;
+            DerivationScope derivationScope =
+                    DerivationScope.fromExtensionContext(extensionContext);
+            for (ValueConstraint valueConstraint : derivationScope.getValueConstraints()) {
+                DerivationParameter derivationParameter =
+                        valueConstraint.getAffectedParameter().getInstance();
+                if (derivationParameter.hasNoApplicableValues(derivationScope)) {
+                    return ConditionEvaluationResult.disabled(
+                            "No values supported required for parameter "
+                                    + derivationParameter.getParameterIdentifier());
+                }
+            }
+            for (ParameterIdentifier explicitParameterIdentifier :
+                    derivationScope.getExplicitValues().keySet()) {
+                DerivationParameter derivationParameter = explicitParameterIdentifier.getInstance();
+                if (derivationParameter.hasNoApplicableValues(derivationScope)) {
+                    return ConditionEvaluationResult.disabled(
+                            "No values supported required for parameter "
+                                    + explicitParameterIdentifier);
+                }
+            }
+            return ConditionEvaluationResult.enabled("");
         }
     }
 }
