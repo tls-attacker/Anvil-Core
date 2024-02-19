@@ -30,7 +30,7 @@ public abstract class SingleCheckCondition implements ExecutionCondition {
     protected abstract ConditionEvaluationResult evaluateUncachedCondition(
             ExtensionContext extensionContext);
 
-    public ConditionEvaluationResult getPreviousEvaluationResult(
+    private ConditionEvaluationResult getPreviousEvaluationResult(
             ExtensionContext extensionContext) {
         ExtensionContext.Namespace namespace =
                 ExtensionContext.Namespace.create(
@@ -44,7 +44,7 @@ public abstract class SingleCheckCondition implements ExecutionCondition {
                 .get(this.getClass(), ConditionEvaluationResult.class);
     }
 
-    public void cacheEvalResult(
+    private void cacheEvalResult(
             ExtensionContext extensionContext, ConditionEvaluationResult evalResult) {
         if (extensionContext.getTestMethod().isPresent()) {
             // only cache for test methods as containers will only be checked once
@@ -54,14 +54,5 @@ public abstract class SingleCheckCondition implements ExecutionCondition {
                             extensionContext.getRequiredTestMethod());
             extensionContext.getStore(namespace).put(this.getClass(), evalResult);
         }
-    }
-
-    protected ConditionEvaluationResult createInstance(ExtensionContext extensionContext) {
-        ConditionEvaluationResult evalResult = null;
-        if (extensionContext.getTestMethod().isPresent()) {
-            // only check for methods as containers will always only be evaluated once
-
-        }
-        return evalResult;
     }
 }
