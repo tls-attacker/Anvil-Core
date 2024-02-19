@@ -8,6 +8,7 @@
  */
 package de.rub.nds.anvilcore.junit;
 
+import de.rub.nds.anvilcore.execution.PcapCapturingInvocationInterceptor;
 import de.rub.nds.anvilcore.junit.extension.AnvilTestWatcher;
 import de.rub.nds.anvilcore.junit.extension.EndpointConditionExtension;
 import de.rub.nds.anvilcore.junit.extension.MethodConditionExtension;
@@ -26,9 +27,10 @@ import org.junit.jupiter.params.aggregator.ArgumentsAccessor;
     EndpointConditionExtension.class,
     MethodConditionExtension.class,
     ValueConstraintsConditionExtension.class,
-    ExtensionContextParameterResolver.class
+    ExtensionContextParameterResolver.class,
+    PcapCapturingInvocationInterceptor.class
 })
-public abstract class CombinatorialAnvilTest {
+public abstract class AnvilTestBaseClass {
     protected static final Logger LOGGER = LogManager.getLogger();
 
     protected ExtensionContext extensionContext;

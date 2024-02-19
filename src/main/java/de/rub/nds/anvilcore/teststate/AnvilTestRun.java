@@ -11,18 +11,19 @@ package de.rub.nds.anvilcore.teststate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
-import de.rub.nds.anvilcore.annotation.AnvilTest;
-import de.rub.nds.anvilcore.annotation.NonCombinatorialAnvilTest;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.junit.Utils;
 import de.rub.nds.anvilcore.model.ParameterCombination;
 import de.rub.nds.anvilcore.teststate.reporting.ScoreContainer;
+import de.rub.nds.anvilcore.util.TestIdResolver;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.platform.engine.support.descriptor.MethodSource;
+import org.junit.platform.launcher.TestIdentifier;
 
 public class AnvilTestRun {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -141,24 +142,44 @@ public class AnvilTestRun {
                 Utils.getTemplateContainerExtensionContext(extensionContext)
                         .getTestMethod()
                         .orElseThrow();
-        NonCombinatorialAnvilTest nonCombinatorialAnvilTest =
-                this.testMethod.getAnnotation(NonCombinatorialAnvilTest.class);
-        AnvilTest anvilTest = this.testMethod.getAnnotation(AnvilTest.class);
-        this.testId = getTestMethodName(); // fallback
-        if (nonCombinatorialAnvilTest != null && !nonCombinatorialAnvilTest.id().isEmpty()) {
-            testId = nonCombinatorialAnvilTest.id();
-        } else if (anvilTest != null && !anvilTest.id().isEmpty()) {
-            testId = anvilTest.id();
-        }
+        this.testId = TestIdResolver.resolveTestId(testMethod);
         this.scoreContainer = new ScoreContainer(testId);
+    }
+
+    /**
+     * Constructor used only for failed tests where parameters are not provided by an
+     * ExtensionContext. Note that we base the unique ID solely on the test source as this should
+     * only occur (at most) once for each test.
+     *
+     * @param testClass The class determined externally
+     * @param testMethod The test method determined externally
+     */
+    private AnvilTestRun(Class<?> testClass, Method testMethod) {
+        this.uniqueId = testClass.getName() + "." + testMethod.getName();
+        this.testClass = testClass;
+        this.testMethod = testMethod;
+        this.testId = TestIdResolver.resolveTestId(testMethod);
+        this.scoreContainer = new ScoreContainer(testId);
+    }
+
+    public static AnvilTestRun forFailedInitialization(TestIdentifier testIdentifier) {
+        if (testIdentifier.getSource().isPresent()
+                && testIdentifier.getSource().get() instanceof MethodSource) {
+            MethodSource methodSource = (MethodSource) testIdentifier.getSource().get();
+            return new AnvilTestRun(methodSource.getJavaClass(), methodSource.getJavaMethod());
+        } else {
+            throw new UnsupportedOperationException(
+                    "Failed to create AnvilTestRun as no MethodSource was provided for test "
+                            + testIdentifier.toString());
+        }
     }
 
     public static synchronized AnvilTestRun forExtensionContext(ExtensionContext extensionContext) {
         ExtensionContext resolvedContext =
                 Utils.getTemplateContainerExtensionContext(extensionContext);
 
-        if (AnvilContext.getInstance().getTestResult(resolvedContext.getUniqueId()) != null) {
-            return AnvilContext.getInstance().getTestResult(resolvedContext.getUniqueId());
+        if (AnvilContext.getInstance().getTestRun(resolvedContext.getUniqueId()) != null) {
+            return AnvilContext.getInstance().getTestRun(resolvedContext.getUniqueId());
         }
 
         AnvilTestRun container = new AnvilTestRun(resolvedContext);
@@ -190,6 +211,10 @@ public class AnvilTestRun {
     public TestResult resolveFinalResult() {
         Set<TestResult> uniqueResultTypes =
                 testCases.stream().map(AnvilTestCase::getTestResult).collect(Collectors.toSet());
+
+        if (uniqueResultTypes.contains(TestResult.TEST_SUITE_ERROR)) {
+            return TestResult.TEST_SUITE_ERROR;
+        }
         if (uniqueResultTypes.contains(TestResult.FULLY_FAILED)
                 || uniqueResultTypes.contains(TestResult.PARTIALLY_FAILED)) {
             if (uniqueResultTypes.size() > 1) {
