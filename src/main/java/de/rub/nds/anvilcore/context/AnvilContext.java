@@ -161,7 +161,7 @@ public class AnvilContext {
         return resultTestMap;
     }
 
-    public void addTestResult(TestResult result, String testName) {
+    public synchronized void addTestResult(TestResult result, String testName) {
         getResultTestMap().computeIfAbsent(result, k -> new HashSet<>());
         getResultTestMap().get(result).add(testName);
     }
