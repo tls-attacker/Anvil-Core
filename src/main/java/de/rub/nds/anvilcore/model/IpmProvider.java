@@ -38,7 +38,7 @@ public class IpmProvider implements ModelProvider, AnnotationConsumer<ModelFromS
 
     @Override
     public InputParameterModel provide(ExtensionContext extensionContext) {
-        DerivationScope derivationScope = new DerivationScope(extensionContext);
+        DerivationScope derivationScope = DerivationScope.fromExtensionContext(extensionContext);
         return generateIpm(derivationScope);
     }
 

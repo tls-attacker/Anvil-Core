@@ -211,11 +211,13 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
             LOGGER.error("Error deleting temporary pcap dump file: ", e);
         }
 
-        try {
-            byte[] pcapBytes = Files.readAllBytes(finalPcapPath);
-            AnvilContext.getInstance().getListener().onPcapCaptured(testCase, pcapBytes);
-        } catch (IOException e) {
-            LOGGER.error("Cannot read pcap file.", e);
+        if (AnvilContext.getInstance().getListener() != null) {
+            try {
+                byte[] pcapBytes = Files.readAllBytes(finalPcapPath);
+                AnvilContext.getInstance().getListener().onPcapCaptured(testCase, pcapBytes);
+            } catch (IOException e) {
+                LOGGER.error("Cannot read pcap file.", e);
+            }
         }
     }
 

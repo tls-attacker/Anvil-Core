@@ -13,36 +13,36 @@ import de.rub.nds.anvilcore.model.constraint.ValueConstraint;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
-import org.junit.jupiter.api.extension.ExecutionCondition;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-public class ValueConstraintsConditionExtension implements ExecutionCondition {
+public class ValueConstraintsConditionExtension extends SingleCheckCondition {
 
     @Override
-    public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext extensionContext) {
+    public ConditionEvaluationResult evaluateUncachedCondition(ExtensionContext extensionContext) {
         if (extensionContext.getTestMethod().isEmpty()) {
             return ConditionEvaluationResult.enabled("Class annotations are not relevant");
-        }
-
-        DerivationScope derivationScope = new DerivationScope(extensionContext);
-        for (ValueConstraint valueConstraint : derivationScope.getValueConstraints()) {
-            DerivationParameter derivationParameter =
-                    valueConstraint.getAffectedParameter().getInstance();
-            if (derivationParameter.hasNoApplicableValues(derivationScope)) {
-                return ConditionEvaluationResult.disabled(
-                        "No values supported required for parameter "
-                                + derivationParameter.getParameterIdentifier());
+        } else {
+            DerivationScope derivationScope =
+                    DerivationScope.fromExtensionContext(extensionContext);
+            for (ValueConstraint valueConstraint : derivationScope.getValueConstraints()) {
+                DerivationParameter derivationParameter =
+                        valueConstraint.getAffectedParameter().getInstance();
+                if (derivationParameter.hasNoApplicableValues(derivationScope)) {
+                    return ConditionEvaluationResult.disabled(
+                            "No values supported required for parameter "
+                                    + derivationParameter.getParameterIdentifier());
+                }
             }
-        }
-        for (ParameterIdentifier explicitParameterIdentifier :
-                derivationScope.getExplicitValues().keySet()) {
-            DerivationParameter derivationParameter = explicitParameterIdentifier.getInstance();
-            if (derivationParameter.hasNoApplicableValues(derivationScope)) {
-                return ConditionEvaluationResult.disabled(
-                        "No values supported required for parameter "
-                                + explicitParameterIdentifier);
+            for (ParameterIdentifier explicitParameterIdentifier :
+                    derivationScope.getExplicitValues().keySet()) {
+                DerivationParameter derivationParameter = explicitParameterIdentifier.getInstance();
+                if (derivationParameter.hasNoApplicableValues(derivationScope)) {
+                    return ConditionEvaluationResult.disabled(
+                            "No values supported required for parameter "
+                                    + explicitParameterIdentifier);
+                }
             }
+            return ConditionEvaluationResult.enabled("");
         }
-        return ConditionEvaluationResult.enabled("");
     }
 }

@@ -13,8 +13,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Set;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class MetadataFetcher {
+
+    private static final Logger LOGGER = LogManager.getLogger();
 
     private Map<String, ?> metadataMap = null;
 
@@ -54,6 +58,9 @@ public class MetadataFetcher {
     }
 
     public Map<?, ?> getRawMetadata(String id) {
+        if (!metadataMap.containsKey(id)) {
+            LOGGER.error("No metadata found for test with id: " + id);
+        }
         return (Map<?, ?>) this.metadataMap.get(id);
     }
 

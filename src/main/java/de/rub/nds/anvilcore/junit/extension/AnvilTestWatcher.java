@@ -64,18 +64,21 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
                         .getTestRun(
                                 Utils.getTemplateContainerExtensionContext(extensionContext)
                                         .getUniqueId());
+        AnvilTestCase testCase = AnvilTestCase.fromExtensionContext(extensionContext);
+        if (testCase != null
+                && (testCase.getTestResult() == null
+                        || testCase.getTestResult() == TestResult.NOT_SPECIFIED)) {
+            // test template did not yield a reason why this test did not succeed
+            testCase.setTestResult(TestResult.STRICTLY_SUCCEEDED);
+        }
+
         if (!Utils.extensionContextIsBasedOnCombinatorialTesting(
                 extensionContext.getParent().get())) {
             processNonCombinatorial(testRun, extensionContext, TestResult.STRICTLY_SUCCEEDED, null);
         } else {
-            AnvilTestCase testCase = getTestCase(extensionContext, testRun);
             if (testCase == null) {
-                LOGGER.error("TestCase sould not be null");
+                LOGGER.error("TestCase should not be null");
                 return;
-            }
-            if (testCase.getTestResult() == null) {
-                // test template did not yield a reason why this test did not succeed
-                testCase.setTestResult(TestResult.STRICTLY_SUCCEEDED);
             }
 
             if (AnvilContext.getInstance().getListener() != null) {
@@ -117,17 +120,6 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         testRun.finish();
     }
 
-    public AnvilTestCase getTestCase(ExtensionContext extensionContext, AnvilTestRun anvilTestRun) {
-        return anvilTestRun.getTestCases().stream()
-                .filter(
-                        testCase ->
-                                testCase.getExtensionContext()
-                                        .getUniqueId()
-                                        .equals(extensionContext.getUniqueId()))
-                .findFirst()
-                .orElse(null);
-    }
-
     /**
      * TestCase or non-combinatorial test failed / did not pass.
      *
@@ -143,28 +135,29 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
                         .getTestRun(
                                 Utils.getTemplateContainerExtensionContext(extensionContext)
                                         .getUniqueId());
+        AnvilTestCase testCase = AnvilTestCase.fromExtensionContext(extensionContext);
+        if (cause != null && testCase != null) {
+            if (!(cause instanceof AssertionError)) {
+                LOGGER.error(
+                        "Test failed without AssertionError {}\n",
+                        extensionContext.getDisplayName(),
+                        cause);
+                testCase.setTestResult(TestResult.TEST_SUITE_ERROR);
+            } else if (testCase.getTestResult() == null
+                    || testCase.getTestResult() == TestResult.NOT_SPECIFIED) {
+                // default to failed for all AssertionErrors
+                testCase.setTestResult(TestResult.FULLY_FAILED);
+            }
+            testRun.setFailedReason(retrieveThrowableReason(cause));
+        }
+
         if (!Utils.extensionContextIsBasedOnCombinatorialTesting(
                 extensionContext.getParent().get())) {
             processNonCombinatorial(testRun, extensionContext, TestResult.FULLY_FAILED, cause);
         } else {
-            AnvilTestCase testCase = getTestCase(extensionContext, testRun);
             if (testCase == null) {
                 LOGGER.error("TestCase should not be null.");
                 return;
-            }
-            if (cause != null) {
-                if (!(cause instanceof AssertionError)) {
-                    LOGGER.error(
-                            "Test failed without AssertionError {}\n",
-                            extensionContext.getDisplayName(),
-                            cause);
-                    testCase.setTestResult(TestResult.TEST_SUITE_ERROR);
-                } else if (testCase.getTestResult() == null
-                        || testCase.getTestResult() == TestResult.NOT_SPECIFIED) {
-                    // default to failed for all AssertionErrors
-                    testCase.setTestResult(TestResult.FULLY_FAILED);
-                }
-                testRun.setFailedReason(retrieveThrowableReason(cause));
             }
 
             if (AnvilContext.getInstance().getListener() != null) {
@@ -258,6 +251,8 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
     @Override
     public void testPlanExecutionStarted(TestPlan testPlan) {
         AnvilContext.getInstance().setTestStartTime(new Date());
+        AnvilReport anvilReport = new AnvilReport(AnvilContext.getInstance(), true);
+        AnvilContext.getInstance().getMapper().saveReportToPath(anvilReport);
         LOGGER.trace("Started execution of " + testPlan.toString());
         if (AnvilContext.getInstance().getListener() != null) {
             AnvilContext.getInstance().getListener().onStarted();
