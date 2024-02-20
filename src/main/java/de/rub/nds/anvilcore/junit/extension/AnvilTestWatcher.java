@@ -393,9 +393,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
     public synchronized void logTestPlanExecutionSummary(AnvilContext context) {
         StringBuilder logMessage = new StringBuilder("\nTest plan execution summary:");
         context.getResultsTestRuns().entrySet().stream()
-                .sorted(
-                        Map.Entry.comparingByKey(
-                                Comparator.comparing(TestResult::getValue).reversed()))
+                .sorted(Map.Entry.comparingByKey(TestResult.getComparator().reversed()))
                 .forEach(
                         entry -> {
                             TestResult testRunResult = entry.getKey();
