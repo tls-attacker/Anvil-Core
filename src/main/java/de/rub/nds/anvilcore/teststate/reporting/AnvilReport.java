@@ -97,7 +97,7 @@ public class AnvilReport {
                         .size();
         this.testsTestSuiteError =
                 context.getResultTestMap()
-                        .computeIfAbsent(TestResult.TEST_SUITE_ERROR, k -> new LinkedList<>())
+                        .computeIfAbsent(TestResult.TEST_SUITE_ERROR, k -> new HashSet<>())
                         .size();
         this.totalTests = context.getTotalTests();
         this.finishedTests = context.getTestsDone();
