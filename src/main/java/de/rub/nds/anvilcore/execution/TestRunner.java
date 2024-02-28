@@ -17,6 +17,7 @@ import de.rub.nds.anvilcore.context.AnvilTestConfig;
 import de.rub.nds.anvilcore.context.ProfileResolver;
 import de.rub.nds.anvilcore.junit.extension.AnvilTestWatcher;
 import de.rub.nds.anvilcore.model.ParameterIdentifierProvider;
+import de.rub.nds.anvilcore.teststate.reporting.PcapCapturer;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
@@ -166,5 +167,15 @@ public class TestRunner {
         summary.printTo(writer);
         String content = new String(baos.toByteArray(), StandardCharsets.UTF_8);
         LOGGER.info("\n" + content);
+
+        // wait for all pcap files to be written
+        if (!config.isDisableTcpDump()) {
+            LOGGER.info("Stopping pcap capture...");
+            try {
+                Thread.sleep(PcapCapturer.WAITING_TIME_AFTER_CLOSE_MILLI);
+            } catch (InterruptedException e) {
+                LOGGER.error(e);
+            }
+        }
     }
 }

@@ -14,14 +14,13 @@ import de.rub.nds.anvilcore.constants.TestEndpointType;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import java.lang.reflect.Method;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
-import org.junit.jupiter.api.extension.ExecutionCondition;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 /**
  * Evaluates the ClientTest, ServerTest, TestEndpoint annotations The test is disabled when a client
  * is tested but the test is written for servers.
  */
-public class EndpointConditionExtension implements ExecutionCondition {
+public class EndpointConditionExtension extends SingleCheckCondition {
 
     private TestEndpointType endpointOfMethod(ExtensionContext context) {
         Method testMethod = context.getRequiredTestMethod();
@@ -45,7 +44,7 @@ public class EndpointConditionExtension implements ExecutionCondition {
     }
 
     @Override
-    public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext extensionContext) {
+    public ConditionEvaluationResult evaluateUncachedCondition(ExtensionContext extensionContext) {
         if (!extensionContext.getTestMethod().isPresent()) {
             return ConditionEvaluationResult.enabled("Class annotations are not relevant.");
         }
@@ -53,9 +52,7 @@ public class EndpointConditionExtension implements ExecutionCondition {
         AnvilContext anvilContext = AnvilContext.getInstance();
         TestEndpointType targetEndpoint = endpointOfMethod(extensionContext);
 
-        if (anvilContext.getConfig().getEndpointMode() == TestEndpointType.BOTH
-                || targetEndpoint == anvilContext.getConfig().getEndpointMode()
-                || targetEndpoint == TestEndpointType.BOTH) {
+        if (targetEndpoint.isMatchingTestEndpointType(anvilContext.getConfig().getEndpointMode())) {
             return ConditionEvaluationResult.enabled("TestEndpointMode matches");
         }
 

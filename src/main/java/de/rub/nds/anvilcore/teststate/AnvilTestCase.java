@@ -10,8 +10,15 @@ package de.rub.nds.anvilcore.teststate;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.rub.nds.anvilcore.model.ParameterCombination;
+import jakarta.xml.bind.DatatypeConverter;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -36,8 +43,21 @@ public class AnvilTestCase {
     @JsonProperty("AdditionalTestInformation")
     private List<String> additionalTestInformation;
 
+    @JsonProperty("SrcPort")
+    private Integer srcPort = null;
+
+    @JsonProperty("DstPort")
+    private Integer dstPort = null;
+
+    private Date startTime;
+    private Date endTime;
+
     private ExtensionContext extensionContext;
     protected AnvilTestRun associatedContainer;
+
+    private String caseSpecificPcapFilter = null;
+    private String temporaryPcapFileName = null;
+    private static int pcapFileCounter = 0;
 
     public AnvilTestCase() {}
 
@@ -49,6 +69,56 @@ public class AnvilTestCase {
         this.associatedContainer = AnvilTestRun.forExtensionContext(extensionContext);
         this.associatedContainer.add(this);
         this.testResult = TestResult.NOT_SPECIFIED;
+    }
+
+    public static AnvilTestCase fromExtensionContext(ExtensionContext extensionContext) {
+        return (AnvilTestCase)
+                extensionContext
+                        .getStore(ExtensionContext.Namespace.GLOBAL)
+                        .get(AnvilTestCase.class.getName());
+    }
+
+    @JsonProperty("uuid")
+    public String getUuid() {
+        StringBuilder toHash = new StringBuilder();
+        toHash.append(this.getAdditionalTestInformation());
+        if (getParameterCombination() != null) {
+            toHash.append(this.getParameterCombination().toString());
+        }
+        toHash.append(getAssociatedContainer().getTestClass().getName());
+        toHash.append(getAssociatedContainer().getTestMethod().getName());
+
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(toHash.toString().getBytes(StandardCharsets.UTF_8));
+            return DatatypeConverter.printHexBinary(hash);
+        } catch (Exception e) {
+            throw new RuntimeException("SHA-256 not possible...");
+        }
+    }
+
+    @JsonProperty("Stacktrace")
+    public String getStacktrace() {
+        if (getFailedReason() != null) {
+            return ExceptionUtils.getStackTrace(getFailedReason().getCause());
+        }
+        return null;
+    }
+
+    @JsonProperty("StartTimestamp")
+    public String getStartTimestamp() {
+        if (startTime == null) return null;
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+        format.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return format.format(startTime);
+    }
+
+    @JsonProperty("EndTimestamp")
+    public String getEndTimestamp() {
+        if (endTime == null) return null;
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+        format.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return format.format(endTime);
     }
 
     public TestResult getTestResult() {
@@ -131,5 +201,55 @@ public class AnvilTestCase {
         additionalTestInformation.add(info);
     }
 
-    public void finalizeAnvilTestCase() {}
+    public String getCaseSpecificPcapFilter() {
+        return caseSpecificPcapFilter;
+    }
+
+    public void setCaseSpecificPcapFilter(String caseSpecificPcapFilter) {
+        this.caseSpecificPcapFilter = caseSpecificPcapFilter;
+    }
+
+    public String getTemporaryPcapFileName() {
+        if (temporaryPcapFileName == null) {
+            temporaryPcapFileName = String.format("testcase_%d.pcap", pcapFileCounter);
+            pcapFileCounter++;
+        }
+        return temporaryPcapFileName;
+    }
+
+    public void setTemporaryPcapFileName(String temporaryPcapFileName) {
+        this.temporaryPcapFileName = temporaryPcapFileName;
+    }
+
+    public Integer getSrcPort() {
+        return srcPort;
+    }
+
+    public void setSrcPort(Integer srcPort) {
+        this.srcPort = srcPort;
+    }
+
+    public Integer getDstPort() {
+        return dstPort;
+    }
+
+    public void setDstPort(Integer dstPort) {
+        this.dstPort = dstPort;
+    }
+
+    public Date getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(Date startTime) {
+        this.startTime = startTime;
+    }
+
+    public Date getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(Date endTime) {
+        this.endTime = endTime;
+    }
 }

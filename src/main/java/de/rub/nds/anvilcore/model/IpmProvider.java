@@ -38,7 +38,7 @@ public class IpmProvider implements ModelProvider, AnnotationConsumer<ModelFromS
 
     @Override
     public InputParameterModel provide(ExtensionContext extensionContext) {
-        DerivationScope derivationScope = new DerivationScope(extensionContext);
+        DerivationScope derivationScope = DerivationScope.fromExtensionContext(extensionContext);
         return generateIpm(derivationScope);
     }
 
@@ -118,7 +118,6 @@ public class IpmProvider implements ModelProvider, AnnotationConsumer<ModelFromS
         List<Constraint> applicableConstraints = new ArrayList<>();
         for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
             DerivationParameter<Object, Object> parameter = parameterIdentifier.getInstance();
-            // if (parameter.canBeModeled(derivationScope)) {
             List<ConditionalConstraint> conditionalConstraints =
                     parameter.getConditionalConstraints(derivationScope);
             for (ConditionalConstraint conditionalConstraint : conditionalConstraints) {
@@ -126,33 +125,7 @@ public class IpmProvider implements ModelProvider, AnnotationConsumer<ModelFromS
                     applicableConstraints.add(conditionalConstraint.getConstraint());
                 }
             }
-            // }
         }
         return applicableConstraints.toArray(Constraint[]::new);
-    }
-
-    /**
-     * Lists the DerivationParameters which do not allow for derivation because only one value can
-     * be selected. This one value will never be given to coffee4j and will be added as a
-     * ParameterValue when creating the ParameterCombination from coffee4j's ArgumentsAccessor.
-     *
-     * @param derivationScope
-     * @return List of parameters modeled with only one possible value
-     */
-    public static List<DerivationParameter<Object, Object>> getStaticParameterValues(
-            DerivationScope derivationScope) {
-        List<DerivationParameter<Object, Object>> staticParameterValues = new ArrayList<>();
-        List<ParameterIdentifier> parameterIdentifiers =
-                getParameterIdentifiersForScope(derivationScope);
-        for (ParameterIdentifier parameterIdentifier : parameterIdentifiers) {
-            List<DerivationParameter<Object, Object>> parameterValues =
-                    parameterIdentifier
-                            .getInstance()
-                            .getConstrainedParameterValues(derivationScope);
-            if (parameterValues.size() == 1) {
-                staticParameterValues.add(parameterValues.get(0));
-            }
-        }
-        return staticParameterValues;
     }
 }

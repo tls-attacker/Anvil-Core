@@ -17,7 +17,8 @@ public enum TestResult {
     CONCEPTUALLY_SUCCEEDED(1 << 2, 80),
     PARTIALLY_FAILED(1 << 3, 20),
     FULLY_FAILED(1 << 4, 0),
-    DISABLED(1 << 5, 0);
+    DISABLED(1 << 5, 0),
+    TEST_SUITE_ERROR(1 << 6, 0);
 
     private final int value;
     private final int scorePercentage;
