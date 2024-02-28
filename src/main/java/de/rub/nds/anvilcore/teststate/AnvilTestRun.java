@@ -11,6 +11,7 @@ package de.rub.nds.anvilcore.teststate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import de.rub.nds.anvilcore.annotation.AnvilTest;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.junit.Utils;
 import de.rub.nds.anvilcore.model.ParameterCombination;
@@ -139,12 +140,6 @@ public class AnvilTestRun {
 
     public String getTestMethodName() {
         return testClass.getName() + "." + testMethod.getName();
-    }
-
-    public void finalizeTestCases() {
-        for (AnvilTestCase c : this.testCases) {
-            c.finalizeAnvilTestCase();
-        }
     }
 
     public AnvilTestRun(ExtensionContext extensionContext) {
