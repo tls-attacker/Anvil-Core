@@ -11,6 +11,7 @@ package de.rub.nds.anvilcore.teststate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import de.rub.nds.anvilcore.annotation.AnvilTest;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.junit.Utils;
 import de.rub.nds.anvilcore.model.ParameterCombination;
@@ -88,6 +89,13 @@ public class AnvilTestRun {
 
     @JsonProperty("DisabledReason")
     private String disabledReason;
+
+    private Date startInputGenerationTime;
+
+    private Date endInputGenerationTime;
+
+    @JsonProperty("ElapsedGenerationTimeSeconds")
+    private long elapsedGenerationTimeSeconds;
 
     @JsonProperty("FailedReason")
     private String failedReason;
@@ -202,10 +210,28 @@ public class AnvilTestRun {
             LOGGER.info("{} is disable because {}", getTestMethodName(), getDisabledReason());
         }
         scoreContainer.updateForResult(result);
+        // AnvilContext.getInstance().testFinished(uniqueId);
+        if (result != TestResult.DISABLED && testMethod.getAnnotation(AnvilTest.class) != null) {
+            try {
+                Date startInputGenerationTimes =
+                        AnvilContext.getInstance()
+                                .getStartInputGenerationTimes()
+                                .get(this.testMethod.toString());
+                Date endInputGenerationTimes =
+                        AnvilContext.getInstance()
+                                .getEndInputGenerationTimes()
+                                .get(this.testMethod.toString());
+                this.setStartInputGenerationTime(startInputGenerationTimes);
+                this.setEndInputGenerationTime(endInputGenerationTimes);
+            } catch (NullPointerException e) {
+                LOGGER.warn("Cannot read GenerationTimes");
+            }
+        }
+        scoreContainer.updateForResult(result);
         AnvilContext.getInstance()
                 .addTestResult(result, testClass.getName() + "." + testMethod.getName());
-        AnvilContext.getInstance().getMapper().saveTestRunToPath(this);
         AnvilContext.getInstance().testFinished(uniqueId);
+        AnvilContext.getInstance().getMapper().saveTestRunToPath(this);
     }
 
     public TestResult resolveFinalResult() {
@@ -332,5 +358,35 @@ public class AnvilTestRun {
      */
     public void setReadyForCompletion(boolean readyForCompletion) {
         this.readyForCompletion = readyForCompletion;
+    }
+
+    public Date getStartInputGenerationTime() {
+        return startInputGenerationTime;
+    }
+
+    public void setStartInputGenerationTime(Date startInputGenerationTime) {
+        this.startInputGenerationTime = startInputGenerationTime;
+    }
+
+    public Date getEndInputGenerationTime() {
+        return endInputGenerationTime;
+    }
+
+    public void setEndInputGenerationTime(Date endInputGenerationTime) {
+        this.endInputGenerationTime = endInputGenerationTime;
+        this.updateElapsedGenerationTimeSeconds();
+    }
+
+    private void updateElapsedGenerationTimeSeconds() {
+        this.elapsedGenerationTimeSeconds =
+                (this.endInputGenerationTime.getTime() - startInputGenerationTime.getTime()) / 1000;
+    }
+
+    public long getElapsedGenerationTimeSeconds() {
+        return elapsedGenerationTimeSeconds;
+    }
+
+    public void setElapsedGenerationTimeSeconds(long elapsedGenerationTimeSeconds) {
+        this.elapsedGenerationTimeSeconds = elapsedGenerationTimeSeconds;
     }
 }

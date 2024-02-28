@@ -27,6 +27,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestWatcher;
 import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
@@ -119,6 +120,17 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         testRun.finish();
     }
 
+    public AnvilTestCase getTestCase(ExtensionContext extensionContext, AnvilTestRun anvilTestRun) {
+        return anvilTestRun.getTestCases().stream()
+                .filter(
+                        testCase ->
+                                testCase.getExtensionContext()
+                                        .getUniqueId()
+                                        .equals(extensionContext.getUniqueId()))
+                .findFirst()
+                .orElse(null);
+    }
+
     /**
      * TestCase or non-combinatorial test failed / did not pass.
      *
@@ -208,7 +220,12 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
     @Override
     public void testInputGroupGenerated(
             TestInputGroupContext context, List<Combination> testInputs) {
+        // AnvilTestRun testRun = new AnvilTestRun(extensionContext);
+        // AnvilContext.getInstance().addActiveTestRun(testRun);
         AnvilTestRun testRun = createAnvilTestRunForExtensionContext(extensionContext);
+        AnvilContext.getInstance()
+                .addEndInputGenerationTime(
+                        extensionContext.getRequiredTestMethod().toString(), new Date());
         LOGGER.trace(
                 "Test Inputs generated for " + extensionContext.getRequiredTestMethod().getName());
     }
@@ -293,6 +310,8 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
      */
     @Override
     public void executionStarted(TestIdentifier testIdentifier) {
+        long time = System.currentTimeMillis();
+        Date date = new Date(time);
         if (!testIdentifier.isContainer()
                 && testIdentifier.getSource().isPresent()
                 && testIdentifier.getSource().get() instanceof MethodSource) {
@@ -307,7 +326,28 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             LOGGER.trace(testIdentifier.getDisplayName() + " started");
         }
         if (testIdentifier.isContainer()) {
-            elapsedTimes.put(testIdentifier.getUniqueId(), System.currentTimeMillis());
+            elapsedTimes.put(testIdentifier.getUniqueId(), time);
+        }
+        TestSource source = testIdentifier.getSource().orElse(null);
+        if (testIdentifier.isContainer() && source instanceof MethodSource) {
+            MethodSource methodSource = (MethodSource) source;
+            AnvilContext anvilContext = AnvilContext.getInstance();
+            anvilContext.addStartInputGenerationTime(methodSource.getJavaMethod().toString(), date);
+        }
+    }
+
+    public void executionStarted2(TestIdentifier testIdentifier) {
+        long time = System.currentTimeMillis();
+        Date date = new Date(time);
+        LOGGER.trace(testIdentifier.getDisplayName() + " started");
+        if (testIdentifier.isContainer()) {
+            elapsedTimes.put(testIdentifier.getUniqueId(), time);
+        }
+        TestSource source = testIdentifier.getSource().orElse(null);
+        if (testIdentifier.isContainer() && source instanceof MethodSource) {
+            MethodSource methodSource = (MethodSource) source;
+            AnvilContext anvilContext = AnvilContext.getInstance();
+            anvilContext.addStartInputGenerationTime(methodSource.getJavaMethod().toString(), date);
         }
     }
 
