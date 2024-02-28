@@ -88,11 +88,12 @@ public class AnvilTestRun {
     @JsonProperty("DisabledReason")
     private String disabledReason;
 
-    @JsonProperty("StartInputGenerationTime")
     private Date startInputGenerationTime;
 
-    @JsonProperty("EndInputGenerationTime")
     private Date endInputGenerationTime;
+
+    @JsonProperty("ElapsedGenerationTimeSeconds")
+    private long elapsedGenerationTimeSeconds;
 
     @JsonProperty("FailedReason")
     private String failedReason;
@@ -353,5 +354,19 @@ public class AnvilTestRun {
 
     public void setEndInputGenerationTime(Date endInputGenerationTime) {
         this.endInputGenerationTime = endInputGenerationTime;
+        this.updateElapsedGenerationTimeSeconds();
+    }
+
+    private void updateElapsedGenerationTimeSeconds() {
+        this.elapsedGenerationTimeSeconds =
+                (this.endInputGenerationTime.getTime() - startInputGenerationTime.getTime()) / 1000;
+    }
+
+    public long getElapsedGenerationTimeSeconds() {
+        return elapsedGenerationTimeSeconds;
+    }
+
+    public void setElapsedGenerationTimeSeconds(long elapsedGenerationTimeSeconds) {
+        this.elapsedGenerationTimeSeconds = elapsedGenerationTimeSeconds;
     }
 }

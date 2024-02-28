@@ -99,15 +99,17 @@ public class TestRunner {
                                             (MethodBasedTestDescriptor) descriptor;
                                     Method method = md.getTestMethod();
                                     String anvilTestId = null;
-                                    if (method.getAnnotation(AnvilTest.class) != null)
+                                    if (method.getAnnotation(AnvilTest.class) != null) {
                                         anvilTestId = method.getAnnotation(AnvilTest.class).id();
-                                    else if (method.getAnnotation(NonCombinatorialAnvilTest.class)
-                                            != null)
+                                    } else if (method.getAnnotation(NonCombinatorialAnvilTest.class)
+                                            != null) {
                                         anvilTestId =
                                                 method.getAnnotation(
                                                                 NonCombinatorialAnvilTest.class)
                                                         .id();
-                                    else LOGGER.warn("Method " + method + " has no ID");
+                                    } else {
+                                        LOGGER.warn("Method " + method + " has no ID");
+                                    }
 
                                     if (anvilTestId != null) {
                                         if (ids.contains(anvilTestId)) {

@@ -327,7 +327,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
     public void logTestFinished(
             TestExecutionResult testExecutionResult, TestIdentifier testIdentifier) {
         if (testExecutionResult.getThrowable().isPresent() && testIdentifier.isContainer()) {
-            LOGGER.info(
+            LOGGER.error(
                     "Internal exception during execution of test container created for test {}. Exception: ",
                     testIdentifier.getDisplayName(),
                     testExecutionResult.getThrowable().get());
