@@ -23,6 +23,8 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.support.AnnotationSupport;
 
 public class DerivationScope {
+    private static final String EXTENSION_CONTEXT_STORE_KEY = "DerivationScope";
+
     private final String modelType;
     private final List<ParameterIdentifier> ipmLimitations;
     private final List<ParameterIdentifier> ipmExtensions;
@@ -33,7 +35,7 @@ public class DerivationScope {
     private final Set<ParameterIdentifier> manualConfigTypes;
     private final int testStrength;
 
-    public DerivationScope(ExtensionContext extensionContext) {
+    private DerivationScope(ExtensionContext extensionContext) {
         this.extensionContext = extensionContext;
         this.ipmLimitations = resolveIpmLimitations(extensionContext);
         this.ipmExtensions = resolveIpmExtensions(extensionContext);
@@ -43,6 +45,23 @@ public class DerivationScope {
         this.manualConfigTypes = resolveManualConfigTypes(extensionContext);
         this.testStrength = resolveTestStrength(extensionContext);
         this.modelType = resolveModelType(extensionContext);
+    }
+
+    public static DerivationScope fromExtensionContext(ExtensionContext extensionContext) {
+        ExtensionContext.Namespace namespace =
+                ExtensionContext.Namespace.create(
+                        extensionContext.getRequiredTestClass(),
+                        extensionContext.getRequiredTestMethod());
+        if (extensionContext.getStore(namespace) == null
+                || extensionContext.getStore(namespace).get(EXTENSION_CONTEXT_STORE_KEY) == null) {
+            DerivationScope newScope = new DerivationScope(extensionContext);
+            extensionContext.getStore(namespace).put(EXTENSION_CONTEXT_STORE_KEY, newScope);
+            return newScope;
+        } else {
+            return extensionContext
+                    .getStore(namespace)
+                    .get(EXTENSION_CONTEXT_STORE_KEY, DerivationScope.class);
+        }
     }
 
     // TODO Remove constructor, only for testing purposes
