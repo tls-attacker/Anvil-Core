@@ -44,7 +44,7 @@ public class AnvilContext {
     private final ScoreContainer overallScoreContainer = new ScoreContainer();
 
     private final Map<String, AnvilTestRun> activeTestRuns = new HashMap<>();
-    private final Map<TestResult, List<String>> resultTestMap = new HashMap<>();
+    private final Map<TestResult, Set<String>> resultTestMap = new HashMap<>();
     private final Map<String, Boolean> finishedTests = new HashMap<>();
     private boolean aborted = false;
 
@@ -155,12 +155,12 @@ public class AnvilContext {
         return overallScoreContainer;
     }
 
-    public Map<TestResult, List<String>> getResultTestMap() {
+    public Map<TestResult, Set<String>> getResultTestMap() {
         return resultTestMap;
     }
 
-    public void addTestResult(TestResult result, String testName) {
-        getResultTestMap().computeIfAbsent(result, k -> new LinkedList<>());
+    public synchronized void addTestResult(TestResult result, String testName) {
+        getResultTestMap().computeIfAbsent(result, k -> new HashSet<>());
         getResultTestMap().get(result).add(testName);
     }
 
