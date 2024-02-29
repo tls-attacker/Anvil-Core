@@ -46,8 +46,6 @@ public class AnvilContext {
     private final Map<String, AnvilTestRun> activeTestRuns = new HashMap<>();
     private final Map<TestResult, Set<String>> resultTestMap = new HashMap<>();
     private final Map<String, Boolean> finishedTests = new HashMap<>();
-    private final Map<String, Date> startInputGenerationTimes = new HashMap<>();
-    private final Map<String, Date> endInputGenerationTimes = new HashMap<>();
     private boolean aborted = false;
 
     public static synchronized AnvilContext getInstance() {
@@ -188,25 +186,5 @@ public class AnvilContext {
 
     public String getConfigString() {
         return configString;
-    }
-
-    public synchronized Map<String, Date> getStartInputGenerationTimes() {
-        return startInputGenerationTimes;
-    }
-
-    public synchronized Date getStartInputGenerationTime(String k) {
-        return startInputGenerationTimes.get(k);
-    }
-
-    public synchronized void addStartInputGenerationTime(String methodeName, Date time) {
-        startInputGenerationTimes.put(methodeName, time);
-    }
-
-    public synchronized Map<String, Date> getEndInputGenerationTimes() {
-        return endInputGenerationTimes;
-    }
-
-    public synchronized void addEndInputGenerationTime(String methodeName, Date time) {
-        endInputGenerationTimes.put(methodeName, time);
     }
 }
