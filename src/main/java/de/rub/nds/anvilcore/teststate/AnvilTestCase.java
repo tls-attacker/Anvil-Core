@@ -67,7 +67,7 @@ public class AnvilTestCase {
         this.extensionContext = extensionContext;
         this.displayName = extensionContext.getDisplayName();
         this.associatedContainer = AnvilTestRun.forExtensionContext(extensionContext);
-        this.associatedContainer.add(this);
+        this.associatedContainer.addTestCase(this);
         this.testResult = TestResult.NOT_SPECIFIED;
     }
 

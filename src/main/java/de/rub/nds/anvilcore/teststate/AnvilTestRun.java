@@ -343,9 +343,9 @@ public class AnvilTestRun {
             result = resolveFinalResult();
         }
         scoreContainer.updateForResult(result);
-        AnvilContext.getInstance().addTestResult(result, this);
+        AnvilContext.getInstance().addTestRunResult(result, this);
         AnvilContext.getInstance().getMapper().saveTestRunToPath(this);
-        AnvilContext.getInstance().testFinished(this);
+        AnvilContext.getInstance().testRunFinished(this);
 
         // log test run summary
         switch (result) {
@@ -466,9 +466,9 @@ public class AnvilTestRun {
         return scoreContainer;
     }
 
-    public void add(AnvilTestCase testState) {
-        testState.setAssociatedContainer(this);
-        this.testCases.add(testState);
+    public void addTestCase(AnvilTestCase testCase) {
+        testCase.setAssociatedContainer(this);
+        this.testCases.add(testCase);
     }
 
     public void setFailureInducingCombinations(

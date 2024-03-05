@@ -36,8 +36,8 @@ public class AnvilContext {
 
     private final ParameterIdentifierProvider parameterIdentifierProvider;
 
-    private long totalTests = 0;
-    private long testsDone = 0;
+    private long totalTestRuns = 0;
+    private long testRunsDone = 0;
     private long testCases = 0;
     private final Date creationTime = new Date();
     private Date testStartTime;
@@ -140,13 +140,13 @@ public class AnvilContext {
         return detailsFailedTestCases;
     }
 
-    public synchronized void testFinished(AnvilTestRun testRun) {
+    public synchronized void testRunFinished(AnvilTestRun testRun) {
         String testRunUniqueId = testRun.getUniqueId();
         addDetailsFailedTestCases(testRun);
         finishedTestRuns.put(testRunUniqueId, true);
         overallScoreContainer.merge(activeTestRuns.get(testRunUniqueId).getScoreContainer());
         AnvilTestRun finishedContainer = activeTestRuns.remove(testRunUniqueId);
-        testsDone++;
+        testRunsDone++;
         if (finishedContainer.getTestCases() != null) {
             testCases += finishedContainer.getTestCases().size();
         }
@@ -163,7 +163,7 @@ public class AnvilContext {
         LOGGER.info(
                 String.format(
                         "%d/%d Tests finished (in %02d:%02d). Method: %s",
-                        testsDone, totalTests, minutes, seconds, uniqueIdCompact));
+                        testRunsDone, totalTestRuns, minutes, seconds, uniqueIdCompact));
 
         if (listener != null) {
             listener.onTestRunFinished(finishedContainer);
@@ -174,7 +174,7 @@ public class AnvilContext {
         return finishedTestRuns;
     }
 
-    public synchronized boolean testIsFinished(String uniqueId) {
+    public synchronized boolean testRunIsFinished(String uniqueId) {
         return finishedTestRuns.containsKey(uniqueId);
     }
 
@@ -190,20 +190,20 @@ public class AnvilContext {
         this.testStartTime = testStartTime;
     }
 
-    public long getTotalTests() {
-        return totalTests;
+    public long getTotalTestRuns() {
+        return totalTestRuns;
     }
 
-    public void setTotalTests(long totalTests) {
-        this.totalTests = totalTests;
+    public void setTotalTestRuns(long totalTestRuns) {
+        this.totalTestRuns = totalTestRuns;
     }
 
     public long getTestCases() {
         return testCases;
     }
 
-    public long getTestsDone() {
-        return testsDone;
+    public long getTestRunsDone() {
+        return testRunsDone;
     }
 
     public ScoreContainer getOverallScoreContainer() {
@@ -214,7 +214,7 @@ public class AnvilContext {
         return resultsTestRuns;
     }
 
-    public synchronized void addTestResult(TestResult result, AnvilTestRun testRun) {
+    public synchronized void addTestRunResult(TestResult result, AnvilTestRun testRun) {
         getResultsTestRuns().computeIfAbsent(result, k -> new LinkedList<>());
         getResultsTestRuns().get(result).add(testRun.getUniqueId());
     }

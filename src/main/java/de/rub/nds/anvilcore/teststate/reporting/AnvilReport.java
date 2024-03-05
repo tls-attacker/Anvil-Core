@@ -115,8 +115,8 @@ public class AnvilReport {
                         .collect(
                                 Collectors.groupingBy(
                                         String::toString, Collectors.summingInt(detail -> 1)));
-        this.totalTests = context.getTotalTests();
-        this.finishedTests = context.getTestsDone();
+        this.totalTests = context.getTotalTestRuns();
+        this.finishedTests = context.getTestRunsDone();
         this.testCaseCount = context.getTestCases();
         this.scoreContainer = context.getOverallScoreContainer();
         this.configString = context.getConfigString();

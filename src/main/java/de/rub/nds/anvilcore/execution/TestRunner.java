@@ -139,7 +139,7 @@ public class TestRunner {
                                     || (source != null
                                             && source.getClass().equals(MethodSource.class));
                         });
-        context.setTotalTests(testcases);
+        context.setTotalTestRuns(testcases);
 
         if (context.getListener() != null) {
             context.getListener().beforeStart(testplan, testcases);
