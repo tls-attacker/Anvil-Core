@@ -56,7 +56,7 @@ public class AnvilContext {
      * A Map that holds the test results. The keys are TestResult objects, and the values are
      * List<String> objects representing the unique IDs of the tests.
      */
-    private final Map<TestResult, List<String>> resultsTestRuns = new HashMap<>();
+    private final Map<TestResult, Set<String>> resultsTestRuns = new HashMap<>();
 
     /**
      * A Map that holds the finished tests. The keys are String objects representing unique IDs of
@@ -210,12 +210,12 @@ public class AnvilContext {
         return overallScoreContainer;
     }
 
-    public Map<TestResult, List<String>> getResultsTestRuns() {
+    public Map<TestResult, Set<String>> getResultsTestRuns() {
         return resultsTestRuns;
     }
 
     public synchronized void addTestRunResult(TestResult result, AnvilTestRun testRun) {
-        getResultsTestRuns().computeIfAbsent(result, k -> new LinkedList<>());
+        getResultsTestRuns().computeIfAbsent(result, k -> new HashSet<>());
         getResultsTestRuns().get(result).add(testRun.getUniqueId());
     }
 

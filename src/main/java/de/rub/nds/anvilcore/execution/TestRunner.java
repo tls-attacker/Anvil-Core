@@ -11,6 +11,7 @@ package de.rub.nds.anvilcore.execution;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPackage;
 
 import de.rub.nds.anvilcore.annotation.AnvilTest;
+import de.rub.nds.anvilcore.annotation.NonCombinatorialAnvilTest;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.context.AnvilTestConfig;
 import de.rub.nds.anvilcore.context.ProfileResolver;
@@ -99,10 +100,16 @@ public class TestRunner {
                                             (MethodBasedTestDescriptor) descriptor;
                                     Method method = md.getTestMethod();
                                     String anvilTestId = null;
-                                    try {
+                                    if (method.isAnnotationPresent(AnvilTest.class)) {
                                         anvilTestId = method.getAnnotation(AnvilTest.class).id();
-                                    } catch (NullPointerException e) {
-                                        LOGGER.debug("Method " + method + " has no ID");
+                                    } else if (method.isAnnotationPresent(
+                                            NonCombinatorialAnvilTest.class)) {
+                                        anvilTestId =
+                                                method.getAnnotation(
+                                                                NonCombinatorialAnvilTest.class)
+                                                        .id();
+                                    } else {
+                                        LOGGER.warn("Method {} has no ID", method);
                                     }
                                     if (anvilTestId != null) {
                                         if (ids.contains(anvilTestId)) {

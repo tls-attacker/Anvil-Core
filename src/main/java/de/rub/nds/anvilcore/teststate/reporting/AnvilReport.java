@@ -16,6 +16,7 @@ import de.rub.nds.anvilcore.constants.TestEndpointType;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.teststate.TestResult;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -87,27 +88,27 @@ public class AnvilReport {
         this.date = context.getCreationTime();
         this.testsDisabled =
                 context.getResultsTestRuns()
-                        .computeIfAbsent(TestResult.DISABLED, k -> new LinkedList<>())
+                        .computeIfAbsent(TestResult.DISABLED, k -> new HashSet<>())
                         .size();
         this.testsFullyFailed =
                 context.getResultsTestRuns()
-                        .computeIfAbsent(TestResult.FULLY_FAILED, k -> new LinkedList<>())
+                        .computeIfAbsent(TestResult.FULLY_FAILED, k -> new HashSet<>())
                         .size();
         this.testsStrictlySucceeded =
                 context.getResultsTestRuns()
-                        .computeIfAbsent(TestResult.STRICTLY_SUCCEEDED, k -> new LinkedList<>())
+                        .computeIfAbsent(TestResult.STRICTLY_SUCCEEDED, k -> new HashSet<>())
                         .size();
         this.testsPartiallyFailed =
                 context.getResultsTestRuns()
-                        .computeIfAbsent(TestResult.PARTIALLY_FAILED, k -> new LinkedList<>())
+                        .computeIfAbsent(TestResult.PARTIALLY_FAILED, k -> new HashSet<>())
                         .size();
         this.testsConceptuallySucceeded =
                 context.getResultsTestRuns()
-                        .computeIfAbsent(TestResult.CONCEPTUALLY_SUCCEEDED, k -> new LinkedList<>())
+                        .computeIfAbsent(TestResult.CONCEPTUALLY_SUCCEEDED, k -> new HashSet<>())
                         .size();
         this.testsTestSuiteError =
                 context.getResultsTestRuns()
-                        .computeIfAbsent(TestResult.TEST_SUITE_ERROR, k -> new LinkedList<>())
+                        .computeIfAbsent(TestResult.TEST_SUITE_ERROR, k -> new HashSet<>())
                         .size();
         this.detailsFailedTestCases =
                 context.getDetailsFailedTestCases().values().stream()
