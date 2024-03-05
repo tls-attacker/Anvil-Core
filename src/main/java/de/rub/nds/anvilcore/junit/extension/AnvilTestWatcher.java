@@ -393,7 +393,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
                 .forEach(
                         entry -> {
                             TestResult testRunResult = entry.getKey();
-                            List<String> testRunsUniqueIds = entry.getValue();
+                            Set<String> testRunsUniqueIds = entry.getValue();
                             logMessage.append(
                                     String.format(
                                             "\n\t%d test runs %s",
@@ -415,7 +415,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
      *     test run. Returns an empty string if the test run result is not failed.
      */
     private String buildTestCaseFailureDetailsSummary(
-            TestResult testRunResult, List<String> testRunsUniqueIds) {
+            TestResult testRunResult, Set<String> testRunsUniqueIds) {
         StringBuilder logMessage = new StringBuilder();
 
         if (testRunResult == TestResult.FULLY_FAILED

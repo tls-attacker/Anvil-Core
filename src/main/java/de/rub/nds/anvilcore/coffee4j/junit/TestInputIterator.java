@@ -21,12 +21,13 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 /**
- * A special {@link Iterator} since streaming a java {@link Queue} directly does not allow concurrent modification
- * of said queue. In our case this means that one cannot add test inputs to the execution queue while executing
- * elements from the queue. Consequently, it is not possible to add fault characterization test inputs.
- * Therefore, this iterator decouples the actual queue from the stream by having and internal queue and only allowing
- * access through well defined public methods.
- * This iterator is NOT thread-safe and should not be used with parallel test execution in junit-jupiter!
+ * A special {@link Iterator} since streaming a java {@link Queue} directly does not allow
+ * concurrent modification of said queue. In our case this means that one cannot add test inputs to
+ * the execution queue while executing elements from the queue. Consequently, it is not possible to
+ * add fault characterization test inputs. Therefore, this iterator decouples the actual queue from
+ * the stream by having and internal queue and only allowing access through well defined public
+ * methods. This iterator is NOT thread-safe and should not be used with parallel test execution in
+ * junit-jupiter!
  */
 class TestInputIterator implements Iterator<Combination> {
 
