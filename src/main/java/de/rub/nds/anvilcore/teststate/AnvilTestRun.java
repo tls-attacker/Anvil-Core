@@ -35,10 +35,10 @@ public class AnvilTestRun {
 
     private final long startTime = System.currentTimeMillis();
     private int resultRaw = 0;
-    private String uniqueId;
+    private final String uniqueId;
 
     @JsonProperty("TestId")
-    private String testId;
+    private final String testId;
 
     private Method testMethod;
     private Class<?> testClass;
@@ -92,8 +92,11 @@ public class AnvilTestRun {
     @JsonProperty("FailedReason")
     private String failedReason;
 
-    @JsonProperty("ElapsedTime")
-    private long elapsedTime = 0; // todo set elapsed time
+    @JsonProperty("ExecutionTime")
+    private long executionTimeMillis;
+
+    @JsonProperty("GenerationTime")
+    private long generationTimeMillis;
 
     @JsonProperty("FailureInducingCombinations")
     private List<ParameterCombination> failureInducingCombinations;
@@ -298,10 +301,6 @@ public class AnvilTestRun {
         this.failedReason = failedReason;
     }
 
-    public long getElapsedTime() {
-        return elapsedTime;
-    }
-
     public List<ParameterCombination> getFailureInducingCombinations() {
         return failureInducingCombinations;
     }
@@ -332,5 +331,21 @@ public class AnvilTestRun {
      */
     public void setReadyForCompletion(boolean readyForCompletion) {
         this.readyForCompletion = readyForCompletion;
+    }
+
+    public long getExecutionTimeMillis() {
+        return executionTimeMillis;
+    }
+
+    public void setExecutionTimeMillis(long executionTimeMillis) {
+        this.executionTimeMillis = executionTimeMillis;
+    }
+
+    public long getGenerationTimeMillis() {
+        return generationTimeMillis;
+    }
+
+    public void setGenerationTimeMillis(long generationTimeMillis) {
+        this.generationTimeMillis = generationTimeMillis;
     }
 }
