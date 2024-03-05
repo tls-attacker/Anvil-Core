@@ -147,6 +147,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
                     || testCase.getTestResult() == TestResult.NOT_SPECIFIED) {
                 // default to failed for all AssertionErrors
                 testCase.setTestResult(TestResult.FULLY_FAILED);
+                testCase.setFailedReason(cause);
             }
             testRun.setFailedReason(retrieveThrowableReason(cause));
         }
