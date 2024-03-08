@@ -262,7 +262,7 @@ public class AnvilTestRun {
             logMessage.append(buildTestRunFailureDetailsSummary());
         }
 
-        LOGGER.info(logMessage.toString());
+        LOGGER.warn(logMessage.toString());
     }
 
     @Override
@@ -354,7 +354,7 @@ public class AnvilTestRun {
                 break; // skip live logging for any successful test
             case DISABLED:
                 LOGGER.info(
-                        "{} is disabled because {}",
+                        "{} is disabled because: {}",
                         getTestMethodName() != null ? getTestMethodName() : "undefined",
                         disabledReason != null ? disabledReason : "undefined");
                 break;

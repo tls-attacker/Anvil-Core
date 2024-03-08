@@ -155,15 +155,15 @@ public class AnvilContext {
         long minutes = TimeUnit.MILLISECONDS.toMinutes(timediff);
         long remainingSecondsInMillis = timediff - TimeUnit.MINUTES.toMillis(minutes);
         long seconds = TimeUnit.MILLISECONDS.toSeconds(remainingSecondsInMillis);
-        String uniqueIdCompact =
-                testRunUniqueId.replaceAll(
-                        "\\[engine:junit-jupiter]/|\\(org\\.junit\\.jupiter\\.params\\.aggregator\\.ArgumentsAccessor, de\\.rub\\.nds\\.tlstest\\.framework\\.execution\\.WorkflowRunner\\)",
-                        "");
 
         LOGGER.info(
                 String.format(
                         "%d/%d Tests finished (in %02d:%02d). Method: %s",
-                        testRunsDone, totalTestRuns, minutes, seconds, uniqueIdCompact));
+                        testRunsDone,
+                        totalTestRuns,
+                        minutes,
+                        seconds,
+                        testRun.getTestMethodName()));
 
         if (listener != null) {
             listener.onTestRunFinished(finishedContainer);
