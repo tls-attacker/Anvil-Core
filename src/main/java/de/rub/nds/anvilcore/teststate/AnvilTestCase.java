@@ -67,7 +67,7 @@ public class AnvilTestCase {
         this.extensionContext = extensionContext;
         this.displayName = extensionContext.getDisplayName();
         this.associatedContainer = AnvilTestRun.forExtensionContext(extensionContext);
-        this.associatedContainer.add(this);
+        this.associatedContainer.addTestCase(this);
         this.testResult = TestResult.NOT_SPECIFIED;
     }
 
@@ -183,6 +183,28 @@ public class AnvilTestCase {
 
     public void setAssociatedContainer(AnvilTestRun associatedContainer) {
         this.associatedContainer = associatedContainer;
+    }
+
+    /**
+     * Generates a string containing the failure reason and additional result information of a
+     * failed test case. This string is used for logging purposes.
+     *
+     * @return The generated string
+     */
+    public String getFailureDetails() {
+        StringBuilder logMessage = new StringBuilder();
+        logMessage.append(
+                String.format(
+                        "failure reason: %s.",
+                        getFailedReason() != null ? getFailedReason().getMessage() : "undefined"));
+        if (getAdditionalResultInformation() != null) {
+            logMessage.append(
+                    String.format(
+                            " Additional result info: %s.",
+                            getAdditionalResultInformation().toString()));
+        }
+
+        return logMessage.toString();
     }
 
     public void addAdditionalResultInfo(String info) {

@@ -22,6 +22,7 @@ import de.rwth.swc.coffee4j.model.report.ExecutionReporter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -146,6 +147,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
                     || testCase.getTestResult() == TestResult.NOT_SPECIFIED) {
                 // default to failed for all AssertionErrors
                 testCase.setTestResult(TestResult.FULLY_FAILED);
+                testCase.setFailedReason(cause);
             }
             testRun.setFailedReason(retrieveThrowableReason(cause));
         }
@@ -266,6 +268,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
     @Override
     public void testPlanExecutionFinished(TestPlan testPlan) {
         LOGGER.trace("Execution of " + testPlan.toString() + " finished");
+        logTestPlanExecutionSummary(AnvilContext.getInstance());
         AnvilReport anvilReport = new AnvilReport(AnvilContext.getInstance(), false);
         AnvilContext.getInstance().getMapper().saveReportToPath(anvilReport);
         if (AnvilContext.getInstance().getListener() != null) {
@@ -376,5 +379,66 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             thrown.printStackTrace(printWriter);
             return stringWriter.toString();
         }
+    }
+
+    /**
+     * Logs a summary of all test runs and in case of failure, the details of the failed test cases.
+     *
+     * @param context AnvilContext containing all test runs and their results
+     */
+    public synchronized void logTestPlanExecutionSummary(AnvilContext context) {
+        StringBuilder logMessage = new StringBuilder("\nTest plan execution summary:");
+        context.getResultsTestRuns().entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(TestResult.getComparator().reversed()))
+                .forEach(
+                        entry -> {
+                            TestResult testRunResult = entry.getKey();
+                            Set<String> testRunsUniqueIds = entry.getValue();
+                            logMessage.append(
+                                    String.format(
+                                            "\n\t%d test runs %s",
+                                            testRunsUniqueIds.size(), testRunResult));
+                            logMessage.append(
+                                    buildTestCaseFailureDetailsSummary(
+                                            testRunResult, testRunsUniqueIds));
+                        });
+
+        LOGGER.info(logMessage.toString());
+    }
+
+    /**
+     * Builds a summary of the failure details of all failed test cases of a test run.
+     *
+     * @param testRunResult The result of the test run
+     * @param testRunsUniqueIds The list of test runs unique IDs associated with the test run result
+     * @return A string containing the summary of the failure details of all failed test cases of a
+     *     test run. Returns an empty string if the test run result is not failed.
+     */
+    private String buildTestCaseFailureDetailsSummary(
+            TestResult testRunResult, Set<String> testRunsUniqueIds) {
+        StringBuilder logMessage = new StringBuilder();
+
+        if (testRunResult == TestResult.FULLY_FAILED
+                || testRunResult == TestResult.PARTIALLY_FAILED) {
+            Map<String, Long> failedTestCasesDetailsSummary =
+                    AnvilContext.getInstance().getDetailsFailedTestCases().entrySet().stream()
+                            .filter(entry -> testRunsUniqueIds.contains(entry.getKey()))
+                            .map(Map.Entry::getValue)
+                            .flatMap(Collection::stream)
+                            .collect(
+                                    Collectors.groupingBy(String::toString, Collectors.counting()));
+
+            logMessage.append("\n\t\tDetails of failed test cases:");
+            failedTestCasesDetailsSummary.entrySet().stream()
+                    .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
+                    .forEach(
+                            entry ->
+                                    logMessage.append(
+                                            String.format(
+                                                    "\n\t\t\t%d failed with %s",
+                                                    entry.getValue(), entry.getKey())));
+        }
+
+        return logMessage.toString();
     }
 }

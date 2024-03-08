@@ -9,6 +9,7 @@
 package de.rub.nds.anvilcore.teststate;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public enum TestResult {
@@ -26,6 +27,10 @@ public enum TestResult {
     TestResult(int value, int scorePercentage) {
         this.value = value;
         this.scorePercentage = scorePercentage;
+    }
+
+    public static Comparator<TestResult> getComparator() {
+        return Comparator.comparingInt(TestResult::getValue);
     }
 
     public int getValue() {
