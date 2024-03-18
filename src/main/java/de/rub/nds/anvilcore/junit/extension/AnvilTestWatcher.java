@@ -59,12 +59,13 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         if (AnvilContext.getInstance().isAborted()) {
             return;
         }
-        AnvilTestRun testRun =
-                AnvilContext.getInstance()
-                        .getTestRun(
-                                Utils.getTemplateContainerExtensionContext(extensionContext)
-                                        .getUniqueId());
+
+        ExtensionContext resolvedContext =
+                Utils.getTemplateContainerExtensionContext(extensionContext);
+        String testId = TestIdResolver.resolveTestId(resolvedContext.getRequiredTestMethod());
+        AnvilTestRun testRun = AnvilContext.getInstance().getActiveTestRun(testId);
         AnvilTestCase testCase = AnvilTestCase.fromExtensionContext(extensionContext);
+
         if (testCase != null
                 && (testCase.getTestResult() == null
                         || testCase.getTestResult() == TestResult.NOT_SPECIFIED)) {
@@ -130,12 +131,12 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         if (AnvilContext.getInstance().isAborted()) {
             return;
         }
-        AnvilTestRun testRun =
-                AnvilContext.getInstance()
-                        .getTestRun(
-                                Utils.getTemplateContainerExtensionContext(extensionContext)
-                                        .getUniqueId());
+        ExtensionContext resolvedContext =
+                Utils.getTemplateContainerExtensionContext(extensionContext);
+        String testId = TestIdResolver.resolveTestId(resolvedContext.getRequiredTestMethod());
+        AnvilTestRun testRun = AnvilContext.getInstance().getActiveTestRun(testId);
         AnvilTestCase testCase = AnvilTestCase.fromExtensionContext(extensionContext);
+
         if (cause != null && testCase != null) {
             if (!(cause instanceof AssertionError)) {
                 LOGGER.error(
@@ -393,14 +394,13 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
                 .forEach(
                         entry -> {
                             TestResult testRunResult = entry.getKey();
-                            Set<String> testRunsUniqueIds = entry.getValue();
+                            Set<String> testRunsIds = entry.getValue();
                             logMessage.append(
                                     String.format(
                                             "\n\t%d test runs %s",
-                                            testRunsUniqueIds.size(), testRunResult));
+                                            testRunsIds.size(), testRunResult));
                             logMessage.append(
-                                    buildTestCaseFailureDetailsSummary(
-                                            testRunResult, testRunsUniqueIds));
+                                    buildTestCaseFailureDetailsSummary(testRunResult, testRunsIds));
                         });
 
         LOGGER.info(logMessage.toString());
@@ -410,33 +410,35 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
      * Builds a summary of the failure details of all failed test cases of a test run.
      *
      * @param testRunResult The result of the test run
-     * @param testRunsUniqueIds The list of test runs unique IDs associated with the test run result
+     * @param testRunsIds A collection of test runs IDs associated with the test run result
      * @return A string containing the summary of the failure details of all failed test cases of a
      *     test run. Returns an empty string if the test run result is not failed.
      */
     private String buildTestCaseFailureDetailsSummary(
-            TestResult testRunResult, Set<String> testRunsUniqueIds) {
+            TestResult testRunResult, Set<String> testRunsIds) {
         StringBuilder logMessage = new StringBuilder();
 
         if (testRunResult == TestResult.FULLY_FAILED
                 || testRunResult == TestResult.PARTIALLY_FAILED) {
             Map<String, Long> failedTestCasesDetailsSummary =
                     AnvilContext.getInstance().getDetailsFailedTestCases().entrySet().stream()
-                            .filter(entry -> testRunsUniqueIds.contains(entry.getKey()))
+                            .filter(entry -> testRunsIds.contains(entry.getKey()))
                             .map(Map.Entry::getValue)
                             .flatMap(Collection::stream)
                             .collect(
                                     Collectors.groupingBy(String::toString, Collectors.counting()));
 
-            logMessage.append("\n\t\tDetails of failed test cases:");
-            failedTestCasesDetailsSummary.entrySet().stream()
-                    .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
-                    .forEach(
-                            entry ->
-                                    logMessage.append(
-                                            String.format(
-                                                    "\n\t\t\t%d failed with %s",
-                                                    entry.getValue(), entry.getKey())));
+            if (!failedTestCasesDetailsSummary.isEmpty()) {
+                logMessage.append("\n\t\tDetails of failed test cases:");
+                failedTestCasesDetailsSummary.entrySet().stream()
+                        .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
+                        .forEach(
+                                entry ->
+                                        logMessage.append(
+                                                String.format(
+                                                        "\n\t\t\t%d failed with %s",
+                                                        entry.getValue(), entry.getKey())));
+            }
         }
 
         return logMessage.toString();
