@@ -10,6 +10,7 @@ package de.rub.nds.anvilcore.coffee4j.junit;
 
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.junit.Utils;
+import de.rub.nds.anvilcore.util.TestIdResolver;
 import de.rwth.swc.coffee4j.model.Combination;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -44,9 +45,11 @@ class TestInputIterator implements Iterator<Combination> {
 
     @Override
     public boolean hasNext() {
-        String uniqueId =
-                Utils.getTemplateContainerExtensionContext(extensionContext).getUniqueId();
-        while (!AnvilContext.getInstance().testRunIsFinished(uniqueId)) {
+        ExtensionContext resolvedContext =
+                Utils.getTemplateContainerExtensionContext(extensionContext);
+        String testId = TestIdResolver.resolveTestId(resolvedContext.getRequiredTestMethod());
+
+        while (!AnvilContext.getInstance().testRunIsFinished(testId)) {
             try {
                 Combination nextTestInput = testInputQueue.poll(3, TimeUnit.SECONDS);
                 if (nextTestInput != null) {

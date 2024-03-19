@@ -236,7 +236,7 @@ public class AnvilTestRun {
         MetadataFetcher metadataFetcher = AnvilContext.getInstance().getMetadataFetcher();
         StringBuilder logMessage = new StringBuilder();
 
-        String methodName = getTestMethodName() != null ? getTestMethodName() : "undefined";
+        String testName = getName() != null ? getName() : "undefined";
         String testIdValue = testId != null ? testId : "undefined";
         String rfcNumber =
                 metadataFetcher.getRfcNumber(testId) != null
@@ -254,8 +254,8 @@ public class AnvilTestRun {
 
         logMessage.append(
                 String.format(
-                        "Test Method: %s\n\tTest UID: %s\n\tRFC source: RFC %s, section %s\n\tRFC description: %s\n\tTest cases: %d",
-                        methodName, testIdValue, rfcNumber, rfcSection, description, testCaseSize));
+                        "Test Method: %s\n\tTest Run ID: %s\n\tRFC source: RFC %s, section %s\n\tRFC description: %s\n\tTest cases: %d",
+                        testName, testIdValue, rfcNumber, rfcSection, description, testCaseSize));
 
         if (!testCases.isEmpty()) {
             logMessage.append(buildTestRunResultsSummary());
@@ -274,7 +274,7 @@ public class AnvilTestRun {
                 result != null ? result.name() : "undefined");
     }
 
-    public String getTestMethodName() {
+    public String getName() {
         return testClass.getName() + "." + testMethod.getName();
     }
 
@@ -299,9 +299,9 @@ public class AnvilTestRun {
      * @param testMethod The test method determined externally
      */
     private AnvilTestRun(Class<?> testClass, Method testMethod) {
-        this.uniqueId = testClass.getName() + "." + testMethod.getName();
         this.testClass = testClass;
         this.testMethod = testMethod;
+        this.uniqueId = getName();
         this.testId = TestIdResolver.resolveTestId(testMethod);
         this.scoreContainer = new ScoreContainer(testId);
     }
@@ -321,9 +321,10 @@ public class AnvilTestRun {
     public static synchronized AnvilTestRun forExtensionContext(ExtensionContext extensionContext) {
         ExtensionContext resolvedContext =
                 Utils.getTemplateContainerExtensionContext(extensionContext);
+        String testId = TestIdResolver.resolveTestId(resolvedContext.getRequiredTestMethod());
 
-        if (AnvilContext.getInstance().getTestRun(resolvedContext.getUniqueId()) != null) {
-            return AnvilContext.getInstance().getTestRun(resolvedContext.getUniqueId());
+        if (AnvilContext.getInstance().getActiveTestRun(testId) != null) {
+            return AnvilContext.getInstance().getActiveTestRun(testId);
         }
 
         AnvilTestRun container = new AnvilTestRun(resolvedContext);
@@ -355,7 +356,7 @@ public class AnvilTestRun {
             case DISABLED:
                 LOGGER.info(
                         "{} is disabled because: {}",
-                        getTestMethodName() != null ? getTestMethodName() : "undefined",
+                        getName() != null ? getName() : "undefined",
                         disabledReason != null ? disabledReason : "undefined");
                 break;
             default:

@@ -52,6 +52,9 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
      * Create a new Capturer object and start capturing immediately, until {@link #close} is called.
      *
      * @param testCase the AnvilTestCase related to the capturing
+     * @throws PcapNativeException if an error occurs in the pcap native library
+     * @throws NotOpenException if the pcap handle is not open
+     * @throws IOException if an I/O error occurs
      */
     public PcapCapturer(AnvilTestCase testCase)
             throws PcapNativeException, NotOpenException, IOException {

@@ -49,7 +49,7 @@ public class AnvilJsonMapper {
             createEmptyFile(filePath.toString());
             mapper.writeValue(f, testRun);
         } catch (Exception e) {
-            LOGGER.error("Failed to save AnvilTestRun ({})", testRun.getTestMethodName(), e);
+            LOGGER.error("Failed to save AnvilTestRun ({})", testRun.getName(), e);
         }
     }
 

@@ -47,26 +47,25 @@ public class AnvilContext {
 
     /**
      * A Map that keeps track of all the active test runs in the current context. The keys in this
-     * map are String objects representing unique IDs of test runs, and the values are AnvilTestRun
-     * objects representing the test runs themselves.
+     * map are test IDs of test runs, and the values are the test runs.
      */
     private final Map<String, AnvilTestRun> activeTestRuns = new HashMap<>();
 
     /**
-     * A Map that holds the test results. The keys are TestResult objects, and the values are
-     * List<String> objects representing the unique IDs of the tests.
+     * A Map that holds the test results. The keys are TestResult objects and the values are the
+     * test IDs of the tests.
      */
     private final Map<TestResult, Set<String>> resultsTestRuns = new HashMap<>();
 
     /**
-     * A Map that holds the finished tests. The keys are String objects representing unique IDs of
-     * tests, and the values are Boolean objects indicating whether the test is finished.
+     * A Map that holds the finished tests. The keys are the test IDs and the values are Boolean
+     * objects indicating whether the test is finished.
      */
     private final Map<String, Boolean> finishedTestRuns = new HashMap<>();
 
     /**
      * A Map that holds the failure details of all failed test cases by test run. The keys are the
-     * test run unique IDs and the values are the test case failure details per test run.
+     * test run test IDs and the values are the test case failure details per test run.
      */
     private final Map<String, List<String>> detailsFailedTestCases = new HashMap<>();
 
@@ -108,12 +107,12 @@ public class AnvilContext {
         return activeTestRuns;
     }
 
-    public synchronized AnvilTestRun getTestRun(String uniqueId) {
-        return activeTestRuns.get(uniqueId);
+    public synchronized AnvilTestRun getActiveTestRun(String testId) {
+        return activeTestRuns.get(testId);
     }
 
     public synchronized void addActiveTestRun(AnvilTestRun testRun) {
-        activeTestRuns.put(testRun.getUniqueId(), testRun);
+        activeTestRuns.put(testRun.getTestId(), testRun);
     }
 
     private synchronized void addDetailsFailedTestCases(AnvilTestRun testRun) {
@@ -132,7 +131,7 @@ public class AnvilContext {
                         failureDetail ->
                                 detailsFailedTestCases
                                         .computeIfAbsent(
-                                                testRun.getUniqueId(), k -> new LinkedList<>())
+                                                testRun.getTestId(), k -> new LinkedList<>())
                                         .add(failureDetail));
     }
 
@@ -141,11 +140,11 @@ public class AnvilContext {
     }
 
     public synchronized void testRunFinished(AnvilTestRun testRun) {
-        String testRunUniqueId = testRun.getUniqueId();
+        String testId = testRun.getTestId();
         addDetailsFailedTestCases(testRun);
-        finishedTestRuns.put(testRunUniqueId, true);
-        overallScoreContainer.merge(activeTestRuns.get(testRunUniqueId).getScoreContainer());
-        AnvilTestRun finishedContainer = activeTestRuns.remove(testRunUniqueId);
+        finishedTestRuns.put(testId, true);
+        overallScoreContainer.merge(activeTestRuns.get(testId).getScoreContainer());
+        AnvilTestRun finishedContainer = activeTestRuns.remove(testId);
         testRunsDone++;
         if (finishedContainer.getTestCases() != null) {
             testCases += finishedContainer.getTestCases().size();
@@ -158,12 +157,8 @@ public class AnvilContext {
 
         LOGGER.info(
                 String.format(
-                        "%d/%d Tests finished (in %02d:%02d). Method: %s",
-                        testRunsDone,
-                        totalTestRuns,
-                        minutes,
-                        seconds,
-                        testRun.getTestMethodName()));
+                        "%d/%d Tests finished (in %02d:%02d). Finished method %s",
+                        testRunsDone, totalTestRuns, minutes, seconds, testRun.getName()));
 
         if (listener != null) {
             listener.onTestRunFinished(finishedContainer);
@@ -174,8 +169,8 @@ public class AnvilContext {
         return finishedTestRuns;
     }
 
-    public synchronized boolean testRunIsFinished(String uniqueId) {
-        return finishedTestRuns.containsKey(uniqueId);
+    public synchronized boolean testRunIsFinished(String testId) {
+        return finishedTestRuns.containsKey(testId);
     }
 
     public synchronized Date getCreationTime() {
@@ -216,7 +211,7 @@ public class AnvilContext {
 
     public synchronized void addTestRunResult(TestResult result, AnvilTestRun testRun) {
         getResultsTestRuns().computeIfAbsent(result, k -> new HashSet<>());
-        getResultsTestRuns().get(result).add(testRun.getUniqueId());
+        getResultsTestRuns().get(result).add(testRun.getTestId());
     }
 
     public AnvilListener getListener() {
