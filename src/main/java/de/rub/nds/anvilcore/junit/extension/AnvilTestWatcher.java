@@ -16,6 +16,7 @@ import de.rub.nds.anvilcore.teststate.AnvilTestRun;
 import de.rub.nds.anvilcore.teststate.TestResult;
 import de.rub.nds.anvilcore.teststate.reporting.AnvilReport;
 import de.rub.nds.anvilcore.util.TestIdResolver;
+import de.rub.nds.anvilcore.util.ZipUtil;
 import de.rwth.swc.coffee4j.model.Combination;
 import de.rwth.swc.coffee4j.model.TestInputGroupContext;
 import de.rwth.swc.coffee4j.model.report.ExecutionReporter;
@@ -274,6 +275,10 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         AnvilContext.getInstance().getMapper().saveReportToPath(anvilReport);
         if (AnvilContext.getInstance().getListener() != null) {
             AnvilContext.getInstance().getListener().onReportFinished(anvilReport);
+        }
+        if (AnvilContext.getInstance().getConfig().isDoZip()) {
+            ZipUtil.packFolderToZip(
+                    AnvilContext.getInstance().getConfig().getOutputFolder(), "report.zip");
         }
     }
 

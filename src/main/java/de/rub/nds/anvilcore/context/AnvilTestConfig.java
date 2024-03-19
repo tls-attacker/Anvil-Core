@@ -102,6 +102,9 @@ public class AnvilTestConfig {
             description = "Disables the packet capturing with tcpdump")
     private boolean disableTcpDump = false;
 
+    @Parameter(names = "-zip", description = "Pack the results folder into a zip archive.")
+    private boolean doZip = false;
+
     private TestEndpointType endpointMode;
     private String generalPcapFilter = "";
 
@@ -274,5 +277,13 @@ public class AnvilTestConfig {
 
     public void setGeneralPcapFilter(String generalPcapFilter) {
         this.generalPcapFilter = generalPcapFilter;
+    }
+
+    public boolean isDoZip() {
+        return doZip;
+    }
+
+    public void setDoZip(boolean doZip) {
+        this.doZip = doZip;
     }
 }
