@@ -56,6 +56,6 @@ public class EndpointConditionExtension extends SingleCheckCondition {
             return ConditionEvaluationResult.enabled("TestEndpointMode matches");
         }
 
-        return ConditionEvaluationResult.disabled("TestEndpointMode doesn't match, skipping test.");
+        return ConditionEvaluationResult.disabled("TestEndpointMode doesn't match");
     }
 }

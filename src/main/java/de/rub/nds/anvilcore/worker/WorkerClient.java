@@ -324,13 +324,13 @@ public class WorkerClient implements AnvilListener {
     }
 
     @Override
-    public void onTestCaseFinished(AnvilTestCase testCase, String testId) {
+    public void onTestCaseFinished(AnvilTestCase testCase, String testRunId) {
         if (listener != null) {
-            listener.onTestCaseFinished(testCase, testId);
+            listener.onTestCaseFinished(testCase, testRunId);
         }
         Map<String, Object> testCaseUpdate = new LinkedHashMap<>();
         testCaseUpdate.put("jobId", activeJobId);
-        testCaseUpdate.put("testId", testId);
+        testCaseUpdate.put("testId", testRunId);
         testCaseUpdate.put("testCase", testCase);
 
         postUpdateAsync("worker/update/testcase", testCaseUpdate);

@@ -18,10 +18,7 @@ import de.rub.nds.anvilcore.context.ProfileResolver;
 import de.rub.nds.anvilcore.junit.extension.AnvilTestWatcher;
 import de.rub.nds.anvilcore.model.ParameterIdentifierProvider;
 import de.rub.nds.anvilcore.teststate.reporting.PcapCapturer;
-import java.io.ByteArrayOutputStream;
-import java.io.PrintWriter;
 import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,8 +30,6 @@ import org.junit.platform.launcher.*;
 import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
-import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
-import org.junit.platform.launcher.listeners.TestExecutionSummary;
 
 /**
  * The TestRunner is used to start the testing phase. It is the entrypoint for anvil implementations
@@ -126,14 +121,12 @@ public class TestRunner {
                             });
         }
         LauncherDiscoveryRequest request = builder.build();
-        SummaryGeneratingListener summaryListener = new SummaryGeneratingListener();
         AnvilTestWatcher anvilTestWatcher = new AnvilTestWatcher();
 
         Launcher launcher =
                 LauncherFactory.create(
                         LauncherConfig.builder()
                                 .enableTestExecutionListenerAutoRegistration(false)
-                                .addTestExecutionListeners(summaryListener)
                                 .addTestExecutionListeners(anvilTestWatcher)
                                 .build());
 
@@ -146,7 +139,7 @@ public class TestRunner {
                                     || (source != null
                                             && source.getClass().equals(MethodSource.class));
                         });
-        context.setTotalTests(testcases);
+        context.setTotalTestRuns(testcases);
 
         if (context.getListener() != null) {
             context.getListener().beforeStart(testplan, testcases);
@@ -159,13 +152,6 @@ public class TestRunner {
         if (elapsedTime < 10) {
             LOGGER.error("Something seems to be wrong, testsuite executed in " + elapsedTime + "s");
         }
-
-        TestExecutionSummary summary = summaryListener.getSummary();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintWriter writer = new PrintWriter(baos, true);
-        summary.printTo(writer);
-        String content = new String(baos.toByteArray(), StandardCharsets.UTF_8);
-        LOGGER.info("\n" + content);
 
         // wait for all pcap files to be written
         if (!config.isDisableTcpDump()) {

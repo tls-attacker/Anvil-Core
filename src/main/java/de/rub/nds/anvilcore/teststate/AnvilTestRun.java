@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.junit.Utils;
 import de.rub.nds.anvilcore.model.ParameterCombination;
+import de.rub.nds.anvilcore.teststate.reporting.MetadataFetcher;
 import de.rub.nds.anvilcore.teststate.reporting.ScoreContainer;
 import de.rub.nds.anvilcore.util.TestIdResolver;
 import java.lang.reflect.Method;
@@ -117,8 +118,151 @@ public class AnvilTestRun {
     }
 
     @JsonUnwrapped
-    private Map getMetadata() {
+    private Map<?, ?> getMetadata() {
         return AnvilContext.getInstance().getMetadataFetcher().getRawMetadata(testId);
+    }
+
+    private Map<TestResult, List<AnvilTestCase>> groupTestCasesByResult() {
+        Map<TestResult, List<AnvilTestCase>> testCasesByResult = new EnumMap<>(TestResult.class);
+        testCases.forEach(
+                testCase -> {
+                    TestResult testCaseResult = testCase.getTestResult();
+                    testCasesByResult
+                            .computeIfAbsent(testCaseResult, mapKey -> new ArrayList<>())
+                            .add(testCase);
+                });
+
+        return testCasesByResult;
+    }
+
+    private List<TestResult> getFailureTestResults() {
+        return Arrays.asList(TestResult.FULLY_FAILED, TestResult.PARTIALLY_FAILED);
+    }
+
+    private List<AnvilTestCase> filterTestCasesByResult(TestResult testResult) {
+        return testCases.stream()
+                .filter(testCase -> testCase.getTestResult() == testResult)
+                .collect(Collectors.toList());
+    }
+
+    private Map<String, Integer> filterUniqueFailedTestCases(TestResult testResult) {
+        if (!getFailureTestResults().contains(testResult)) {
+            String failureResults =
+                    getFailureTestResults().stream()
+                            .map(Enum::name)
+                            .collect(Collectors.joining(" or "));
+            throw new IllegalArgumentException("Test result must be either " + failureResults);
+        }
+
+        Map<String, Integer> failedTestCasesDetails = new HashMap<>();
+        List<AnvilTestCase> failedTestCases = filterTestCasesByResult(testResult);
+
+        // create a frequency map of failure details for all failed test cases
+        failedTestCases.forEach(
+                failedTestCase ->
+                        failedTestCasesDetails.merge(
+                                failedTestCase.getFailureDetails(), 1, Integer::sum));
+
+        return failedTestCasesDetails;
+    }
+
+    /**
+     * This method generates a summary of the failure details for a given test result.
+     *
+     * @param testResult The test result for which the failure details summary is to be generated.
+     * @param failedTestCaseDetails A map where the keys are the detail messages of the failed test
+     *     cases and the values are the counts of how many times each detail message appears.
+     * @return A string containing the failure details summary for the given test result.
+     */
+    private String buildTestCaseFailureDetailsSummary(
+            TestResult testResult, Map<String, Integer> failedTestCaseDetails) {
+        StringJoiner logMessage = new StringJoiner("\n");
+        int totalFailures =
+                failedTestCaseDetails.values().stream().mapToInt(Integer::intValue).sum();
+        failedTestCaseDetails.forEach(
+                (detailMessage, detailCount) ->
+                        logMessage.add(
+                                String.format(
+                                        "\t%d/%d test cases %s with %s",
+                                        detailCount,
+                                        totalFailures,
+                                        testResult.toString(),
+                                        detailMessage)));
+
+        return logMessage.toString();
+    }
+
+    private String buildTestRunResultsSummary() {
+        Map<TestResult, List<AnvilTestCase>> testCasesByResult = groupTestCasesByResult();
+        int testCasesSize = testCases.size();
+
+        StringJoiner logMessage = new StringJoiner("\n");
+        logMessage.add(
+                String.format(
+                        "\nTest cases of test run %s by result:",
+                        testId != null ? testId : "undefined"));
+        testCasesByResult.forEach(
+                (testResult, mappedTestCases) -> {
+                    logMessage.add(
+                            String.format(
+                                    "\t%d/%d test cases %s.",
+                                    mappedTestCases.size(), testCasesSize, testResult.toString()));
+                });
+
+        return logMessage.toString();
+    }
+
+    private String buildTestRunFailureDetailsSummary() {
+        Map<TestResult, List<AnvilTestCase>> testCasesByResult = groupTestCasesByResult();
+        StringBuilder logMessage = new StringBuilder();
+
+        // add details of failed test cases if there are any
+        if (testCasesByResult.keySet().stream().anyMatch(getFailureTestResults()::contains)) {
+            logMessage.append("\nDetails of failed test cases:\n");
+        }
+        getFailureTestResults().stream()
+                .filter(testCasesByResult::containsKey)
+                .forEach(
+                        failureResult ->
+                                logMessage.append(
+                                        buildTestCaseFailureDetailsSummary(
+                                                failureResult,
+                                                filterUniqueFailedTestCases(failureResult))));
+
+        return logMessage.toString();
+    }
+
+    private void logTestRun() {
+        MetadataFetcher metadataFetcher = AnvilContext.getInstance().getMetadataFetcher();
+        StringBuilder logMessage = new StringBuilder();
+
+        String testName = getName() != null ? getName() : "undefined";
+        String testIdValue = testId != null ? testId : "undefined";
+        String rfcNumber =
+                metadataFetcher.getRfcNumber(testId) != null
+                        ? metadataFetcher.getRfcNumber(testId).toString()
+                        : "undefined";
+        String rfcSection =
+                metadataFetcher.getRfcSection(testId) != null
+                        ? metadataFetcher.getRfcSection(testId)
+                        : "undefined";
+        String description =
+                metadataFetcher.getDescription(testId) != null
+                        ? metadataFetcher.getDescription(testId)
+                        : "undefined";
+        int testCaseSize = testCases.size();
+
+        logMessage.append(
+                String.format(
+                        "Test Method: %s\n\tTest Run ID: %s\n\tRFC source: RFC %s, section %s\n\tRFC description: %s\n\tTest cases: %d",
+                        testName, testIdValue, rfcNumber, rfcSection, description, testCaseSize));
+
+        if (!testCases.isEmpty()) {
+            logMessage.append(buildTestRunResultsSummary());
+            logMessage.append(buildTestRunFailureDetailsSummary());
+        }
+
+        LOGGER.warn(logMessage.toString());
     }
 
     @Override
@@ -130,7 +274,7 @@ public class AnvilTestRun {
                 result != null ? result.name() : "undefined");
     }
 
-    public String getTestMethodName() {
+    public String getName() {
         return testClass.getName() + "." + testMethod.getName();
     }
 
@@ -155,9 +299,9 @@ public class AnvilTestRun {
      * @param testMethod The test method determined externally
      */
     private AnvilTestRun(Class<?> testClass, Method testMethod) {
-        this.uniqueId = testClass.getName() + "." + testMethod.getName();
         this.testClass = testClass;
         this.testMethod = testMethod;
+        this.uniqueId = getName();
         this.testId = TestIdResolver.resolveTestId(testMethod);
         this.scoreContainer = new ScoreContainer(testId);
     }
@@ -177,9 +321,10 @@ public class AnvilTestRun {
     public static synchronized AnvilTestRun forExtensionContext(ExtensionContext extensionContext) {
         ExtensionContext resolvedContext =
                 Utils.getTemplateContainerExtensionContext(extensionContext);
+        String testId = TestIdResolver.resolveTestId(resolvedContext.getRequiredTestMethod());
 
-        if (AnvilContext.getInstance().getTestRun(resolvedContext.getUniqueId()) != null) {
-            return AnvilContext.getInstance().getTestRun(resolvedContext.getUniqueId());
+        if (AnvilContext.getInstance().getActiveTestRun(testId) != null) {
+            return AnvilContext.getInstance().getActiveTestRun(testId);
         }
 
         AnvilTestRun container = new AnvilTestRun(resolvedContext);
@@ -198,14 +343,26 @@ public class AnvilTestRun {
             // only determine result automatically if it has not been set before
             result = resolveFinalResult();
         }
-        if (result == TestResult.DISABLED && getDisabledReason() != null) {
-            LOGGER.info("{} is disable because {}", getTestMethodName(), getDisabledReason());
-        }
         scoreContainer.updateForResult(result);
-        AnvilContext.getInstance()
-                .addTestResult(result, testClass.getName() + "." + testMethod.getName());
+        AnvilContext.getInstance().addTestRunResult(result, this);
         AnvilContext.getInstance().getMapper().saveTestRunToPath(this);
-        AnvilContext.getInstance().testFinished(uniqueId);
+        AnvilContext.getInstance().testRunFinished(this);
+
+        // log test run summary
+        switch (result) {
+            case STRICTLY_SUCCEEDED:
+            case CONCEPTUALLY_SUCCEEDED:
+                break; // skip live logging for any successful test
+            case DISABLED:
+                LOGGER.info(
+                        "{} is disabled because: {}",
+                        getName() != null ? getName() : "undefined",
+                        disabledReason != null ? disabledReason : "undefined");
+                break;
+            default:
+                logTestRun();
+                break;
+        }
     }
 
     public TestResult resolveFinalResult() {
@@ -310,9 +467,9 @@ public class AnvilTestRun {
         return scoreContainer;
     }
 
-    public void add(AnvilTestCase testState) {
-        testState.setAssociatedContainer(this);
-        this.testCases.add(testState);
+    public void addTestCase(AnvilTestCase testCase) {
+        testCase.setAssociatedContainer(this);
+        this.testCases.add(testCase);
     }
 
     public void setFailureInducingCombinations(

@@ -37,6 +37,26 @@ public class MetadataFetcher {
         return (Map<String, Integer>) ((Map<?, ?>) this.metadataMap.get(id)).get("severityLevels");
     }
 
+    public String getDescription(String id) {
+        if (this.metadataMap.get(id) == null) return null;
+        return (String) ((Map<?, ?>) this.metadataMap.get(id)).get("description");
+    }
+
+    public Map<String, ?> getRfc(String id) {
+        if (this.metadataMap.get(id) == null) return null;
+        return (Map<String, ?>) ((Map<?, ?>) this.metadataMap.get(id)).get("rfc");
+    }
+
+    public Integer getRfcNumber(String id) {
+        if (this.getRfc(id) == null) return null;
+        return (Integer) getRfc(id).get("number");
+    }
+
+    public String getRfcSection(String id) {
+        if (this.getRfc(id) == null) return null;
+        return (String) getRfc(id).get("section");
+    }
+
     public Map<?, ?> getRawMetadata(String id) {
         if (!metadataMap.containsKey(id)) {
             LOGGER.error("No metadata found for test with id: " + id);

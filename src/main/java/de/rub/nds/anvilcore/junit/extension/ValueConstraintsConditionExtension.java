@@ -17,6 +17,9 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 
 public class ValueConstraintsConditionExtension extends SingleCheckCondition {
 
+    public static final String DISABLED_REASON =
+            "Specific features required for the test have not been met by the SUT for derivation parameter ";
+
     @Override
     public ConditionEvaluationResult evaluateUncachedCondition(ExtensionContext extensionContext) {
         if (extensionContext.getTestMethod().isEmpty()) {
@@ -29,8 +32,7 @@ public class ValueConstraintsConditionExtension extends SingleCheckCondition {
                         valueConstraint.getAffectedParameter().getInstance();
                 if (derivationParameter.hasNoApplicableValues(derivationScope)) {
                     return ConditionEvaluationResult.disabled(
-                            "No values supported required for parameter "
-                                    + derivationParameter.getParameterIdentifier());
+                            DISABLED_REASON + derivationParameter.getParameterIdentifier());
                 }
             }
             for (ParameterIdentifier explicitParameterIdentifier :
@@ -38,8 +40,7 @@ public class ValueConstraintsConditionExtension extends SingleCheckCondition {
                 DerivationParameter derivationParameter = explicitParameterIdentifier.getInstance();
                 if (derivationParameter.hasNoApplicableValues(derivationScope)) {
                     return ConditionEvaluationResult.disabled(
-                            "No values supported required for parameter "
-                                    + explicitParameterIdentifier);
+                            DISABLED_REASON + explicitParameterIdentifier);
                 }
             }
             return ConditionEvaluationResult.enabled("");
