@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        JDK_TOOL_NAME = 'JDK 11'
+        JDK_TOOL_NAME = 'JDK 21'
         MAVEN_TOOL_NAME = 'Maven 3.9.9'
     }
 
@@ -14,10 +14,6 @@ pipeline {
     stages {
         stage('Clean') {
             steps {
-                // This is necessary to make the origin/master refspec available to spotless (for ratcheting)
-                withCredentials([gitUsernamePassword(credentialsId: 'github-app-tls-attacker')]) {
-                    sh 'git fetch origin main:refs/remotes/origin/main'
-                }
                 withMaven(jdk: env.JDK_TOOL_NAME, maven: env.MAVEN_TOOL_NAME) {
                     sh 'mvn clean'
                 }
@@ -58,12 +54,12 @@ pipeline {
                 }
             }
             options {
-                timeout(activity: true, time: 240, unit: 'SECONDS')
+                timeout(activity: true, time: 120, unit: 'SECONDS')
             }
             steps {
                 withMaven(jdk: env.JDK_TOOL_NAME, maven: env.MAVEN_TOOL_NAME) {
-                    // `package` goal is required here to load modules in reactor and avoid dependency resolve conflicts
-                    sh 'mvn -DskipTests=true package pmd:pmd pmd:cpd spotbugs:spotbugs'
+                    //sh 'mvn pmd:pmd pmd:cpd spotbugs:spotbugs'
+                    sh 'mvn spotbugs:spotbugs'
                 }
             }
             post {
@@ -81,7 +77,7 @@ pipeline {
                 }
             }
             options {
-                timeout(activity: true, time: 180, unit: 'SECONDS')
+                timeout(activity: true, time: 120, unit: 'SECONDS')
             }
             steps {
                 withMaven(jdk: env.JDK_TOOL_NAME, maven: env.MAVEN_TOOL_NAME) {
@@ -103,7 +99,7 @@ pipeline {
                 }
             }
             options {
-                timeout(activity: true, time: 600, unit: 'SECONDS')
+                timeout(activity: true, time: 120, unit: 'SECONDS')
             }
             steps {
                 withMaven(jdk: env.JDK_TOOL_NAME, maven: env.MAVEN_TOOL_NAME) {

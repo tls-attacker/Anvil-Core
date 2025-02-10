@@ -8,7 +8,7 @@
  */
 package de.rub.nds.anvilcore.annotation.methodcondition;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import de.rub.nds.anvilcore.annotation.MethodCondition;
 import de.rub.nds.anvilcore.junit.extension.MethodConditionExtension;
