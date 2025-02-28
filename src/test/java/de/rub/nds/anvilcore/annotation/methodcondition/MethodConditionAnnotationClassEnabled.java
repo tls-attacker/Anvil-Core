@@ -8,7 +8,7 @@
  */
 package de.rub.nds.anvilcore.annotation.methodcondition;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import de.rub.nds.anvilcore.annotation.MethodCondition;
 import de.rub.nds.anvilcore.junit.extension.MethodConditionExtension;
@@ -61,8 +61,8 @@ public class MethodConditionAnnotationClassEnabled {
     @Test
     @MethodCondition(method = "test2")
     public void execute_validMethod() {
-        assertTrue("Class ConditionMethod executed", classConditionExecuted);
-        assertTrue("Method ConditionMethod executed", methodConditionExecuted);
+        assertTrue(classConditionExecuted, "Class ConditionMethod executed");
+        assertTrue(methodConditionExecuted, "Method ConditionMethod executed");
     }
 
     @Test
@@ -76,8 +76,8 @@ public class MethodConditionAnnotationClassEnabled {
     @Test
     @MethodCondition(method = "privateEnabled")
     public void execute_PrivateEnabled() {
-        assertTrue("Class ConditionMethod executed", classConditionExecuted);
-        assertTrue("Method ConditionMethod executed", methodConditionExecuted);
+        assertTrue(classConditionExecuted, "Class ConditionMethod executed");
+        assertTrue(methodConditionExecuted, "Method ConditionMethod executed");
     }
 
     @Test
