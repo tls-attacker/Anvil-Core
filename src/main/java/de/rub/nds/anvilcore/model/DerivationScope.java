@@ -172,7 +172,7 @@ public class DerivationScope {
      * @return list of parameters that will be removed from the model
      * @see ExcludeParameter
      */
-    private static List<ParameterIdentifier> resolveIpmLimitations(
+    private List<ParameterIdentifier> resolveIpmLimitations(
             final ExtensionContext extensionContext) {
         return Stream.concat(
                         AnnotationSupport.findAnnotation(
@@ -186,7 +186,7 @@ public class DerivationScope {
                                 .stream()
                                 .map(ExcludeParameter::value))
                 .distinct()
-                .map(ParameterIdentifier::fromName)
+                .map(identifier -> ParameterIdentifier.fromName(identifier, this))
                 .collect(Collectors.toList());
     }
 
