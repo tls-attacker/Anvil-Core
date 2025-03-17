@@ -355,6 +355,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             }
         }
     }
+
     /**
      * Combinatorial tests might fail before we enter the body of the test template. This is the
      * case when coffee4j fails to produce the test inputs. In this case, no container will be added
