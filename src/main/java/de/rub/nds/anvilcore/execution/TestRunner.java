@@ -149,8 +149,7 @@ public class TestRunner {
                                 } else if (method.isAnnotationPresent(
                                         NonCombinatorialAnvilTest.class)) {
                                     anvilTestId =
-                                            method.getAnnotation(
-                                                            NonCombinatorialAnvilTest.class)
+                                            method.getAnnotation(NonCombinatorialAnvilTest.class)
                                                     .id();
                                 } else {
                                     LOGGER.warn("Method {} has no ID", method);
@@ -159,8 +158,7 @@ public class TestRunner {
                                     if (ids.contains(anvilTestId)) {
                                         return FilterResult.included("Profile includes ID");
                                     } else {
-                                        return FilterResult.excluded(
-                                                "Profile does not include ID");
+                                        return FilterResult.excluded("Profile does not include ID");
                                     }
                                 }
                                 return FilterResult.excluded("Method has no ID");
