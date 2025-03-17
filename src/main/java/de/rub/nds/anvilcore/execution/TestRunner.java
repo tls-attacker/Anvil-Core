@@ -22,6 +22,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor;
 import org.junit.jupiter.engine.descriptor.MethodBasedTestDescriptor;
 import org.junit.platform.engine.FilterResult;
 import org.junit.platform.engine.TestSource;
@@ -85,41 +86,9 @@ public class TestRunner {
             builder.filters(TagFilter.includeTags(config.getTags()));
         }
         if (!config.getProfiles().isEmpty()) {
-            ProfileResolver profileResolver = new ProfileResolver(config.getProfileFolder());
-            List<String> ids = profileResolver.resolve(config.getProfiles());
-            builder.filters(
-                    (PostDiscoveryFilter)
-                            descriptor -> {
-                                if (descriptor instanceof MethodBasedTestDescriptor) {
-                                    MethodBasedTestDescriptor md =
-                                            (MethodBasedTestDescriptor) descriptor;
-                                    Method method = md.getTestMethod();
-                                    String anvilTestId = null;
-                                    if (method.isAnnotationPresent(AnvilTest.class)) {
-                                        anvilTestId = method.getAnnotation(AnvilTest.class).id();
-                                    } else if (method.isAnnotationPresent(
-                                            NonCombinatorialAnvilTest.class)) {
-                                        anvilTestId =
-                                                method.getAnnotation(
-                                                                NonCombinatorialAnvilTest.class)
-                                                        .id();
-                                    } else {
-                                        LOGGER.warn("Method {} has no ID", method);
-                                    }
-                                    if (anvilTestId != null) {
-                                        if (ids.contains(anvilTestId)) {
-                                            return FilterResult.included("Profile includes ID");
-                                        } else {
-                                            return FilterResult.excluded(
-                                                    "Profile does not include ID");
-                                        }
-                                    }
-                                    return FilterResult.excluded("Method has no ID");
-                                }
-                                return FilterResult.included(
-                                        "Method is not instance of MethodBasedTestDescriptor");
-                            });
+            restrictToProfile(builder);
         }
+        restrictToAnvilTests(builder);
         LauncherDiscoveryRequest request = builder.build();
         AnvilTestWatcher anvilTestWatcher = new AnvilTestWatcher();
 
@@ -162,5 +131,70 @@ public class TestRunner {
                 LOGGER.error(e);
             }
         }
+    }
+
+    private void restrictToProfile(LauncherDiscoveryRequestBuilder builder) {
+        ProfileResolver profileResolver = new ProfileResolver(config.getProfileFolder());
+        List<String> ids = profileResolver.resolve(config.getProfiles());
+        builder.filters(
+                (PostDiscoveryFilter)
+                        descriptor -> {
+                            if (descriptor instanceof MethodBasedTestDescriptor) {
+                                MethodBasedTestDescriptor md =
+                                        (MethodBasedTestDescriptor) descriptor;
+                                Method method = md.getTestMethod();
+                                String anvilTestId = null;
+                                if (method.isAnnotationPresent(AnvilTest.class)) {
+                                    anvilTestId = method.getAnnotation(AnvilTest.class).id();
+                                } else if (method.isAnnotationPresent(
+                                        NonCombinatorialAnvilTest.class)) {
+                                    anvilTestId =
+                                            method.getAnnotation(NonCombinatorialAnvilTest.class)
+                                                    .id();
+                                } else {
+                                    LOGGER.warn("Method {} has no ID", method);
+                                }
+                                if (anvilTestId != null) {
+                                    if (ids.contains(anvilTestId)) {
+                                        return FilterResult.included("Profile includes ID");
+                                    } else {
+                                        return FilterResult.excluded("Profile does not include ID");
+                                    }
+                                }
+                                return FilterResult.excluded("Method has no ID");
+                            }
+                            return FilterResult.included(
+                                    "Method is not instance of MethodBasedTestDescriptor");
+                        });
+    }
+
+    private void restrictToAnvilTests(LauncherDiscoveryRequestBuilder builder) {
+        builder.filters(
+                (PostDiscoveryFilter)
+                        descriptor -> {
+                            if (descriptor instanceof MethodBasedTestDescriptor) {
+                                MethodBasedTestDescriptor md =
+                                        (MethodBasedTestDescriptor) descriptor;
+                                Method method = md.getTestMethod();
+                                if (method.isAnnotationPresent(AnvilTest.class)
+                                        || method.isAnnotationPresent(
+                                                NonCombinatorialAnvilTest.class)) {
+                                    return FilterResult.included("");
+                                } else {
+                                    return FilterResult.excluded("Method is not an AnvilTest");
+                                }
+                            } else if (descriptor instanceof ClassBasedTestDescriptor) {
+                                ClassBasedTestDescriptor cd = (ClassBasedTestDescriptor) descriptor;
+                                if (cd.getTestClass().isAnnotationPresent(AnvilTest.class)
+                                        || cd.getTestClass()
+                                                .isAnnotationPresent(
+                                                        NonCombinatorialAnvilTest.class)) {
+                                    return FilterResult.included("");
+                                } else {
+                                    return FilterResult.excluded("Class is not an AnvilTest");
+                                }
+                            }
+                            return FilterResult.excluded("Test is not an AnvilTest");
+                        });
     }
 }
