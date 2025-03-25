@@ -27,7 +27,23 @@ public abstract class ParameterIdentifierProvider {
         return allParameterIdentifiers;
     }
 
+    public static List<ParameterIdentifier> getAllParameterIdentifiers(
+            DerivationScope derivationScope) {
+        if (allParameterIdentifiers == null) {
+            allParameterIdentifiers =
+                    AnvilContext.getInstance()
+                            .getParameterIdentifierProvider()
+                            .generateAllParameterIdentifiers(derivationScope);
+        }
+        return allParameterIdentifiers;
+    }
+
     public abstract List<ParameterIdentifier> generateAllParameterIdentifiers();
+
+    public List<ParameterIdentifier> generateAllParameterIdentifiers(
+            DerivationScope derivationScope) {
+        return generateAllParameterIdentifiers();
+    }
 
     public List<ParameterIdentifier> getModelParameterIdentifiers(DerivationScope derivationScope) {
         String modelType = derivationScope.getModelType();
