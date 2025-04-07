@@ -20,6 +20,9 @@ import org.apache.logging.log4j.Logger;
 public class AnvilTestConfig {
     static Logger LOGGER = LogManager.getLogger();
 
+    @Parameter(names = "-expectedResults", description = "Path to expectedResults as json")
+    private String expectedResults = null;
+
     @Parameter(names = "-profiles", description = "Which profiles should be used")
     private List<String> profiles = new ArrayList<String>();
 
@@ -107,6 +110,14 @@ public class AnvilTestConfig {
 
     private TestEndpointType endpointMode;
     private String generalPcapFilter = "";
+
+    public String getExpectedResults() {
+        return expectedResults;
+    }
+
+    public void setExpectedResults(String expectedResults) {
+        this.expectedResults = expectedResults;
+    }
 
     public List<String> getProfiles() {
         return profiles;
