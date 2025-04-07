@@ -174,6 +174,7 @@ public class TestRunner {
 
         boolean fail = false;
         StringBuilder builder = new StringBuilder();
+        builder.append("Comparing to expected results:\n");
         builder.append(String.format(" %-20s| %-20s| %-20s\n", "Actual", "Expected", "Test"));
         builder.append("---------------------+---------------------+---------------------\n");
         Set<String> unionSet = new HashSet<>();
@@ -208,6 +209,8 @@ public class TestRunner {
         }
         if (fail) {
             LOGGER.error(builder);
+        } else {
+            LOGGER.info("Results match expected results.");
         }
         checkExecuted = true;
         checkPassed = !fail;

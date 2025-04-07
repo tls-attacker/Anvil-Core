@@ -273,6 +273,9 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         logTestPlanExecutionSummary(AnvilContext.getInstance());
         AnvilReport anvilReport = new AnvilReport(AnvilContext.getInstance(), false);
         AnvilContext.getInstance().getMapper().saveReportToPath(anvilReport);
+        AnvilContext.getInstance()
+                .getMapper()
+                .saveExtraFileToPath(AnvilContext.getInstance().getResultsTestRuns(), "result_map");
         if (AnvilContext.getInstance().getListener() != null) {
             AnvilContext.getInstance().getListener().onReportFinished(anvilReport);
         }
