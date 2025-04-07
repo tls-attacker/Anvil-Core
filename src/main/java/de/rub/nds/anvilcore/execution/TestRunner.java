@@ -12,7 +12,6 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPacka
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Sets;
 import de.rub.nds.anvilcore.annotation.AnvilTest;
 import de.rub.nds.anvilcore.annotation.NonCombinatorialAnvilTest;
 import de.rub.nds.anvilcore.context.AnvilContext;
@@ -27,10 +26,7 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor;
@@ -153,7 +149,7 @@ public class TestRunner {
     private void checkExpectedResults() {
         String pathStr = config.getExpectedResults();
         ObjectMapper mapper = new ObjectMapper();
-        Map<TestResult, Set<String>> expectedResults = null;
+        Map<TestResult, Set<String>> expectedResults;
         TypeReference<HashMap<TestResult, Set<String>>> typeRef = new TypeReference<>() {};
         try (InputStream inputFile = Files.newInputStream(Paths.get(pathStr))) {
             expectedResults = mapper.readValue(inputFile, typeRef);
@@ -180,8 +176,10 @@ public class TestRunner {
         StringBuilder builder = new StringBuilder();
         builder.append(String.format(" %-20s| %-20s| %-20s\n", "Actual", "Expected", "Test"));
         builder.append("---------------------+---------------------+---------------------\n");
-        for (String testId :
-                Sets.union(orderedActualResults.keySet(), orderedExpectedResults.keySet())) {
+        Set<String> unionSet = new HashSet<>();
+        unionSet.addAll(orderedExpectedResults.keySet());
+        unionSet.addAll(orderedActualResults.keySet());
+        for (String testId : unionSet) {
             if (!orderedActualResults.containsKey(testId)) {
                 builder.append(
                         String.format(
@@ -221,9 +219,7 @@ public class TestRunner {
         builder.filters(
                 (PostDiscoveryFilter)
                         descriptor -> {
-                            if (descriptor instanceof MethodBasedTestDescriptor) {
-                                MethodBasedTestDescriptor md =
-                                        (MethodBasedTestDescriptor) descriptor;
+                            if (descriptor instanceof MethodBasedTestDescriptor md) {
                                 Method method = md.getTestMethod();
                                 String anvilTestId = null;
                                 if (method.isAnnotationPresent(AnvilTest.class)) {
@@ -254,9 +250,7 @@ public class TestRunner {
         builder.filters(
                 (PostDiscoveryFilter)
                         descriptor -> {
-                            if (descriptor instanceof MethodBasedTestDescriptor) {
-                                MethodBasedTestDescriptor md =
-                                        (MethodBasedTestDescriptor) descriptor;
+                            if (descriptor instanceof MethodBasedTestDescriptor md) {
                                 Method method = md.getTestMethod();
                                 if (method.isAnnotationPresent(AnvilTest.class)
                                         || method.isAnnotationPresent(
@@ -265,8 +259,7 @@ public class TestRunner {
                                 } else {
                                     return FilterResult.excluded("Method is not an AnvilTest");
                                 }
-                            } else if (descriptor instanceof ClassBasedTestDescriptor) {
-                                ClassBasedTestDescriptor cd = (ClassBasedTestDescriptor) descriptor;
+                            } else if (descriptor instanceof ClassBasedTestDescriptor cd) {
                                 if (cd.getTestClass().isAnnotationPresent(AnvilTest.class)
                                         || cd.getTestClass()
                                                 .isAnnotationPresent(
