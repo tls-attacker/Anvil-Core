@@ -186,7 +186,7 @@ public class DerivationScope {
                                 .stream()
                                 .map(ExcludeParameter::value))
                 .distinct()
-                .map(ParameterIdentifier::fromName)
+                .map((String name) -> ParameterIdentifier.fromName(name, extensionContext))
                 .collect(Collectors.toList());
     }
 
@@ -211,7 +211,7 @@ public class DerivationScope {
                                 .stream()
                                 .map(IncludeParameter::value))
                 .distinct()
-                .map(ParameterIdentifier::fromName)
+                .map((String name) -> ParameterIdentifier.fromName(name, extensionContext))
                 .collect(Collectors.toList());
     }
 
@@ -237,7 +237,8 @@ public class DerivationScope {
                                                 annotation ->
                                                         new ValueConstraint(
                                                                 ParameterIdentifier.fromName(
-                                                                        annotation.identifier()),
+                                                                        annotation.identifier(),
+                                                                        extensionContext),
                                                                 annotation.method(),
                                                                 null,
                                                                 false)),
@@ -250,7 +251,8 @@ public class DerivationScope {
                                                 annotation ->
                                                         new ValueConstraint(
                                                                 ParameterIdentifier.fromName(
-                                                                        annotation.identifier()),
+                                                                        annotation.identifier(),
+                                                                        extensionContext),
                                                                 annotation.method(),
                                                                 null,
                                                                 false)))
@@ -272,7 +274,7 @@ public class DerivationScope {
                                             entry -> {
                                                 ParameterIdentifier matchingIdentifier =
                                                         ParameterIdentifier.fromName(
-                                                                entry.getKey());
+                                                                entry.getKey(), extensionContext);
                                                 if (matchingIdentifier != null) {
                                                     dynamicConstraints.add(
                                                             new ValueConstraint(
@@ -312,7 +314,8 @@ public class DerivationScope {
                 .map(
                         entry ->
                                 Map.entry(
-                                        ParameterIdentifier.fromName(entry.getKey()),
+                                        ParameterIdentifier.fromName(
+                                                entry.getKey(), extensionContext),
                                         entry.getValue()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
@@ -336,7 +339,8 @@ public class DerivationScope {
                 .map(
                         entry ->
                                 Map.entry(
-                                        ParameterIdentifier.fromName(entry.getKey()),
+                                        ParameterIdentifier.fromName(
+                                                entry.getKey(), extensionContext),
                                         entry.getValue()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
@@ -354,7 +358,7 @@ public class DerivationScope {
                         extensionContext.getRequiredTestMethod(), ManualConfig.class)
                 .stream()
                 .flatMap(annotation -> Arrays.stream(annotation.identifiers()))
-                .map(ParameterIdentifier::fromName)
+                .map((String name) -> ParameterIdentifier.fromName(name, extensionContext))
                 .collect(Collectors.toSet());
     }
 

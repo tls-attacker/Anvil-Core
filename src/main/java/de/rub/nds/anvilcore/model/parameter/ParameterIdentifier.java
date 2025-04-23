@@ -11,6 +11,7 @@ package de.rub.nds.anvilcore.model.parameter;
 import de.rub.nds.anvilcore.model.ParameterIdentifierProvider;
 import java.util.List;
 import java.util.Objects;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 public class ParameterIdentifier {
     private final ParameterType parameterType;
@@ -51,6 +52,10 @@ public class ParameterIdentifier {
                 .filter(known -> known.name().equals(name))
                 .findFirst()
                 .orElse(null);
+    }
+
+    public static ParameterIdentifier fromName(String name, ExtensionContext extensionContext) {
+        return fromName(name);
     }
 
     public DerivationParameter getInstance() {
