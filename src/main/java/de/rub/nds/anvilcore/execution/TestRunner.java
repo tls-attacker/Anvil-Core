@@ -10,6 +10,8 @@ package de.rub.nds.anvilcore.execution;
 
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPackage;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.rub.nds.anvilcore.annotation.AnvilTest;
 import de.rub.nds.anvilcore.annotation.NonCombinatorialAnvilTest;
 import de.rub.nds.anvilcore.context.AnvilContext;
@@ -17,14 +19,17 @@ import de.rub.nds.anvilcore.context.AnvilTestConfig;
 import de.rub.nds.anvilcore.context.ProfileResolver;
 import de.rub.nds.anvilcore.junit.extension.AnvilTestWatcher;
 import de.rub.nds.anvilcore.model.ParameterIdentifierProvider;
+import de.rub.nds.anvilcore.teststate.TestResult;
 import de.rub.nds.anvilcore.teststate.reporting.PcapCapturer;
-import java.io.ByteArrayOutputStream;
-import java.io.PrintWriter;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor;
 import org.junit.jupiter.engine.descriptor.MethodBasedTestDescriptor;
 import org.junit.platform.engine.FilterResult;
 import org.junit.platform.engine.TestSource;
@@ -33,8 +38,7 @@ import org.junit.platform.launcher.*;
 import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
-import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
-import org.junit.platform.launcher.listeners.TestExecutionSummary;
+import org.opentest4j.TestAbortedException;
 
 /**
  * The TestRunner is used to start the testing phase. It is the entrypoint for anvil implementations
@@ -47,6 +51,8 @@ public class TestRunner {
 
     private final AnvilTestConfig config;
     private final AnvilContext context;
+    private boolean checkExecuted = false;
+    private boolean checkPassed = false;
 
     public TestRunner(
             AnvilTestConfig config, String configString, ParameterIdentifierProvider provider) {
@@ -90,50 +96,16 @@ public class TestRunner {
             builder.filters(TagFilter.includeTags(config.getTags()));
         }
         if (!config.getProfiles().isEmpty()) {
-            ProfileResolver profileResolver = new ProfileResolver(config.getProfileFolder());
-            List<String> ids = profileResolver.resolve(config.getProfiles());
-            builder.filters(
-                    (PostDiscoveryFilter)
-                            descriptor -> {
-                                if (descriptor instanceof MethodBasedTestDescriptor) {
-                                    MethodBasedTestDescriptor md =
-                                            (MethodBasedTestDescriptor) descriptor;
-                                    Method method = md.getTestMethod();
-                                    String anvilTestId = null;
-                                    if (method.isAnnotationPresent(AnvilTest.class)) {
-                                        anvilTestId = method.getAnnotation(AnvilTest.class).id();
-                                    } else if (method.isAnnotationPresent(
-                                            NonCombinatorialAnvilTest.class)) {
-                                        anvilTestId =
-                                                method.getAnnotation(
-                                                                NonCombinatorialAnvilTest.class)
-                                                        .id();
-                                    } else {
-                                        LOGGER.warn("Method {} has no ID", method);
-                                    }
-                                    if (anvilTestId != null) {
-                                        if (ids.contains(anvilTestId)) {
-                                            return FilterResult.included("Profile includes ID");
-                                        } else {
-                                            return FilterResult.excluded(
-                                                    "Profile does not include ID");
-                                        }
-                                    }
-                                    return FilterResult.excluded("Method has no ID");
-                                }
-                                return FilterResult.included(
-                                        "Method is not instance of MethodBasedTestDescriptor");
-                            });
+            restrictToProfile(builder);
         }
+        restrictToAnvilTests(builder);
         LauncherDiscoveryRequest request = builder.build();
-        SummaryGeneratingListener summaryListener = new SummaryGeneratingListener();
         AnvilTestWatcher anvilTestWatcher = new AnvilTestWatcher();
 
         Launcher launcher =
                 LauncherFactory.create(
                         LauncherConfig.builder()
                                 .enableTestExecutionListenerAutoRegistration(false)
-                                .addTestExecutionListeners(summaryListener)
                                 .addTestExecutionListeners(anvilTestWatcher)
                                 .build());
 
@@ -146,7 +118,7 @@ public class TestRunner {
                                     || (source != null
                                             && source.getClass().equals(MethodSource.class));
                         });
-        context.setTotalTests(testcases);
+        context.setTotalTestRuns(testcases);
 
         if (context.getListener() != null) {
             context.getListener().beforeStart(testplan, testcases);
@@ -160,13 +132,6 @@ public class TestRunner {
             LOGGER.error("Something seems to be wrong, testsuite executed in " + elapsedTime + "s");
         }
 
-        TestExecutionSummary summary = summaryListener.getSummary();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintWriter writer = new PrintWriter(baos, true);
-        summary.printTo(writer);
-        String content = new String(baos.toByteArray(), StandardCharsets.UTF_8);
-        LOGGER.info("\n" + content);
-
         // wait for all pcap files to be written
         if (!config.isDisableTcpDump()) {
             LOGGER.info("Stopping pcap capture...");
@@ -176,5 +141,146 @@ public class TestRunner {
                 LOGGER.error(e);
             }
         }
+        if (config.getExpectedResults() != null) {
+            checkExpectedResults();
+        }
+    }
+
+    private void checkExpectedResults() {
+        String pathStr = config.getExpectedResults();
+        ObjectMapper mapper = new ObjectMapper();
+        Map<TestResult, Set<String>> expectedResults;
+        TypeReference<HashMap<TestResult, Set<String>>> typeRef = new TypeReference<>() {};
+        try (InputStream inputFile = Files.newInputStream(Paths.get(pathStr))) {
+            expectedResults = mapper.readValue(inputFile, typeRef);
+        } catch (IOException e) {
+            LOGGER.error(String.format("Error while parsing file %s: %s", pathStr, e));
+            throw new TestAbortedException();
+        }
+
+        Map<TestResult, Set<String>> results = AnvilContext.getInstance().getResultsTestRuns();
+        Map<String, TestResult> orderedActualResults = new HashMap<>();
+        Map<String, TestResult> orderedExpectedResults = new HashMap<>();
+        for (Map.Entry<TestResult, Set<String>> entry : results.entrySet()) {
+            for (String s : entry.getValue()) {
+                orderedActualResults.put(s, entry.getKey());
+            }
+        }
+        for (Map.Entry<TestResult, Set<String>> entry : expectedResults.entrySet()) {
+            for (String s : entry.getValue()) {
+                orderedExpectedResults.put(s, entry.getKey());
+            }
+        }
+
+        boolean fail = false;
+        StringBuilder builder = new StringBuilder();
+        builder.append("Comparing to expected results:\n");
+        builder.append(String.format(" %-20s| %-20s| %-20s\n", "Actual", "Expected", "Test"));
+        builder.append("---------------------+---------------------+---------------------\n");
+        Set<String> unionSet = new HashSet<>();
+        unionSet.addAll(orderedExpectedResults.keySet());
+        unionSet.addAll(orderedActualResults.keySet());
+        for (String testId : unionSet) {
+            if (!orderedActualResults.containsKey(testId)) {
+                builder.append(
+                        String.format(
+                                " %-20s| %-20s| %-20s\n",
+                                "missing", orderedExpectedResults.get(testId), testId));
+                fail = true;
+            } else if (!orderedExpectedResults.containsKey(testId)) {
+                if (orderedActualResults.get(testId) != TestResult.STRICTLY_SUCCEEDED
+                        && orderedActualResults.get(testId) != TestResult.CONCEPTUALLY_SUCCEEDED
+                        && orderedActualResults.get(testId) != TestResult.DISABLED) {
+                    builder.append(
+                            String.format(
+                                    " %-20s| %-20s| %-20s\n",
+                                    orderedActualResults.get(testId), "not present", testId));
+                    fail = true;
+                }
+            } else if (orderedActualResults.get(testId) != orderedExpectedResults.get(testId)) {
+                builder.append(
+                        String.format(
+                                " %-20s| %-20s| %-20s\n",
+                                orderedActualResults.get(testId),
+                                orderedExpectedResults.get(testId),
+                                testId));
+                fail = true;
+            }
+        }
+        if (fail) {
+            LOGGER.error(builder);
+        } else {
+            LOGGER.info("Results match expected results.");
+        }
+        checkExecuted = true;
+        checkPassed = !fail;
+    }
+
+    private void restrictToProfile(LauncherDiscoveryRequestBuilder builder) {
+        ProfileResolver profileResolver = new ProfileResolver(config.getProfileFolder());
+        List<String> ids = profileResolver.resolve(config.getProfiles());
+        builder.filters(
+                (PostDiscoveryFilter)
+                        descriptor -> {
+                            if (descriptor instanceof MethodBasedTestDescriptor md) {
+                                Method method = md.getTestMethod();
+                                String anvilTestId = null;
+                                if (method.isAnnotationPresent(AnvilTest.class)) {
+                                    anvilTestId = method.getAnnotation(AnvilTest.class).id();
+                                } else if (method.isAnnotationPresent(
+                                        NonCombinatorialAnvilTest.class)) {
+                                    anvilTestId =
+                                            method.getAnnotation(NonCombinatorialAnvilTest.class)
+                                                    .id();
+                                } else {
+                                    LOGGER.warn("Method {} has no ID", method);
+                                }
+                                if (anvilTestId != null) {
+                                    if (ids.contains(anvilTestId)) {
+                                        return FilterResult.included("Profile includes ID");
+                                    } else {
+                                        return FilterResult.excluded("Profile does not include ID");
+                                    }
+                                }
+                                return FilterResult.excluded("Method has no ID");
+                            }
+                            return FilterResult.included(
+                                    "Method is not instance of MethodBasedTestDescriptor");
+                        });
+    }
+
+    private void restrictToAnvilTests(LauncherDiscoveryRequestBuilder builder) {
+        builder.filters(
+                (PostDiscoveryFilter)
+                        descriptor -> {
+                            if (descriptor instanceof MethodBasedTestDescriptor md) {
+                                Method method = md.getTestMethod();
+                                if (method.isAnnotationPresent(AnvilTest.class)
+                                        || method.isAnnotationPresent(
+                                                NonCombinatorialAnvilTest.class)) {
+                                    return FilterResult.included("");
+                                } else {
+                                    return FilterResult.excluded("Method is not an AnvilTest");
+                                }
+                            } else if (descriptor instanceof ClassBasedTestDescriptor cd) {
+                                if (cd.getTestClass().isAnnotationPresent(AnvilTest.class)
+                                        || cd.getTestClass()
+                                                .isAnnotationPresent(
+                                                        NonCombinatorialAnvilTest.class)) {
+                                    return FilterResult.included("");
+                                } else {
+                                    return FilterResult.excluded("Class is not an AnvilTest");
+                                }
+                            }
+                            return FilterResult.excluded("Test is not an AnvilTest");
+                        });
+    }
+
+    public boolean isCheckExecuted() {
+        return checkExecuted;
+    }
+
+    public boolean isCheckPassed() {
+        return checkPassed;
     }
 }

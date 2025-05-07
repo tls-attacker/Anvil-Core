@@ -270,20 +270,24 @@ public class DerivationScope {
                             zipArrays(annotation.affectedIdentifiers(), annotation.methods())
                                     .forEach(
                                             entry -> {
-                                                dynamicConstraints.add(
-                                                        new ValueConstraint(
-                                                                ParameterIdentifier.fromName(
-                                                                        entry.getKey()),
-                                                                entry.getValue(),
-                                                                annotation
-                                                                                .clazz()
-                                                                                .equals(
-                                                                                        Object
-                                                                                                .class)
-                                                                        ? extensionContext
-                                                                                .getRequiredTestClass()
-                                                                        : annotation.clazz(),
-                                                                true));
+                                                ParameterIdentifier matchingIdentifier =
+                                                        ParameterIdentifier.fromName(
+                                                                entry.getKey());
+                                                if (matchingIdentifier != null) {
+                                                    dynamicConstraints.add(
+                                                            new ValueConstraint(
+                                                                    matchingIdentifier,
+                                                                    entry.getValue(),
+                                                                    annotation
+                                                                                    .clazz()
+                                                                                    .equals(
+                                                                                            Object
+                                                                                                    .class)
+                                                                            ? extensionContext
+                                                                                    .getRequiredTestClass()
+                                                                            : annotation.clazz(),
+                                                                    true));
+                                                }
                                             });
                         });
         staticConstraints.addAll(dynamicConstraints);

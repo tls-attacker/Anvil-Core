@@ -16,12 +16,14 @@ import de.rub.nds.anvilcore.teststate.AnvilTestRun;
 import de.rub.nds.anvilcore.teststate.TestResult;
 import de.rub.nds.anvilcore.teststate.reporting.AnvilReport;
 import de.rub.nds.anvilcore.util.TestIdResolver;
+import de.rub.nds.anvilcore.util.ZipUtil;
 import de.rwth.swc.coffee4j.model.Combination;
 import de.rwth.swc.coffee4j.model.TestInputGroupContext;
 import de.rwth.swc.coffee4j.model.report.ExecutionReporter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -61,12 +63,13 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         if (AnvilContext.getInstance().isAborted()) {
             return;
         }
-        AnvilTestRun testRun =
-                AnvilContext.getInstance()
-                        .getTestRun(
-                                Utils.getTemplateContainerExtensionContext(extensionContext)
-                                        .getUniqueId());
+
+        ExtensionContext resolvedContext =
+                Utils.getTemplateContainerExtensionContext(extensionContext);
+        String testId = TestIdResolver.resolveTestId(resolvedContext.getRequiredTestMethod());
+        AnvilTestRun testRun = AnvilContext.getInstance().getActiveTestRun(testId);
         AnvilTestCase testCase = AnvilTestCase.fromExtensionContext(extensionContext);
+
         if (testCase != null
                 && (testCase.getTestResult() == null
                         || testCase.getTestResult() == TestResult.NOT_SPECIFIED)) {
@@ -141,12 +144,12 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         if (AnvilContext.getInstance().isAborted()) {
             return;
         }
-        AnvilTestRun testRun =
-                AnvilContext.getInstance()
-                        .getTestRun(
-                                Utils.getTemplateContainerExtensionContext(extensionContext)
-                                        .getUniqueId());
+        ExtensionContext resolvedContext =
+                Utils.getTemplateContainerExtensionContext(extensionContext);
+        String testId = TestIdResolver.resolveTestId(resolvedContext.getRequiredTestMethod());
+        AnvilTestRun testRun = AnvilContext.getInstance().getActiveTestRun(testId);
         AnvilTestCase testCase = AnvilTestCase.fromExtensionContext(extensionContext);
+
         if (cause != null && testCase != null) {
             if (!(cause instanceof AssertionError)) {
                 LOGGER.error(
@@ -158,6 +161,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
                     || testCase.getTestResult() == TestResult.NOT_SPECIFIED) {
                 // default to failed for all AssertionErrors
                 testCase.setTestResult(TestResult.FULLY_FAILED);
+                testCase.setFailedReason(cause);
             }
             testRun.setFailedReason(retrieveThrowableReason(cause));
         }
@@ -280,10 +284,18 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
     @Override
     public void testPlanExecutionFinished(TestPlan testPlan) {
         LOGGER.trace("Execution of " + testPlan.toString() + " finished");
+        logTestPlanExecutionSummary(AnvilContext.getInstance());
         AnvilReport anvilReport = new AnvilReport(AnvilContext.getInstance(), false);
         AnvilContext.getInstance().getMapper().saveReportToPath(anvilReport);
+        AnvilContext.getInstance()
+                .getMapper()
+                .saveExtraFileToPath(AnvilContext.getInstance().getResultsTestRuns(), "result_map");
         if (AnvilContext.getInstance().getListener() != null) {
             AnvilContext.getInstance().getListener().onReportFinished(anvilReport);
+        }
+        if (AnvilContext.getInstance().getConfig().isDoZip()) {
+            ZipUtil.packFolderToZip(
+                    AnvilContext.getInstance().getConfig().getOutputFolder(), "report.zip");
         }
     }
 
@@ -361,6 +373,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             }
         }
     }
+
     /**
      * Combinatorial tests might fail before we enter the body of the test template. This is the
      * case when coffee4j fails to produce the test inputs. In this case, no container will be added
@@ -391,5 +404,67 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             thrown.printStackTrace(printWriter);
             return stringWriter.toString();
         }
+    }
+
+    /**
+     * Logs a summary of all test runs and in case of failure, the details of the failed test cases.
+     *
+     * @param context AnvilContext containing all test runs and their results
+     */
+    public synchronized void logTestPlanExecutionSummary(AnvilContext context) {
+        StringBuilder logMessage = new StringBuilder("\nTest plan execution summary:");
+        context.getResultsTestRuns().entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(TestResult.getComparator().reversed()))
+                .forEach(
+                        entry -> {
+                            TestResult testRunResult = entry.getKey();
+                            Set<String> testRunsIds = entry.getValue();
+                            logMessage.append(
+                                    String.format(
+                                            "\n\t%d test runs %s",
+                                            testRunsIds.size(), testRunResult));
+                            logMessage.append(
+                                    buildTestCaseFailureDetailsSummary(testRunResult, testRunsIds));
+                        });
+
+        LOGGER.info(logMessage.toString());
+    }
+
+    /**
+     * Builds a summary of the failure details of all failed test cases of a test run.
+     *
+     * @param testRunResult The result of the test run
+     * @param testRunsIds A collection of test runs IDs associated with the test run result
+     * @return A string containing the summary of the failure details of all failed test cases of a
+     *     test run. Returns an empty string if the test run result is not failed.
+     */
+    private String buildTestCaseFailureDetailsSummary(
+            TestResult testRunResult, Set<String> testRunsIds) {
+        StringBuilder logMessage = new StringBuilder();
+
+        if (testRunResult == TestResult.FULLY_FAILED
+                || testRunResult == TestResult.PARTIALLY_FAILED) {
+            Map<String, Long> failedTestCasesDetailsSummary =
+                    AnvilContext.getInstance().getDetailsFailedTestCases().entrySet().stream()
+                            .filter(entry -> testRunsIds.contains(entry.getKey()))
+                            .map(Map.Entry::getValue)
+                            .flatMap(Collection::stream)
+                            .collect(
+                                    Collectors.groupingBy(String::toString, Collectors.counting()));
+
+            if (!failedTestCasesDetailsSummary.isEmpty()) {
+                logMessage.append("\n\t\tDetails of failed test cases:");
+                failedTestCasesDetailsSummary.entrySet().stream()
+                        .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
+                        .forEach(
+                                entry ->
+                                        logMessage.append(
+                                                String.format(
+                                                        "\n\t\t\t%d failed with %s",
+                                                        entry.getValue(), entry.getKey())));
+            }
+        }
+
+        return logMessage.toString();
     }
 }

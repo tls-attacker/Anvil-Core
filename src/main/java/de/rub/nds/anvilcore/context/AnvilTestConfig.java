@@ -20,6 +20,9 @@ import org.apache.logging.log4j.Logger;
 public class AnvilTestConfig {
     static Logger LOGGER = LogManager.getLogger();
 
+    @Parameter(names = "-expectedResults", description = "Path to expectedResults as json")
+    private String expectedResults = null;
+
     @Parameter(names = "-profiles", description = "Which profiles should be used")
     private List<String> profiles = new ArrayList<String>();
 
@@ -102,8 +105,19 @@ public class AnvilTestConfig {
             description = "Disables the packet capturing with tcpdump")
     private boolean disableTcpDump = false;
 
+    @Parameter(names = "-zip", description = "Pack the results folder into a zip archive.")
+    private boolean doZip = false;
+
     private TestEndpointType endpointMode;
     private String generalPcapFilter = "";
+
+    public String getExpectedResults() {
+        return expectedResults;
+    }
+
+    public void setExpectedResults(String expectedResults) {
+        this.expectedResults = expectedResults;
+    }
 
     public List<String> getProfiles() {
         return profiles;
@@ -274,5 +288,13 @@ public class AnvilTestConfig {
 
     public void setGeneralPcapFilter(String generalPcapFilter) {
         this.generalPcapFilter = generalPcapFilter;
+    }
+
+    public boolean isDoZip() {
+        return doZip;
+    }
+
+    public void setDoZip(boolean doZip) {
+        this.doZip = doZip;
     }
 }

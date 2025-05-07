@@ -50,7 +50,7 @@ public class ParameterIdentifier {
         return knownIdentifiers.stream()
                 .filter(known -> known.name().equals(name))
                 .findFirst()
-                .orElseThrow();
+                .orElse(null);
     }
 
     public DerivationParameter getInstance() {
