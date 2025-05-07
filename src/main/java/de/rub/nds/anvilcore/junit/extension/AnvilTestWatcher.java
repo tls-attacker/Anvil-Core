@@ -41,8 +41,11 @@ import org.junit.platform.launcher.TestPlan;
 public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExecutionListener {
     private static final Logger LOGGER = LogManager.getLogger();
 
+    // initiated only by ExecutionReporter
     private ExtensionContext extensionContext;
-    private final Map<String, Long> elapsedTimes = new HashMap<>();
+    // for keeping time
+    private static final Map<String, Long> executionTimes = new HashMap<>();
+    private static final Map<String, Long> generationTimes = new HashMap<>();
 
     public AnvilTestWatcher() {}
 
@@ -90,9 +93,18 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             }
 
             if (testRun.isReadyForCompletion()) {
-                testRun.finish();
+                finishAndTime(testRun);
             }
         }
+    }
+
+    private void finishAndTime(AnvilTestRun testRun) {
+        Long startTime = executionTimes.get(testRun.getUniqueId());
+        if (startTime != null) {
+            long elapsedTime = System.currentTimeMillis() - startTime;
+            testRun.setExecutionTimeMillis(elapsedTime);
+        }
+        testRun.finish();
     }
 
     private void processNonCombinatorial(
@@ -119,7 +131,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             }
         }
 
-        testRun.finish();
+        finishAndTime(testRun);
     }
 
     /**
@@ -170,7 +182,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             }
 
             if (testRun.isReadyForCompletion()) {
-                testRun.finish();
+                finishAndTime(testRun);
             }
         }
     }
@@ -185,7 +197,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         if (AnvilContext.getInstance().isAborted()) {
             return;
         }
-        AnvilTestRun testRun = createAnvilTestRunForExtensionContext(extensionContext);
+        AnvilTestRun testRun = AnvilTestRun.forExtensionContext(extensionContext);
         testRun.setResultRaw(TestResult.DISABLED.getValue());
         testRun.setDisabledReason(reason.orElse("No reason specified"));
         if (!Utils.extensionContextIsBasedOnCombinatorialTesting(
@@ -197,12 +209,6 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         }
     }
 
-    private AnvilTestRun createAnvilTestRunForExtensionContext(ExtensionContext extensionContext1) {
-        AnvilTestRun testRun = new AnvilTestRun(extensionContext1);
-        AnvilContext.getInstance().addActiveTestRun(testRun);
-        return testRun;
-    }
-
     /**
      * Coffee4j generated the different TestCases for a combinatorial AnvilTest
      *
@@ -212,9 +218,17 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
     @Override
     public void testInputGroupGenerated(
             TestInputGroupContext context, List<Combination> testInputs) {
-        AnvilTestRun testRun = createAnvilTestRunForExtensionContext(extensionContext);
         LOGGER.trace(
                 "Test Inputs generated for " + extensionContext.getRequiredTestMethod().getName());
+
+        Long generationStartTime = generationTimes.get(extensionContext.getUniqueId());
+        if (generationStartTime != null) {
+            long generationTime = System.currentTimeMillis() - generationStartTime;
+            generationTimes.put(extensionContext.getUniqueId(), generationTime);
+            executionTimes.put(extensionContext.getUniqueId(), System.currentTimeMillis());
+            AnvilTestRun.forExtensionContext(extensionContext)
+                    .setGenerationTimeMillis(generationTime);
+        }
     }
 
     /**
@@ -319,7 +333,8 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             LOGGER.trace(testIdentifier.getDisplayName() + " started");
         }
         if (testIdentifier.isContainer()) {
-            elapsedTimes.put(testIdentifier.getUniqueId(), System.currentTimeMillis());
+            generationTimes.put(testIdentifier.getUniqueId(), System.currentTimeMillis());
+            executionTimes.put(testIdentifier.getUniqueId(), System.currentTimeMillis());
         }
     }
 
@@ -351,10 +366,10 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             LOGGER.trace(testIdentifier.getDisplayName() + " finished");
         }
         if (testIdentifier.isContainer()) {
-            Long startTime = elapsedTimes.get(testIdentifier.getUniqueId());
+            Long startTime = executionTimes.get(testIdentifier.getUniqueId());
             if (startTime != null) {
                 long elapsedTime = System.currentTimeMillis() - startTime;
-                elapsedTimes.put(testIdentifier.getUniqueId(), elapsedTime);
+                executionTimes.put(testIdentifier.getUniqueId(), elapsedTime);
             }
         }
     }
