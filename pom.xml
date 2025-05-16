@@ -27,6 +27,8 @@
         <skipTests>false</skipTests>
         <skip.surefire.tests>${skipTests}</skip.surefire.tests>
         <skip.failsafe.tests>${skipTests}</skip.failsafe.tests>
+        <!-- Set Coffee4J Anvil version once -->
+        <toolkit.common.coffee4j.anvil.version>2.0.1</toolkit.common.coffee4j.anvil.version>
     </properties>
 
     <dependencies>
@@ -42,14 +44,17 @@
         <dependency>
             <groupId>de.rub.nds.tls</groupId>
             <artifactId>coffee4j-anvil-engine</artifactId>
+            <version>${toolkit.common.coffee4j.anvil.version}</version>
         </dependency>
         <dependency>
             <groupId>de.rub.nds.tls</groupId>
             <artifactId>coffee4j-anvil-junit-jupiter</artifactId>
+            <version>${toolkit.common.coffee4j.anvil.version}</version>
         </dependency>
         <dependency>
             <groupId>de.rub.nds.tls</groupId>
             <artifactId>coffee4j-anvil-model</artifactId>
+            <version>${toolkit.common.coffee4j.anvil.version}</version>
         </dependency>
         <dependency>
             <groupId>jakarta.xml.bind</groupId>
