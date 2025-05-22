@@ -10,8 +10,6 @@ package de.rub.nds.anvilcore.execution;
 
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPackage;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.rub.nds.anvilcore.annotation.AnvilTest;
 import de.rub.nds.anvilcore.annotation.NonCombinatorialAnvilTest;
 import de.rub.nds.anvilcore.context.AnvilContext;
@@ -21,11 +19,7 @@ import de.rub.nds.anvilcore.junit.extension.AnvilTestWatcher;
 import de.rub.nds.anvilcore.model.ParameterIdentifierProvider;
 import de.rub.nds.anvilcore.teststate.TestResult;
 import de.rub.nds.anvilcore.teststate.reporting.PcapCapturer;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,7 +32,6 @@ import org.junit.platform.launcher.*;
 import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
-import org.opentest4j.TestAbortedException;
 
 /**
  * The TestRunner is used to start the testing phase. It is the entrypoint for anvil implementations
@@ -77,6 +70,11 @@ public class TestRunner {
      * parameter in the AnvilConfig.
      */
     public void runTests() {
+
+        if (config.getExpectedResults() != null) {
+            config.parseExpectedResults();
+        }
+
         LauncherDiscoveryRequestBuilder builder =
                 LauncherDiscoveryRequestBuilder.request()
                         .selectors(selectPackage(config.getTestPackage()))
@@ -141,22 +139,12 @@ public class TestRunner {
                 LOGGER.error(e);
             }
         }
-        if (config.getExpectedResults() != null) {
+        if (config.getExpectedResultsMap() != null) {
             checkExpectedResults();
         }
     }
 
     private void checkExpectedResults() {
-        String pathStr = config.getExpectedResults();
-        ObjectMapper mapper = new ObjectMapper();
-        Map<TestResult, Set<String>> expectedResults;
-        TypeReference<HashMap<TestResult, Set<String>>> typeRef = new TypeReference<>() {};
-        try (InputStream inputFile = Files.newInputStream(Paths.get(pathStr))) {
-            expectedResults = mapper.readValue(inputFile, typeRef);
-        } catch (IOException e) {
-            LOGGER.error(String.format("Error while parsing file %s: %s", pathStr, e));
-            throw new TestAbortedException();
-        }
 
         Map<TestResult, Set<String>> results = AnvilContext.getInstance().getResultsTestRuns();
         Map<String, TestResult> orderedActualResults = new HashMap<>();
@@ -166,7 +154,7 @@ public class TestRunner {
                 orderedActualResults.put(s, entry.getKey());
             }
         }
-        for (Map.Entry<TestResult, Set<String>> entry : expectedResults.entrySet()) {
+        for (Map.Entry<TestResult, Set<String>> entry : config.getExpectedResultsMap().entrySet()) {
             for (String s : entry.getValue()) {
                 orderedExpectedResults.put(s, entry.getKey());
             }

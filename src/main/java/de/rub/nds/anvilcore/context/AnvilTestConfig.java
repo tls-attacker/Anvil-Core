@@ -9,11 +9,18 @@
 package de.rub.nds.anvilcore.context;
 
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.rub.nds.anvilcore.constants.TestEndpointType;
-import java.util.ArrayList;
-import java.util.List;
+import de.rub.nds.anvilcore.teststate.TestResult;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -22,6 +29,8 @@ public class AnvilTestConfig {
 
     @Parameter(names = "-expectedResults", description = "Path to expectedResults as json")
     private String expectedResults = null;
+
+    @JsonIgnore private Map<TestResult, Set<String>> expectedResultsMap = null;
 
     @Parameter(names = "-profiles", description = "Which profiles should be used")
     private List<String> profiles = new ArrayList<String>();
@@ -58,7 +67,7 @@ public class AnvilTestConfig {
     @Parameter(
             names = "-parallelTests",
             description =
-                    "How many test templates should be executed in parallel? (Default value: parallelHandshakes * 1.5)")
+                    "How many test templates should be executed in parallel? (Default value: parallelTestCases * 1.5)")
     private Integer parallelTests = null;
 
     @Parameter(
@@ -115,8 +124,27 @@ public class AnvilTestConfig {
         return expectedResults;
     }
 
-    public void setExpectedResults(String expectedResults) {
-        this.expectedResults = expectedResults;
+    public Map<TestResult, Set<String>> getExpectedResultsMap() {
+        return expectedResultsMap;
+    }
+
+    public void setExpectedResultsMap(Map<TestResult, Set<String>> expectedResultsMap) {
+        this.expectedResultsMap = expectedResultsMap;
+    }
+
+    public void setExpectedResults(String expectedResultsPath) {
+        this.expectedResults = expectedResultsPath;
+    }
+
+    public void parseExpectedResults() {
+        ObjectMapper mapper = new ObjectMapper();
+        TypeReference<HashMap<TestResult, Set<String>>> typeRef = new TypeReference<>() {};
+        try (InputStream inputFile = Files.newInputStream(Paths.get(this.expectedResults))) {
+            this.expectedResultsMap = mapper.readValue(inputFile, typeRef);
+        } catch (IOException e) {
+            LOGGER.error("Error while parsing file {}: {}", this.expectedResults, e);
+            throw new ParameterException("Can not read expected results file.");
+        }
     }
 
     public List<String> getProfiles() {
