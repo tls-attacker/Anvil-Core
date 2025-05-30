@@ -20,10 +20,9 @@ import de.rub.nds.anvilcore.util.ZipUtil;
 import de.rwth.swc.coffee4j.model.Combination;
 import de.rwth.swc.coffee4j.model.TestInputGroupContext;
 import de.rwth.swc.coffee4j.model.report.ExecutionReporter;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -163,7 +162,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
                 testCase.setTestResult(TestResult.FULLY_FAILED);
                 testCase.setFailedReason(cause);
             }
-            testRun.setFailedReason(retrieveThrowableReason(cause));
+            testRun.setFailedReason(testCase.getStacktrace());
         }
 
         if (!Utils.extensionContextIsBasedOnCombinatorialTesting(
@@ -388,22 +387,11 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         AnvilTestRun testRun = AnvilTestRun.forFailedInitialization(testIdentifier);
         AnvilContext.getInstance().addActiveTestRun(testRun);
         testRun.setResultRaw(TestResult.TEST_SUITE_ERROR.getValue());
-        testRun.setFailedReason(retrieveThrowableReason(testExecutionResult.getThrowable().get()));
+        testRun.setFailedReason(
+                ExceptionUtils.getStackTrace(testExecutionResult.getThrowable().get()));
         // Finalize artificial result immediately
         testRun.setReadyForCompletion(true);
         testRun.finish();
-    }
-
-    private String retrieveThrowableReason(Throwable thrown) {
-        if (thrown instanceof AssertionError) {
-            return thrown.toString();
-        } else {
-            // add extensive stack trace for all unexpected cases
-            StringWriter stringWriter = new StringWriter();
-            PrintWriter printWriter = new PrintWriter(stringWriter);
-            thrown.printStackTrace(printWriter);
-            return stringWriter.toString();
-        }
     }
 
     /**

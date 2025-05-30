@@ -99,8 +99,12 @@ public class AnvilTestCase {
 
     @JsonProperty("Stacktrace")
     public String getStacktrace() {
-        if (getFailedReason() != null) {
-            return ExceptionUtils.getStackTrace(getFailedReason().getCause());
+        if (failedReason != null) {
+            if (failedReason instanceof AssertionError) {
+                return failedReason.toString();
+            } else {
+                return ExceptionUtils.getStackTrace(failedReason);
+            }
         }
         return null;
     }
