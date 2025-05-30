@@ -121,6 +121,7 @@ public class AnvilTestRun {
     }
 
     @JsonUnwrapped
+    @JsonProperty("MetaData")
     private Map<?, ?> getMetadata() {
         return AnvilContext.getInstance().getMetadataFetcher().getRawMetadata(testId);
     }
