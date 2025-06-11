@@ -179,7 +179,13 @@ public class ParameterCombination {
     public Map<String, Object> jsonObject() {
         Map<String, Object> res = new HashMap<>();
         for (DerivationParameter i : getParameterValues()) {
-            res.put(i.getParameterIdentifier().name(), i.getSelectedValue());
+            if (i.getSelectedValue() instanceof byte[]) {
+                res.put(
+                        i.getParameterIdentifier().name(),
+                        HexFormat.ofDelimiter(" ").formatHex((byte[]) i.getSelectedValue()));
+            } else {
+                res.put(i.getParameterIdentifier().name(), i.getSelectedValue());
+            }
         }
         return res;
     }
