@@ -9,9 +9,11 @@
 package de.rub.nds.anvilcore.junit.extension;
 
 import de.rub.nds.anvilcore.model.DerivationScope;
+import de.rub.nds.anvilcore.model.IpmProvider;
 import de.rub.nds.anvilcore.model.constraint.ValueConstraint;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
+import java.util.List;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -27,10 +29,14 @@ public class ValueConstraintsConditionExtension extends SingleCheckCondition {
         } else {
             DerivationScope derivationScope =
                     DerivationScope.fromExtensionContext(extensionContext);
+            List<ParameterIdentifier> modeledIdentifiers =
+                    IpmProvider.getParameterIdentifiersForScope(derivationScope);
             for (ValueConstraint valueConstraint : derivationScope.getValueConstraints()) {
                 DerivationParameter derivationParameter =
                         valueConstraint.getAffectedParameter().getInstance();
-                if (derivationParameter.hasNoApplicableValues(derivationScope)) {
+                if (derivationParameter.hasNoApplicableValues(derivationScope)
+                        && modeledIdentifiers.contains(
+                                derivationParameter.getParameterIdentifier())) {
                     return ConditionEvaluationResult.disabled(
                             DISABLED_REASON + derivationParameter.getParameterIdentifier());
                 }
@@ -38,7 +44,9 @@ public class ValueConstraintsConditionExtension extends SingleCheckCondition {
             for (ParameterIdentifier explicitParameterIdentifier :
                     derivationScope.getExplicitValues().keySet()) {
                 DerivationParameter derivationParameter = explicitParameterIdentifier.getInstance();
-                if (derivationParameter.hasNoApplicableValues(derivationScope)) {
+                if (derivationParameter.hasNoApplicableValues(derivationScope)
+                        && modeledIdentifiers.contains(
+                                derivationParameter.getParameterIdentifier())) {
                     return ConditionEvaluationResult.disabled(
                             DISABLED_REASON + explicitParameterIdentifier);
                 }
