@@ -79,6 +79,7 @@ public class TestRunner {
                 LauncherDiscoveryRequestBuilder.request()
                         .selectors(selectPackage(config.getTestPackage()))
                         // https://junit.org/junit5/docs/current/user-guide/#writing-tests-parallel-execution
+                        .configurationParameter("junit.jupiter.execution.parallel.enabled", "true")
                         .configurationParameter(
                                 "junit.jupiter.execution.parallel.mode.default", "same_thread")
                         .configurationParameter(
