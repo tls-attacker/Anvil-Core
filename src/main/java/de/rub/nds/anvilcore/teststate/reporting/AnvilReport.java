@@ -32,6 +32,9 @@ public class AnvilReport {
     @JsonProperty("Identifier")
     private String identifier;
 
+    @JsonProperty("Strength")
+    private int strength;
+
     @JsonProperty("Date")
     private Date date;
 
@@ -119,6 +122,7 @@ public class AnvilReport {
         this.finishedTests = context.getTestRunsDone();
         this.testCaseCount = context.getTestCases();
         this.scoreContainer = context.getOverallScoreContainer();
+        this.strength = context.getConfig().getStrength();
         this.configString = context.getConfigString();
         try {
             this.anvilConfigString = new ObjectMapper().writeValueAsString(context.getConfig());
