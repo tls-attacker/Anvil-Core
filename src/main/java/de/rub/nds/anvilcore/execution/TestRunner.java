@@ -75,6 +75,14 @@ public class TestRunner {
             config.parseExpectedResults();
         }
 
+        if (System.getProperty("os.name").toLowerCase().contains("win")
+                && config.getNetworkInterface().equals("any")) {
+            LOGGER.warn(
+                    "To capture traffic on windows, the network interface has to be explicitly set. "
+                            + "Use the -networkInterface flag. Disabling network traffic capture for now.");
+            config.setDisableTcpDump(true);
+        }
+
         LauncherDiscoveryRequestBuilder builder =
                 LauncherDiscoveryRequestBuilder.request()
                         .selectors(selectPackage(config.getTestPackage()))
