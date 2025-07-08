@@ -17,6 +17,7 @@ import de.rub.nds.anvilcore.teststate.TestResult;
 import de.rub.nds.anvilcore.teststate.reporting.AnvilReport;
 import de.rub.nds.anvilcore.util.TestIdResolver;
 import de.rub.nds.anvilcore.util.ZipUtil;
+import de.rub.nds.terminalutils.ProgressSpinner;
 import de.rwth.swc.coffee4j.model.Combination;
 import de.rwth.swc.coffee4j.model.TestInputGroupContext;
 import de.rwth.swc.coffee4j.model.report.ExecutionReporter;
@@ -103,6 +104,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             long elapsedTime = System.currentTimeMillis() - startTime;
             testRun.setExecutionTimeMillis(elapsedTime);
         }
+        ProgressSpinner.stopSpinnerTask(testRun.getTestId());
         testRun.finish();
     }
 
@@ -271,6 +273,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         AnvilReport anvilReport = new AnvilReport(AnvilContext.getInstance(), true);
         AnvilContext.getInstance().getMapper().saveReportToPath(anvilReport);
         LOGGER.trace("Started execution of " + testPlan.toString());
+        ProgressSpinner.startSpinnerTask("Executing:");
         if (AnvilContext.getInstance().getListener() != null) {
             AnvilContext.getInstance().getListener().onStarted();
         }
@@ -284,6 +287,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
     @Override
     public void testPlanExecutionFinished(TestPlan testPlan) {
         LOGGER.trace("Execution of " + testPlan.toString() + " finished");
+        ProgressSpinner.stopSpinner();
         logTestPlanExecutionSummary(AnvilContext.getInstance());
         AnvilReport anvilReport = new AnvilReport(AnvilContext.getInstance(), false);
         AnvilContext.getInstance().getMapper().saveReportToPath(anvilReport);
@@ -335,6 +339,9 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         if (testIdentifier.isContainer()) {
             generationTimes.put(testIdentifier.getUniqueId(), System.currentTimeMillis());
             executionTimes.put(testIdentifier.getUniqueId(), System.currentTimeMillis());
+            ProgressSpinner.startSpinnerTask(
+                    TestIdResolver.resolveTestId(
+                            ((MethodSource) testIdentifier.getSource().get()).getJavaMethod()));
         }
     }
 
@@ -371,6 +378,9 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
                 long elapsedTime = System.currentTimeMillis() - startTime;
                 executionTimes.put(testIdentifier.getUniqueId(), elapsedTime);
             }
+            ProgressSpinner.stopSpinnerTask(
+                    TestIdResolver.resolveTestId(
+                            ((MethodSource) testIdentifier.getSource().get()).getJavaMethod()));
         }
     }
 
