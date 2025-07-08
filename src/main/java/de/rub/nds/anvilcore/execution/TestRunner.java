@@ -51,8 +51,6 @@ public class TestRunner {
             AnvilTestConfig config, String configString, ParameterIdentifierProvider provider) {
         this.config = config;
         this.context = AnvilContext.createInstance(config, configString, provider);
-
-        this.config.restrictParallelization();
     }
 
     public void setListener(AnvilListener listener) {
@@ -81,6 +79,10 @@ public class TestRunner {
                     "To capture traffic on windows, the network interface has to be explicitly set. "
                             + "Use the -networkInterface flag. Disabling network traffic capture for now.");
             config.setDisableTcpDump(true);
+        }
+
+        if (config.getParallelTests() == null) {
+            config.setParallelTests(1);
         }
 
         LauncherDiscoveryRequestBuilder builder =

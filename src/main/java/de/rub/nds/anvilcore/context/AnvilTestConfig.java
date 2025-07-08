@@ -60,14 +60,8 @@ public class AnvilTestConfig {
     private String outputFolder = "";
 
     @Parameter(
-            names = "-parallelTestCases",
-            description = "How many test cases should be executed in parallel?")
-    private int parallelTestCases = 5;
-
-    @Parameter(
             names = "-parallelTests",
-            description =
-                    "How many test templates should be executed in parallel? (Default value: parallelTestCases * 1.5)")
+            description = "How many test templates should be executed in parallel?")
     private Integer parallelTests = null;
 
     @Parameter(
@@ -203,14 +197,6 @@ public class AnvilTestConfig {
         this.outputFolder = outputFolder;
     }
 
-    public int getParallelTestCases() {
-        return parallelTestCases;
-    }
-
-    public void setParallelTestCases(int parallelTestCases) {
-        this.parallelTestCases = parallelTestCases;
-    }
-
     public Integer getParallelTests() {
         return parallelTests;
     }
@@ -281,13 +267,6 @@ public class AnvilTestConfig {
 
     public void setDisableTcpDump(boolean disableTcpDump) {
         this.disableTcpDump = disableTcpDump;
-    }
-
-    public void restrictParallelization() {
-        parallelTestCases = Math.min(parallelTestCases, Runtime.getRuntime().availableProcessors());
-        if (parallelTests == null) {
-            parallelTests = (int) Math.ceil(parallelTestCases * 1.5);
-        }
     }
 
     public String toString() {
