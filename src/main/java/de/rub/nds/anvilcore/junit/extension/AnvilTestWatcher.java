@@ -339,9 +339,12 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         if (testIdentifier.isContainer()) {
             generationTimes.put(testIdentifier.getUniqueId(), System.currentTimeMillis());
             executionTimes.put(testIdentifier.getUniqueId(), System.currentTimeMillis());
-            ProgressSpinner.startSpinnerTask(
-                    TestIdResolver.resolveTestId(
-                            ((MethodSource) testIdentifier.getSource().get()).getJavaMethod()));
+            if (testIdentifier.getSource().isPresent()
+                    && testIdentifier.getSource().get() instanceof MethodSource) {
+                ProgressSpinner.startSpinnerTask(
+                        TestIdResolver.resolveTestId(
+                                ((MethodSource) testIdentifier.getSource().get()).getJavaMethod()));
+            }
         }
     }
 
@@ -378,9 +381,12 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
                 long elapsedTime = System.currentTimeMillis() - startTime;
                 executionTimes.put(testIdentifier.getUniqueId(), elapsedTime);
             }
-            ProgressSpinner.stopSpinnerTask(
-                    TestIdResolver.resolveTestId(
-                            ((MethodSource) testIdentifier.getSource().get()).getJavaMethod()));
+            if (testIdentifier.getSource().isPresent()
+                    && testIdentifier.getSource().get() instanceof MethodSource) {
+                ProgressSpinner.stopSpinnerTask(
+                        TestIdResolver.resolveTestId(
+                                ((MethodSource) testIdentifier.getSource().get()).getJavaMethod()));
+            }
         }
     }
 
