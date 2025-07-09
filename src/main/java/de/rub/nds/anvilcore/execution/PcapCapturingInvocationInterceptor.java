@@ -9,6 +9,7 @@
 package de.rub.nds.anvilcore.execution;
 
 import de.rub.nds.anvilcore.context.AnvilContext;
+import de.rub.nds.anvilcore.context.AnvilContextRegistry;
 import de.rub.nds.anvilcore.teststate.AnvilTestCase;
 import de.rub.nds.anvilcore.teststate.reporting.PcapCapturer;
 import java.io.IOException;
@@ -31,7 +32,8 @@ public class PcapCapturingInvocationInterceptor implements InvocationInterceptor
             final ExtensionContext extensionContext)
             throws Throwable {
 
-        if (AnvilContext.getInstance().getConfig().isDisableTcpDump()) {
+        AnvilContext context = AnvilContextRegistry.byExtensionContext(extensionContext);
+        if (context == null || context.getConfig().isDisableTcpDump()) {
             invocation.proceed();
             return;
         }

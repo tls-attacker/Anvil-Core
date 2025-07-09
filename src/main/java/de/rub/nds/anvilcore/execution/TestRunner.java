@@ -13,6 +13,7 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPacka
 import de.rub.nds.anvilcore.annotation.AnvilTest;
 import de.rub.nds.anvilcore.annotation.NonCombinatorialAnvilTest;
 import de.rub.nds.anvilcore.context.AnvilContext;
+import de.rub.nds.anvilcore.context.AnvilContextRegistry;
 import de.rub.nds.anvilcore.context.AnvilTestConfig;
 import de.rub.nds.anvilcore.context.ProfileResolver;
 import de.rub.nds.anvilcore.junit.extension.AnvilTestWatcher;
@@ -40,17 +41,20 @@ import org.junit.platform.launcher.core.LauncherFactory;
  * as a callback before or after test execution.
  */
 public class TestRunner {
+    public static final String CONTEXT_ID_PROPERTY = "anvil.context.id";
     private static final Logger LOGGER = LogManager.getLogger();
 
     private final AnvilTestConfig config;
     private final AnvilContext context;
+    private final String contextId;
     private boolean checkExecuted = false;
     private boolean checkPassed = false;
 
     public TestRunner(
             AnvilTestConfig config, String configString, ParameterIdentifierProvider provider) {
         this.config = config;
-        this.context = AnvilContext.createInstance(config, configString, provider);
+        this.contextId = AnvilContextRegistry.createContext(config, configString, provider);
+        this.context = AnvilContextRegistry.getContext(contextId);
 
         this.config.restrictParallelization();
     }
@@ -88,7 +92,8 @@ public class TestRunner {
                                 "junit.jupiter.execution.parallel.config.strategy", "fixed")
                         .configurationParameter(
                                 "junit.jupiter.execution.parallel.config.fixed.parallelism",
-                                String.valueOf(config.getParallelTests()));
+                                String.valueOf(config.getParallelTests()))
+                        .configurationParameter(CONTEXT_ID_PROPERTY, contextId);
 
         if (!config.getTags().isEmpty()) {
             builder.filters(TagFilter.includeTags(config.getTags()));
@@ -98,7 +103,7 @@ public class TestRunner {
         }
         restrictToAnvilTests(builder);
         LauncherDiscoveryRequest request = builder.build();
-        AnvilTestWatcher anvilTestWatcher = new AnvilTestWatcher();
+        AnvilTestWatcher anvilTestWatcher = new AnvilTestWatcher(contextId);
 
         Launcher launcher =
                 LauncherFactory.create(
@@ -146,7 +151,8 @@ public class TestRunner {
 
     private void checkExpectedResults() {
 
-        Map<TestResult, Set<String>> results = AnvilContext.getInstance().getResultsTestRuns();
+        Map<TestResult, Set<String>> results =
+                AnvilContextRegistry.getContext(contextId).getResultsTestRuns();
         Map<String, TestResult> orderedActualResults = new HashMap<>();
         Map<String, TestResult> orderedExpectedResults = new HashMap<>();
         for (Map.Entry<TestResult, Set<String>> entry : results.entrySet()) {
@@ -270,5 +276,9 @@ public class TestRunner {
 
     public boolean isCheckPassed() {
         return checkPassed;
+    }
+
+    public String getContextId() {
+        return contextId;
     }
 }

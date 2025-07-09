@@ -8,7 +8,7 @@
  */
 package de.rub.nds.anvilcore.teststate.reporting;
 
-import de.rub.nds.anvilcore.context.AnvilContext;
+import de.rub.nds.anvilcore.context.AnvilContextRegistry;
 import de.rub.nds.anvilcore.teststate.AnvilTestCase;
 import java.io.EOFException;
 import java.io.IOException;
@@ -67,7 +67,10 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
         this.tmpFilepath = getTemporaryFilePath();
 
         this.pcapDumper = this.pcapHandle.dumpOpen(tmpFilepath);
-        String filter = AnvilContext.getInstance().getConfig().getGeneralPcapFilter();
+        String filter =
+                AnvilContextRegistry.byExtensionContext(testCase.getExtensionContext())
+                        .getConfig()
+                        .getGeneralPcapFilter();
         if (filter != null && !filter.isEmpty()) {
             this.pcapHandle.setFilter(filter, BpfCompileMode.OPTIMIZE);
         }
@@ -82,7 +85,9 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
 
         Path folderPath =
                 Paths.get(
-                        AnvilContext.getInstance().getConfig().getOutputFolder(),
+                        AnvilContextRegistry.byExtensionContext(testCase.getExtensionContext())
+                                .getConfig()
+                                .getOutputFolder(),
                         "results",
                         testId);
         Files.createDirectories(folderPath);
@@ -90,7 +95,10 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
     }
 
     private PcapNetworkInterface getNetworkInterface() {
-        String interfaceName = AnvilContext.getInstance().getConfig().getNetworkInterface();
+        String interfaceName =
+                AnvilContextRegistry.byExtensionContext(testCase.getExtensionContext())
+                        .getConfig()
+                        .getNetworkInterface();
         if (System.getProperty("os.name").toLowerCase().contains("win")
                 && interfaceName.equals("any")) {
             LOGGER.error(
@@ -214,10 +222,13 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
             LOGGER.error("Error deleting temporary pcap dump file: ", e);
         }
 
-        if (AnvilContext.getInstance().getListener() != null) {
+        if (AnvilContextRegistry.byExtensionContext(testCase.getExtensionContext()).getListener()
+                != null) {
             try {
                 byte[] pcapBytes = Files.readAllBytes(finalPcapPath);
-                AnvilContext.getInstance().getListener().onPcapCaptured(testCase, pcapBytes);
+                AnvilContextRegistry.byExtensionContext(testCase.getExtensionContext())
+                        .getListener()
+                        .onPcapCaptured(testCase, pcapBytes);
             } catch (IOException e) {
                 LOGGER.error("Cannot read pcap file.", e);
             }

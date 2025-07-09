@@ -9,6 +9,7 @@
 package de.rub.nds.anvilcore.coffee4j.junit;
 
 import de.rub.nds.anvilcore.context.AnvilContext;
+import de.rub.nds.anvilcore.context.AnvilContextRegistry;
 import de.rub.nds.anvilcore.junit.Utils;
 import de.rub.nds.anvilcore.util.TestIdResolver;
 import de.rwth.swc.coffee4j.model.Combination;
@@ -49,7 +50,8 @@ class TestInputIterator implements Iterator<Combination> {
                 Utils.getTemplateContainerExtensionContext(extensionContext);
         String testId = TestIdResolver.resolveTestId(resolvedContext.getRequiredTestMethod());
 
-        while (!AnvilContext.getInstance().testRunIsFinished(testId)) {
+        AnvilContext context = AnvilContextRegistry.byExtensionContext(extensionContext);
+        while (context != null && !context.testRunIsFinished(testId)) {
             try {
                 Combination nextTestInput = testInputQueue.poll(3, TimeUnit.SECONDS);
                 if (nextTestInput != null) {

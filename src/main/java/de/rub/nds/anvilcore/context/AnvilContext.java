@@ -26,12 +26,11 @@ import org.apache.logging.log4j.Logger;
 public class AnvilContext {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private static AnvilContext instance;
-
     private final AnvilTestConfig config;
     private final String configString;
     private final AnvilJsonMapper mapper;
-    private final MetadataFetcher metadataFetcher;
+    private static final MetadataFetcher metadataFetcher = new MetadataFetcher();
+    ;
     private AnvilListener listener;
 
     private final ParameterIdentifierProvider parameterIdentifierProvider;
@@ -71,24 +70,12 @@ public class AnvilContext {
 
     private boolean aborted = false;
 
-    public static synchronized AnvilContext getInstance() {
-        return instance;
-    }
-
-    public static AnvilContext createInstance(
-            AnvilTestConfig config, String configString, ParameterIdentifierProvider provider) {
-        AnvilContext newContext = new AnvilContext(config, configString, provider);
-        instance = newContext;
-        return newContext;
-    }
-
-    private AnvilContext(
+    AnvilContext(
             AnvilTestConfig config, String configString, ParameterIdentifierProvider provider) {
         this.parameterIdentifierProvider = provider;
         this.config = config;
         this.configString = configString;
         this.mapper = new AnvilJsonMapper(config);
-        this.metadataFetcher = new MetadataFetcher();
     }
 
     public void abortRemainingTests() {
@@ -230,7 +217,7 @@ public class AnvilContext {
         return mapper;
     }
 
-    public MetadataFetcher getMetadataFetcher() {
+    public static MetadataFetcher getMetadataFetcher() {
         return metadataFetcher;
     }
 

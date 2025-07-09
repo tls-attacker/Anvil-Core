@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import de.rub.nds.anvilcore.context.AnvilContext;
+import de.rub.nds.anvilcore.context.AnvilContextRegistry;
 import de.rub.nds.anvilcore.junit.Utils;
 import de.rub.nds.anvilcore.model.ParameterCombination;
 import de.rub.nds.anvilcore.teststate.reporting.MetadataFetcher;
@@ -28,6 +29,8 @@ import org.junit.platform.launcher.TestIdentifier;
 
 public class AnvilTestRun {
     private static final Logger LOGGER = LogManager.getLogger();
+
+    private ExtensionContext extensionContext;
 
     // set when the last finished has been reported by junit
     @JsonIgnore private boolean finished = false;
@@ -123,7 +126,7 @@ public class AnvilTestRun {
     @JsonUnwrapped
     @JsonProperty("MetaData")
     private Map<?, ?> getMetadata() {
-        return AnvilContext.getInstance().getMetadataFetcher().getRawMetadata(testId);
+        return AnvilContext.getMetadataFetcher().getRawMetadata(testId);
     }
 
     private Map<TestResult, List<AnvilTestCase>> groupTestCasesByResult() {
@@ -237,7 +240,7 @@ public class AnvilTestRun {
     }
 
     private void logTestRun() {
-        MetadataFetcher metadataFetcher = AnvilContext.getInstance().getMetadataFetcher();
+        MetadataFetcher metadataFetcher = AnvilContext.getMetadataFetcher();
         StringBuilder logMessage = new StringBuilder();
 
         String testName = getName() != null ? getName() : "undefined";
@@ -283,6 +286,7 @@ public class AnvilTestRun {
     }
 
     public AnvilTestRun(ExtensionContext extensionContext) {
+        this.extensionContext = extensionContext;
         this.uniqueId = extensionContext.getUniqueId();
         this.testClass =
                 Utils.getTemplateContainerExtensionContext(extensionContext).getRequiredTestClass();
@@ -326,13 +330,13 @@ public class AnvilTestRun {
         ExtensionContext resolvedContext =
                 Utils.getTemplateContainerExtensionContext(extensionContext);
         String testId = TestIdResolver.resolveTestId(resolvedContext.getRequiredTestMethod());
-
-        if (AnvilContext.getInstance().getActiveTestRun(testId) != null) {
-            return AnvilContext.getInstance().getActiveTestRun(testId);
+        AnvilContext anvilContext = AnvilContextRegistry.byExtensionContext(extensionContext);
+        if (anvilContext.getActiveTestRun(testId) != null) {
+            return anvilContext.getActiveTestRun(testId);
         }
 
         AnvilTestRun container = new AnvilTestRun(resolvedContext);
-        AnvilContext.getInstance().addActiveTestRun(container);
+        anvilContext.addActiveTestRun(container);
         return container;
     }
 
@@ -348,9 +352,10 @@ public class AnvilTestRun {
             result = resolveFinalResult();
         }
         scoreContainer.updateForResult(result);
-        AnvilContext.getInstance().addTestRunResult(result, this);
-        AnvilContext.getInstance().getMapper().saveTestRunToPath(this);
-        AnvilContext.getInstance().testRunFinished(this);
+        AnvilContext anvilContext = AnvilContextRegistry.byExtensionContext(extensionContext);
+        anvilContext.addTestRunResult(result, this);
+        anvilContext.getMapper().saveTestRunToPath(this);
+        anvilContext.testRunFinished(this);
 
         // log test run summary
         switch (result) {

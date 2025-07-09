@@ -79,8 +79,9 @@ public class MethodConditionExtension extends SingleCheckCondition {
                 return clazz.getDeclaredMethod(method);
             }
         } catch (Exception e) {
-            LOGGER.error("Method declared in MethodCondition annotation not found");
-            throw new RuntimeException("Method declared in MethodCondition annotation not found");
+            LOGGER.error("Method '{}' declared in MethodCondition annotation not found", method);
+            throw new RuntimeException(
+                    "Method '" + method + "' declared in MethodCondition annotation not found");
         }
     }
 
