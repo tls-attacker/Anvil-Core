@@ -18,6 +18,7 @@ import de.rub.nds.anvilcore.teststate.TestResult;
 import de.rub.nds.anvilcore.teststate.reporting.AnvilReport;
 import de.rub.nds.anvilcore.util.TestIdResolver;
 import de.rub.nds.anvilcore.util.ZipUtil;
+import de.rub.nds.terminalutils.ProgressSpinner;
 import de.rwth.swc.coffee4j.model.Combination;
 import de.rwth.swc.coffee4j.model.TestInputGroupContext;
 import de.rwth.swc.coffee4j.model.report.ExecutionReporter;
@@ -114,6 +115,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             long elapsedTime = System.currentTimeMillis() - startTime;
             testRun.setExecutionTimeMillis(elapsedTime);
         }
+        ProgressSpinner.stopSpinnerTask(testRun.getTestId());
         testRun.finish();
     }
 
@@ -168,6 +170,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
                         extensionContext.getDisplayName(),
                         cause);
                 testCase.setTestResult(TestResult.TEST_SUITE_ERROR);
+                testCase.setFailedReason(cause);
             } else if (testCase.getTestResult() == null
                     || testCase.getTestResult() == TestResult.NOT_SPECIFIED) {
                 // default to failed for all AssertionErrors
@@ -282,6 +285,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         AnvilReport anvilReport = new AnvilReport(context, true);
         context.getMapper().saveReportToPath(anvilReport);
         LOGGER.trace("Started execution of " + testPlan.toString());
+        ProgressSpinner.startSpinnerTask("Executing:");
         if (context.getListener() != null) {
             context.getListener().onStarted();
         }
@@ -301,6 +305,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
     public void testPlanExecutionFinished(TestPlan testPlan) {
         AnvilContext context = resolveAnvilContext(testPlan);
         LOGGER.trace("Execution of " + testPlan.toString() + " finished");
+        ProgressSpinner.stopSpinner();
         logTestPlanExecutionSummary(context);
         AnvilReport anvilReport = new AnvilReport(context, false);
         context.getMapper().saveReportToPath(anvilReport);
@@ -349,6 +354,12 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
         if (testIdentifier.isContainer()) {
             generationTimes.put(testIdentifier.getUniqueId(), System.currentTimeMillis());
             executionTimes.put(testIdentifier.getUniqueId(), System.currentTimeMillis());
+            if (testIdentifier.getSource().isPresent()
+                    && testIdentifier.getSource().get() instanceof MethodSource) {
+                ProgressSpinner.startSpinnerTask(
+                        TestIdResolver.resolveTestId(
+                                ((MethodSource) testIdentifier.getSource().get()).getJavaMethod()));
+            }
         }
     }
 
@@ -384,6 +395,12 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             if (startTime != null) {
                 long elapsedTime = System.currentTimeMillis() - startTime;
                 executionTimes.put(testIdentifier.getUniqueId(), elapsedTime);
+            }
+            if (testIdentifier.getSource().isPresent()
+                    && testIdentifier.getSource().get() instanceof MethodSource) {
+                ProgressSpinner.stopSpinnerTask(
+                        TestIdResolver.resolveTestId(
+                                ((MethodSource) testIdentifier.getSource().get()).getJavaMethod()));
             }
         }
     }

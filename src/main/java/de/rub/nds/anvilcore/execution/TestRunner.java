@@ -55,7 +55,6 @@ public class TestRunner {
         this.config = config;
         this.contextId = AnvilContextRegistry.createContext(config, configString, provider);
         this.context = AnvilContextRegistry.getContext(contextId);
-
         this.config.restrictParallelization();
     }
 
@@ -79,10 +78,23 @@ public class TestRunner {
             config.parseExpectedResults();
         }
 
+        if (System.getProperty("os.name").toLowerCase().contains("win")
+                && config.getNetworkInterface().equals("any")) {
+            LOGGER.warn(
+                    "To capture traffic on windows, the network interface has to be explicitly set. "
+                            + "Use the -networkInterface flag. Disabling network traffic capture for now.");
+            config.setDisableTcpDump(true);
+        }
+
+        if (config.getParallelTests() == null) {
+            config.setParallelTests(1);
+        }
+
         LauncherDiscoveryRequestBuilder builder =
                 LauncherDiscoveryRequestBuilder.request()
                         .selectors(selectPackage(config.getTestPackage()))
                         // https://junit.org/junit5/docs/current/user-guide/#writing-tests-parallel-execution
+                        .configurationParameter("junit.jupiter.execution.parallel.enabled", "true")
                         .configurationParameter(
                                 "junit.jupiter.execution.parallel.mode.default", "same_thread")
                         .configurationParameter(
