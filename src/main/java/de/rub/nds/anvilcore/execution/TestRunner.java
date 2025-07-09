@@ -55,7 +55,6 @@ public class TestRunner {
         this.config = config;
         this.contextId = AnvilContextRegistry.createContext(config, configString, provider);
         this.context = AnvilContextRegistry.getContext(contextId);
-        this.config.restrictParallelization();
     }
 
     public void setListener(AnvilListener listener) {

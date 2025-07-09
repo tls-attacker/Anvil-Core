@@ -96,9 +96,18 @@ public class MethodConditionExtension extends SingleCheckCondition {
                 classInstance = extensionContext.getTestInstance().get();
             } else {
                 Class<?> clazz = method.getDeclaringClass();
-                Constructor<?> constructor = clazz.getDeclaredConstructor();
-                constructor.setAccessible(true);
-                classInstance = constructor.newInstance();
+                Constructor<?> constructor;
+                try {
+                    // prefer constructor with ExtensionContext parameter
+                    constructor = clazz.getDeclaredConstructor(ExtensionContext.class);
+                    constructor.setAccessible(true);
+                    classInstance = constructor.newInstance(extensionContext);
+                } catch (NoSuchMethodException e) {
+                    // Fall back to no-argument constructor
+                    constructor = clazz.getDeclaredConstructor();
+                    constructor.setAccessible(true);
+                    classInstance = constructor.newInstance();
+                }
             }
 
             Object returnValue;
