@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 public abstract class DerivationParameter<ConfigType, ValueType> {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -79,6 +80,7 @@ public abstract class DerivationParameter<ConfigType, ValueType> {
                     .filter(
                             value ->
                                     valueApplicableUnderAllConstraints(
+                                            derivationScope.getExtensionContext(),
                                             derivationScope.getValueConstraints(),
                                             (ValueType) value.getSelectedValue()))
                     .collect(Collectors.toList());
@@ -128,8 +130,15 @@ public abstract class DerivationParameter<ConfigType, ValueType> {
                             .getMethod(methodName, DerivationScope.class);
             Constructor constructor =
                     derivationScope.getExtensionContext().getRequiredTestClass().getConstructor();
+            Object instance = constructor.newInstance();
+
+            setExtensionContextIfAvailable(
+                    instance,
+                    derivationScope.getExtensionContext().getRequiredTestClass(),
+                    derivationScope.getExtensionContext());
+
             return (List<DerivationParameter<ConfigType, ValueType>>)
-                    method.invoke(constructor.newInstance(), derivationScope);
+                    method.invoke(instance, derivationScope);
         } catch (NoSuchMethodException
                 | InvocationTargetException
                 | IllegalAccessException
@@ -140,10 +149,12 @@ public abstract class DerivationParameter<ConfigType, ValueType> {
     }
 
     private boolean valueApplicableUnderAllConstraints(
-            List<ValueConstraint> valueConstraints, ValueType value) {
+            ExtensionContext extensionContext,
+            List<ValueConstraint> valueConstraints,
+            ValueType value) {
         for (ValueConstraint constraint : valueConstraints) {
             if (constraint.getAffectedParameter().equals(parameterIdentifier)) {
-                if (!valueApplicableUnderConstraint(constraint, value)) {
+                if (!valueApplicableUnderConstraint(extensionContext, constraint, value)) {
                     return false;
                 }
             }
@@ -151,7 +162,8 @@ public abstract class DerivationParameter<ConfigType, ValueType> {
         return true;
     }
 
-    private boolean valueApplicableUnderConstraint(ValueConstraint constraint, ValueType value) {
+    private boolean valueApplicableUnderConstraint(
+            ExtensionContext extensionContext, ValueConstraint constraint, ValueType value) {
         try {
             Method method;
             Constructor constructor;
@@ -162,7 +174,11 @@ public abstract class DerivationParameter<ConfigType, ValueType> {
                                 .getClazz()
                                 .getMethod(constraint.getEvaluationMethod(), valueClass);
                 constructor = constraint.getClazz().getConstructor();
-                return (Boolean) method.invoke(constructor.newInstance(), value);
+                Object instance = constructor.newInstance();
+
+                setExtensionContextIfAvailable(instance, constraint.getClazz(), extensionContext);
+
+                return (Boolean) method.invoke(instance, value);
             } else {
                 // static - call value.method and use return value
                 method = valueClass.getMethod(constraint.getEvaluationMethod());
@@ -190,9 +206,14 @@ public abstract class DerivationParameter<ConfigType, ValueType> {
                             .getMethod(methodName, DerivationScope.class);
             Constructor constructor =
                     derivationScope.getExtensionContext().getRequiredTestClass().getConstructor();
+            Object instance = constructor.newInstance();
 
-            return (List<ConditionalConstraint>)
-                    method.invoke(constructor.newInstance(), derivationScope);
+            setExtensionContextIfAvailable(
+                    instance,
+                    derivationScope.getExtensionContext().getRequiredTestClass(),
+                    derivationScope.getExtensionContext());
+
+            return (List<ConditionalConstraint>) method.invoke(instance, derivationScope);
         } catch (NoSuchMethodException
                 | InvocationTargetException
                 | IllegalArgumentException
@@ -201,6 +222,32 @@ public abstract class DerivationParameter<ConfigType, ValueType> {
             LOGGER.error(
                     "Was unable to fetch explicit constraints for type " + parameterIdentifier, e);
             return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Attempts to set the ExtensionContext on an instance by looking for a setExtensionContext
+     * method. If the method exists, it invokes it with the provided ExtensionContext. This avoids
+     * errors where helper methods don't have access to their respective AnvilContext and other
+     * execution-specific context objects.
+     *
+     * @param instance The instance to set the ExtensionContext on
+     * @param clazz The class of the instance
+     * @param extensionContext The ExtensionContext to set
+     */
+    private void setExtensionContextIfAvailable(
+            Object instance, Class<?> clazz, ExtensionContext extensionContext) {
+        try {
+            Method setContextMethod =
+                    clazz.getMethod("setExtensionContext", ExtensionContext.class);
+            setContextMethod.setAccessible(true);
+            setContextMethod.invoke(instance, extensionContext);
+        } catch (NoSuchMethodException e) {
+            LOGGER.warn(
+                    "Class {} does not provide a setExtensionContext method. ExtensionContext will not be available to the instance.",
+                    clazz.getName());
+        } catch (InvocationTargetException | IllegalAccessException e) {
+            LOGGER.error("Failed to invoke setExtensionContext on class {}", clazz.getName(), e);
         }
     }
 

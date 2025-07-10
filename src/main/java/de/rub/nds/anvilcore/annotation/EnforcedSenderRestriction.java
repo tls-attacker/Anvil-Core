@@ -6,7 +6,7 @@
  * Licensed under Apache License, Version 2.0
  * http://www.apache.org/licenses/LICENSE-2.0.txt
  */
-package de.rub.nds.tlstest.framework.annotations;
+package de.rub.nds.anvilcore.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

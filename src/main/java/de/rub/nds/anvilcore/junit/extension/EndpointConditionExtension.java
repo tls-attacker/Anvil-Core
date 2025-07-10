@@ -12,6 +12,7 @@ import de.rub.nds.anvilcore.annotation.ClientTest;
 import de.rub.nds.anvilcore.annotation.ServerTest;
 import de.rub.nds.anvilcore.constants.TestEndpointType;
 import de.rub.nds.anvilcore.context.AnvilContext;
+import de.rub.nds.anvilcore.context.AnvilContextRegistry;
 import java.lang.reflect.Method;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -49,7 +50,10 @@ public class EndpointConditionExtension extends SingleCheckCondition {
             return ConditionEvaluationResult.enabled("Class annotations are not relevant.");
         }
 
-        AnvilContext anvilContext = AnvilContext.getInstance();
+        AnvilContext anvilContext = AnvilContextRegistry.byExtensionContext(extensionContext);
+        if (anvilContext == null) {
+            return ConditionEvaluationResult.disabled("AnvilContext not found");
+        }
         TestEndpointType targetEndpoint = endpointOfMethod(extensionContext);
 
         if (targetEndpoint.isMatchingTestEndpointType(anvilContext.getConfig().getEndpointMode())) {

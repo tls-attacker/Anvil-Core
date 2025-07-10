@@ -8,6 +8,7 @@
  */
 package de.rub.nds.anvilcore.model.parameter;
 
+import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.model.ParameterIdentifierProvider;
 import java.util.List;
 import java.util.Objects;
@@ -44,9 +45,9 @@ public class ParameterIdentifier {
         return parameterScope + ":" + parameterType.toString();
     }
 
-    public static ParameterIdentifier fromName(String name) {
+    public static ParameterIdentifier fromName(String name, AnvilContext context) {
         List<ParameterIdentifier> knownIdentifiers =
-                ParameterIdentifierProvider.getAllParameterIdentifiers();
+                ParameterIdentifierProvider.getAllParameterIdentifiers(context);
         return knownIdentifiers.stream()
                 .filter(known -> known.name().equals(name))
                 .findFirst()

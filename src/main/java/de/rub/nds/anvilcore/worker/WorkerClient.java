@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.util.StdDateFormat;
 import de.rub.nds.anvilcore.context.AnvilContext;
+import de.rub.nds.anvilcore.context.AnvilContextRegistry;
 import de.rub.nds.anvilcore.context.AnvilTestConfig;
 import de.rub.nds.anvilcore.execution.AnvilListener;
 import de.rub.nds.anvilcore.execution.TestRunner;
@@ -64,6 +65,7 @@ public class WorkerClient implements AnvilListener {
     private CompletableFuture<Void> currentTestRun = null;
     private String activeJobId = null;
     private ExecutorService pool;
+    private AnvilContext anvilContext;
 
     private AnvilListener listener;
 
@@ -263,6 +265,8 @@ public class WorkerClient implements AnvilListener {
                                                     additionalConfigString,
                                                     parameterIdentifierProvider);
                                     runner.setListener(this);
+                                    anvilContext =
+                                            AnvilContextRegistry.getContext(runner.getContextId());
                                     runner.runTests();
                                 })
                         .thenRun(
@@ -285,13 +289,13 @@ public class WorkerClient implements AnvilListener {
             if (listener != null) {
                 listener.onAborted();
             }
-            AnvilContext.getInstance().abortRemainingTests();
+            anvilContext.abortRemainingTests();
             pool.shutdown();
             currentTestRun.cancel(true);
             CompletableFuture.runAsync(
                     () -> {
                         // send last report
-                        AnvilReport report = new AnvilReport(AnvilContext.getInstance(), false);
+                        AnvilReport report = new AnvilReport(anvilContext, false);
                         postTestReportUpdate(report, true);
                         // next job if available
                         Optional<Map<?, ?>> nextJob;

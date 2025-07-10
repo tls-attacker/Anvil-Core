@@ -9,6 +9,7 @@
 package de.rub.nds.anvilcore.model;
 
 import de.rub.nds.anvilcore.context.AnvilContext;
+import de.rub.nds.anvilcore.context.AnvilContextRegistry;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
 import java.util.Collections;
 import java.util.List;
@@ -17,12 +18,10 @@ public abstract class ParameterIdentifierProvider {
 
     private static List<ParameterIdentifier> allParameterIdentifiers;
 
-    public static List<ParameterIdentifier> getAllParameterIdentifiers() {
+    public static List<ParameterIdentifier> getAllParameterIdentifiers(AnvilContext context) {
         if (allParameterIdentifiers == null) {
             allParameterIdentifiers =
-                    AnvilContext.getInstance()
-                            .getParameterIdentifierProvider()
-                            .generateAllParameterIdentifiers();
+                    context.getParameterIdentifierProvider().generateAllParameterIdentifiers();
         }
         return allParameterIdentifiers;
     }
@@ -32,7 +31,8 @@ public abstract class ParameterIdentifierProvider {
     public List<ParameterIdentifier> getModelParameterIdentifiers(DerivationScope derivationScope) {
         String modelType = derivationScope.getModelType();
         if (modelType.equals(DefaultModelTypes.ALL_PARAMETERS)) {
-            return getAllParameterIdentifiers();
+            return getAllParameterIdentifiers(
+                    AnvilContextRegistry.byExtensionContext(derivationScope.getExtensionContext()));
         }
         return Collections.emptyList();
     }

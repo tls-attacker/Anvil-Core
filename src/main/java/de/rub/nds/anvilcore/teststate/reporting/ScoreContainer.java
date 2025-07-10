@@ -9,7 +9,6 @@
 package de.rub.nds.anvilcore.teststate.reporting;
 
 import com.fasterxml.jackson.annotation.JsonValue;
-import de.rub.nds.anvilcore.context.AnvilContext;
 import de.rub.nds.anvilcore.teststate.TestResult;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,8 +24,7 @@ public class ScoreContainer {
     public ScoreContainer() {}
 
     public ScoreContainer(String testId) {
-        Map<String, Integer> severityLevels =
-                AnvilContext.getInstance().getMetadataFetcher().getTestSeverityLevels(testId);
+        Map<String, Integer> severityLevels = new MetadataFetcher().getTestSeverityLevels(testId);
         if (severityLevels == null) {
             LOGGER.error("No severity levels set for test with id: " + testId);
             return;

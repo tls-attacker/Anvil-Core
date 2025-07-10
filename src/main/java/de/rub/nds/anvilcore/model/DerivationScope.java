@@ -11,6 +11,7 @@ package de.rub.nds.anvilcore.model;
 import de.rub.nds.anvilcore.annotation.*;
 import de.rub.nds.anvilcore.coffee4j.model.ModelFromScope;
 import de.rub.nds.anvilcore.context.AnvilContext;
+import de.rub.nds.anvilcore.context.AnvilContextRegistry;
 import de.rub.nds.anvilcore.context.AnvilTestConfig;
 import de.rub.nds.anvilcore.model.constraint.ValueConstraint;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
@@ -37,11 +38,13 @@ public class DerivationScope {
 
     private DerivationScope(ExtensionContext extensionContext) {
         this.extensionContext = extensionContext;
-        this.ipmLimitations = resolveIpmLimitations(extensionContext);
-        this.ipmExtensions = resolveIpmExtensions(extensionContext);
-        this.valueConstraints = resolveValueConstraints(extensionContext);
-        this.explicitValues = resolveExplicitValues(extensionContext);
-        this.explicitModelingConstraints = resolveExplicitModelingConstraints(extensionContext);
+        AnvilContext anvilContext = AnvilContextRegistry.byExtensionContext(extensionContext);
+        this.ipmLimitations = resolveIpmLimitations(extensionContext, anvilContext);
+        this.ipmExtensions = resolveIpmExtensions(extensionContext, anvilContext);
+        this.valueConstraints = resolveValueConstraints(extensionContext, anvilContext);
+        this.explicitValues = resolveExplicitValues(extensionContext, anvilContext);
+        this.explicitModelingConstraints =
+                resolveExplicitModelingConstraints(extensionContext, anvilContext);
         this.manualConfigTypes = resolveManualConfigTypes(extensionContext);
         this.testStrength = resolveTestStrength(extensionContext);
         this.modelType = resolveModelType(extensionContext);
@@ -173,7 +176,7 @@ public class DerivationScope {
      * @see ExcludeParameter
      */
     private static List<ParameterIdentifier> resolveIpmLimitations(
-            final ExtensionContext extensionContext) {
+            final ExtensionContext extensionContext, AnvilContext context) {
         return Stream.concat(
                         AnnotationSupport.findAnnotation(
                                         extensionContext.getRequiredTestMethod(),
@@ -186,7 +189,7 @@ public class DerivationScope {
                                 .stream()
                                 .map(ExcludeParameter::value))
                 .distinct()
-                .map(ParameterIdentifier::fromName)
+                .map(entry -> ParameterIdentifier.fromName(entry, context))
                 .collect(Collectors.toList());
     }
 
@@ -198,7 +201,7 @@ public class DerivationScope {
      * @see IncludeParameter
      */
     private static List<ParameterIdentifier> resolveIpmExtensions(
-            final ExtensionContext extensionContext) {
+            final ExtensionContext extensionContext, AnvilContext context) {
         return Stream.concat(
                         AnnotationSupport.findAnnotation(
                                         extensionContext.getRequiredTestMethod(),
@@ -211,7 +214,7 @@ public class DerivationScope {
                                 .stream()
                                 .map(IncludeParameter::value))
                 .distinct()
-                .map(ParameterIdentifier::fromName)
+                .map(entry -> ParameterIdentifier.fromName(entry, context))
                 .collect(Collectors.toList());
     }
 
@@ -224,8 +227,7 @@ public class DerivationScope {
      * @see DynamicValueConstraints
      */
     private static List<ValueConstraint> resolveValueConstraints(
-            final ExtensionContext extensionContext) {
-
+            final ExtensionContext extensionContext, AnvilContext context) {
         List<ValueConstraint> staticConstraints =
                 Stream.concat(
                                 AnnotationSupport.findRepeatableAnnotations(
@@ -237,7 +239,8 @@ public class DerivationScope {
                                                 annotation ->
                                                         new ValueConstraint(
                                                                 ParameterIdentifier.fromName(
-                                                                        annotation.identifier()),
+                                                                        annotation.identifier(),
+                                                                        context),
                                                                 annotation.method(),
                                                                 null,
                                                                 false)),
@@ -250,7 +253,8 @@ public class DerivationScope {
                                                 annotation ->
                                                         new ValueConstraint(
                                                                 ParameterIdentifier.fromName(
-                                                                        annotation.identifier()),
+                                                                        annotation.identifier(),
+                                                                        context),
                                                                 annotation.method(),
                                                                 null,
                                                                 false)))
@@ -272,7 +276,7 @@ public class DerivationScope {
                                             entry -> {
                                                 ParameterIdentifier matchingIdentifier =
                                                         ParameterIdentifier.fromName(
-                                                                entry.getKey());
+                                                                entry.getKey(), context);
                                                 if (matchingIdentifier != null) {
                                                     dynamicConstraints.add(
                                                             new ValueConstraint(
@@ -302,7 +306,7 @@ public class DerivationScope {
      * @see ExplicitValues
      */
     private static Map<ParameterIdentifier, String> resolveExplicitValues(
-            final ExtensionContext extensionContext) {
+            final ExtensionContext extensionContext, AnvilContext context) {
         return AnnotationSupport.findAnnotation(
                         extensionContext.getRequiredTestMethod(), ExplicitValues.class)
                 .stream()
@@ -312,7 +316,7 @@ public class DerivationScope {
                 .map(
                         entry ->
                                 Map.entry(
-                                        ParameterIdentifier.fromName(entry.getKey()),
+                                        ParameterIdentifier.fromName(entry.getKey(), context),
                                         entry.getValue()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
@@ -326,7 +330,7 @@ public class DerivationScope {
      * @see ExplicitModelingConstraints
      */
     private static Map<ParameterIdentifier, String> resolveExplicitModelingConstraints(
-            final ExtensionContext extensionContext) {
+            final ExtensionContext extensionContext, AnvilContext context) {
         return AnnotationSupport.findAnnotation(
                         extensionContext.getRequiredTestMethod(), ExplicitModelingConstraints.class)
                 .stream()
@@ -336,7 +340,7 @@ public class DerivationScope {
                 .map(
                         entry ->
                                 Map.entry(
-                                        ParameterIdentifier.fromName(entry.getKey()),
+                                        ParameterIdentifier.fromName(entry.getKey(), context),
                                         entry.getValue()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
@@ -354,7 +358,11 @@ public class DerivationScope {
                         extensionContext.getRequiredTestMethod(), ManualConfig.class)
                 .stream()
                 .flatMap(annotation -> Arrays.stream(annotation.identifiers()))
-                .map(ParameterIdentifier::fromName)
+                .map(
+                        entry ->
+                                ParameterIdentifier.fromName(
+                                        entry,
+                                        AnvilContextRegistry.byExtensionContext(extensionContext)))
                 .collect(Collectors.toSet());
     }
 
@@ -372,7 +380,11 @@ public class DerivationScope {
         return AnnotationSupport.findAnnotation(
                         extensionContext.getRequiredTestMethod(), TestStrength.class)
                 .map(TestStrength::value)
-                .orElseGet(() -> AnvilContext.getInstance().getConfig().getStrength());
+                .orElseGet(
+                        () ->
+                                AnvilContextRegistry.byExtensionContext(extensionContext)
+                                        .getConfig()
+                                        .getStrength());
     }
 
     public boolean parameterListedForManualConfig(ParameterIdentifier identifier) {

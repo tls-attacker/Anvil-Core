@@ -9,7 +9,7 @@
 package de.rub.nds.anvilcore.model;
 
 import de.rub.nds.anvilcore.coffee4j.model.ModelFromScope;
-import de.rub.nds.anvilcore.context.AnvilContext;
+import de.rub.nds.anvilcore.context.AnvilContextRegistry;
 import de.rub.nds.anvilcore.model.constraint.ConditionalConstraint;
 import de.rub.nds.anvilcore.model.parameter.DerivationParameter;
 import de.rub.nds.anvilcore.model.parameter.ParameterIdentifier;
@@ -70,7 +70,7 @@ public class IpmProvider implements ModelProvider, AnnotationConsumer<ModelFromS
         final List<ParameterIdentifier> parameterIdentifiers = new ArrayList<>();
         // Get base parameters of model
         parameterIdentifiers.addAll(
-                AnvilContext.getInstance()
+                AnvilContextRegistry.byExtensionContext(derivationScope.getExtensionContext())
                         .getParameterIdentifierProvider()
                         .getModelParameterIdentifiers(derivationScope));
         // Add explicit extensions

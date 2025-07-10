@@ -9,6 +9,7 @@
 package de.rub.nds.anvilcore.junit.extension;
 
 import de.rub.nds.anvilcore.context.AnvilContext;
+import de.rub.nds.anvilcore.context.AnvilContextRegistry;
 import de.rub.nds.anvilcore.junit.Utils;
 import de.rub.nds.anvilcore.model.ParameterCombination;
 import de.rub.nds.anvilcore.teststate.AnvilTestCase;
@@ -46,11 +47,22 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
     // for keeping time
     private static final Map<String, Long> executionTimes = new HashMap<>();
     private static final Map<String, Long> generationTimes = new HashMap<>();
+    // Context ID for this test execution (when acting as TestExecutionListener). As our TestWatcher
+    // implements multiple interfaces, there may be distinct TestWatcher objects. We hence use
+    // either the given ID or the TestPlan to obtain the right AnvilContext.
+    private final String contextId;
 
-    public AnvilTestWatcher() {}
+    public AnvilTestWatcher() {
+        this.contextId = null;
+    }
+
+    public AnvilTestWatcher(String contextId) {
+        this.contextId = contextId;
+    }
 
     public AnvilTestWatcher(ExtensionContext context) {
-        extensionContext = context;
+        this.extensionContext = context;
+        this.contextId = null;
     }
 
     /**
@@ -60,14 +72,15 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
      */
     @Override
     public synchronized void testSuccessful(ExtensionContext extensionContext) {
-        if (AnvilContext.getInstance().isAborted()) {
+        AnvilContext context = AnvilContextRegistry.byExtensionContext(extensionContext);
+        if (context == null || context.isAborted()) {
             return;
         }
 
         ExtensionContext resolvedContext =
                 Utils.getTemplateContainerExtensionContext(extensionContext);
         String testId = TestIdResolver.resolveTestId(resolvedContext.getRequiredTestMethod());
-        AnvilTestRun testRun = AnvilContext.getInstance().getActiveTestRun(testId);
+        AnvilTestRun testRun = context.getActiveTestRun(testId);
         AnvilTestCase testCase = AnvilTestCase.fromExtensionContext(extensionContext);
 
         if (testCase != null
@@ -86,10 +99,8 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
                 return;
             }
 
-            if (AnvilContext.getInstance().getListener() != null) {
-                AnvilContext.getInstance()
-                        .getListener()
-                        .onTestCaseFinished(testCase, testRun.getTestId());
+            if (context.getListener() != null) {
+                context.getListener().onTestCaseFinished(testCase, testRun.getTestId());
             }
 
             if (testRun.isReadyForCompletion()) {
@@ -115,7 +126,7 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
             Throwable cause) {
         if (testRun == null) {
             testRun = new AnvilTestRun(extensionContext);
-            AnvilContext.getInstance().addActiveTestRun(testRun);
+            AnvilContextRegistry.byExtensionContext(extensionContext).addActiveTestRun(testRun);
             testRun.setResultRaw(defaultResult.getValue());
         } else {
             testRun.setResultRaw(testRun.resolveFinalResult().getValue());
@@ -142,13 +153,14 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
      */
     @Override
     public synchronized void testFailed(ExtensionContext extensionContext, Throwable cause) {
-        if (AnvilContext.getInstance().isAborted()) {
+        AnvilContext context = AnvilContextRegistry.byExtensionContext(extensionContext);
+        if (context == null || context.isAborted()) {
             return;
         }
         ExtensionContext resolvedContext =
                 Utils.getTemplateContainerExtensionContext(extensionContext);
         String testId = TestIdResolver.resolveTestId(resolvedContext.getRequiredTestMethod());
-        AnvilTestRun testRun = AnvilContext.getInstance().getActiveTestRun(testId);
+        AnvilTestRun testRun = context.getActiveTestRun(testId);
         AnvilTestCase testCase = AnvilTestCase.fromExtensionContext(extensionContext);
 
         if (cause != null && testCase != null) {
@@ -177,10 +189,8 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
                 return;
             }
 
-            if (AnvilContext.getInstance().getListener() != null) {
-                AnvilContext.getInstance()
-                        .getListener()
-                        .onTestCaseFinished(testCase, testRun.getTestId());
+            if (context.getListener() != null) {
+                context.getListener().onTestCaseFinished(testCase, testRun.getTestId());
             }
 
             if (testRun.isReadyForCompletion()) {
@@ -196,7 +206,8 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
      */
     @Override
     public void testDisabled(ExtensionContext extensionContext, Optional<String> reason) {
-        if (AnvilContext.getInstance().isAborted()) {
+        AnvilContext context = AnvilContextRegistry.byExtensionContext(extensionContext);
+        if (context == null || context.isAborted()) {
             return;
         }
         AnvilTestRun testRun = AnvilTestRun.forExtensionContext(extensionContext);
@@ -269,14 +280,20 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
      */
     @Override
     public void testPlanExecutionStarted(TestPlan testPlan) {
-        AnvilContext.getInstance().setTestStartTime(new Date());
-        AnvilReport anvilReport = new AnvilReport(AnvilContext.getInstance(), true);
-        AnvilContext.getInstance().getMapper().saveReportToPath(anvilReport);
+        AnvilContext context = resolveAnvilContext(testPlan);
+        context.setTestStartTime(new Date());
+        AnvilReport anvilReport = new AnvilReport(context, true);
+        context.getMapper().saveReportToPath(anvilReport);
         LOGGER.trace("Started execution of " + testPlan.toString());
         ProgressSpinner.startSpinnerTask("Executing:");
-        if (AnvilContext.getInstance().getListener() != null) {
-            AnvilContext.getInstance().getListener().onStarted();
+        if (context.getListener() != null) {
+            context.getListener().onStarted();
         }
+    }
+
+    private AnvilContext resolveAnvilContext(TestPlan testPlan) {
+        AnvilContext context = AnvilContextRegistry.byTestPlan(testPlan);
+        return context;
     }
 
     /**
@@ -286,20 +303,18 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
      */
     @Override
     public void testPlanExecutionFinished(TestPlan testPlan) {
+        AnvilContext context = resolveAnvilContext(testPlan);
         LOGGER.trace("Execution of " + testPlan.toString() + " finished");
         ProgressSpinner.stopSpinner();
-        logTestPlanExecutionSummary(AnvilContext.getInstance());
-        AnvilReport anvilReport = new AnvilReport(AnvilContext.getInstance(), false);
-        AnvilContext.getInstance().getMapper().saveReportToPath(anvilReport);
-        AnvilContext.getInstance()
-                .getMapper()
-                .saveExtraFileToPath(AnvilContext.getInstance().getResultsTestRuns(), "result_map");
-        if (AnvilContext.getInstance().getListener() != null) {
-            AnvilContext.getInstance().getListener().onReportFinished(anvilReport);
+        logTestPlanExecutionSummary(context);
+        AnvilReport anvilReport = new AnvilReport(context, false);
+        context.getMapper().saveReportToPath(anvilReport);
+        context.getMapper().saveExtraFileToPath(context.getResultsTestRuns(), "result_map");
+        if (context.getListener() != null) {
+            context.getListener().onReportFinished(anvilReport);
         }
-        if (AnvilContext.getInstance().getConfig().isDoZip()) {
-            ZipUtil.packFolderToZip(
-                    AnvilContext.getInstance().getConfig().getOutputFolder(), "report.zip");
+        if (context.getConfig().isDoZip()) {
+            ZipUtil.packFolderToZip(context.getConfig().getOutputFolder(), "report.zip");
         }
     }
 
@@ -402,7 +417,8 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
                 testIdentifier.getDisplayName(),
                 testExecutionResult.getThrowable().get());
         AnvilTestRun testRun = AnvilTestRun.forFailedInitialization(testIdentifier);
-        AnvilContext.getInstance().addActiveTestRun(testRun);
+        AnvilContext context = AnvilContextRegistry.getContext(contextId);
+        context.addActiveTestRun(testRun);
         testRun.setResultRaw(TestResult.TEST_SUITE_ERROR.getValue());
         testRun.setFailedReason(
                 ExceptionUtils.getStackTrace(testExecutionResult.getThrowable().get()));
@@ -429,7 +445,8 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
                                             "\n\t%d test runs %s",
                                             testRunsIds.size(), testRunResult));
                             logMessage.append(
-                                    buildTestCaseFailureDetailsSummary(testRunResult, testRunsIds));
+                                    buildTestCaseFailureDetailsSummary(
+                                            context, testRunResult, testRunsIds));
                         });
 
         LOGGER.info(logMessage.toString());
@@ -438,19 +455,20 @@ public class AnvilTestWatcher implements TestWatcher, ExecutionReporter, TestExe
     /**
      * Builds a summary of the failure details of all failed test cases of a test run.
      *
+     * @param context The AnvilContext containing the test case details
      * @param testRunResult The result of the test run
      * @param testRunsIds A collection of test runs IDs associated with the test run result
      * @return A string containing the summary of the failure details of all failed test cases of a
      *     test run. Returns an empty string if the test run result is not failed.
      */
     private String buildTestCaseFailureDetailsSummary(
-            TestResult testRunResult, Set<String> testRunsIds) {
+            AnvilContext context, TestResult testRunResult, Set<String> testRunsIds) {
         StringBuilder logMessage = new StringBuilder();
 
         if (testRunResult == TestResult.FULLY_FAILED
                 || testRunResult == TestResult.PARTIALLY_FAILED) {
             Map<String, Long> failedTestCasesDetailsSummary =
-                    AnvilContext.getInstance().getDetailsFailedTestCases().entrySet().stream()
+                    context.getDetailsFailedTestCases().entrySet().stream()
                             .filter(entry -> testRunsIds.contains(entry.getKey()))
                             .map(Map.Entry::getValue)
                             .flatMap(Collection::stream)
