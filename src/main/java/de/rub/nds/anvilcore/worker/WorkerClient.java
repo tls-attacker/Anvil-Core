@@ -31,6 +31,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.appender.WriterAppender;
@@ -68,6 +69,7 @@ public class WorkerClient implements AnvilListener {
     private AnvilContext anvilContext;
 
     private AnvilListener listener;
+    private Consumer<TestRunner> testRunnerCallback;
 
     public WorkerClient(String hostname, ParameterIdentifierProvider provider, String workerName) {
         this(hostname, provider);
@@ -128,6 +130,17 @@ public class WorkerClient implements AnvilListener {
 
     public void setListener(AnvilListener listener) {
         this.listener = listener;
+    }
+
+    /**
+     * Sets a callback that will be invoked when a TestRunner object is created. The callback
+     * receives the TestRunner instance as a parameter. This callback is optional and can be used to
+     * perform additional configuration or setup on the TestRunner before tests are executed.
+     *
+     * @param callback A Consumer that accepts a TestRunner instance, or null to clear the callback
+     */
+    public void setTestRunnerCallback(Consumer<TestRunner> callback) {
+        this.testRunnerCallback = callback;
     }
 
     public void run() throws InterruptedException {
@@ -265,6 +278,12 @@ public class WorkerClient implements AnvilListener {
                                                     additionalConfigString,
                                                     parameterIdentifierProvider);
                                     runner.setListener(this);
+
+                                    // Invoke the test runner callback if one is set, for example,
+                                    // to spawn companion context objects
+                                    if (testRunnerCallback != null) {
+                                        testRunnerCallback.accept(runner);
+                                    }
                                     anvilContext =
                                             AnvilContextRegistry.getContext(runner.getContextId());
                                     runner.runTests();
