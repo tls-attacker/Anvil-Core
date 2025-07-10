@@ -112,17 +112,18 @@ public class MethodConditionExtension extends SingleCheckCondition {
                 setContextMethod.invoke(classInstance, extensionContext);
                 hasContextSet = true;
             } catch (NoSuchMethodException e) {
-                // we log this exception below but only if the called method itself also does not accept a context
+                // we log this exception below but only if the called method itself also does not
+                // accept a context
             }
 
             Object returnValue;
             if (method.getParameterCount() > 0) {
                 returnValue = method.invoke(classInstance, extensionContext);
             } else {
-                if(!hasContextSet) {
+                if (!hasContextSet) {
                     LOGGER.warn(
-                        "Class {} did not provide a setExtensionContext method and method condition did not accept a context. ExtensionContext will not be available to the instance.",
-                        classInstance.getClass().getName());
+                            "Class {} did not provide a setExtensionContext method and method condition did not accept a context. ExtensionContext will not be available to the instance.",
+                            classInstance.getClass().getName());
                 }
                 returnValue = method.invoke(classInstance);
             }
