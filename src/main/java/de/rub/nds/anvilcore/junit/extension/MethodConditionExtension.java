@@ -96,24 +96,34 @@ public class MethodConditionExtension extends SingleCheckCondition {
                 classInstance = extensionContext.getTestInstance().get();
             } else {
                 Class<?> clazz = method.getDeclaringClass();
-                Constructor<?> constructor;
-                try {
-                    // prefer constructor with ExtensionContext parameter
-                    constructor = clazz.getDeclaredConstructor(ExtensionContext.class);
-                    constructor.setAccessible(true);
-                    classInstance = constructor.newInstance(extensionContext);
-                } catch (NoSuchMethodException e) {
-                    // Fall back to no-argument constructor
-                    constructor = clazz.getDeclaredConstructor();
-                    constructor.setAccessible(true);
-                    classInstance = constructor.newInstance();
-                }
+                // Use no-argument constructor
+                Constructor<?> constructor = clazz.getDeclaredConstructor();
+                constructor.setAccessible(true);
+                classInstance = constructor.newInstance();
+            }
+            boolean hasContextSet = false;
+            // Try to find and invoke setExtensionContext method
+            try {
+                Method setContextMethod =
+                        classInstance
+                                .getClass()
+                                .getMethod("setExtensionContext", ExtensionContext.class);
+                setContextMethod.setAccessible(true);
+                setContextMethod.invoke(classInstance, extensionContext);
+                hasContextSet = true;
+            } catch (NoSuchMethodException e) {
+                // we log this exception below but only if the called method itself also does not accept a context
             }
 
             Object returnValue;
             if (method.getParameterCount() > 0) {
                 returnValue = method.invoke(classInstance, extensionContext);
             } else {
+                if(!hasContextSet) {
+                    LOGGER.warn(
+                        "Class {} did not provide a setExtensionContext method and method condition did not accept a context. ExtensionContext will not be available to the instance.",
+                        classInstance.getClass().getName());
+                }
                 returnValue = method.invoke(classInstance);
             }
 
