@@ -76,16 +76,6 @@ public class AnvilContextRegistry {
     }
 
     /**
-     * Returns any available AnvilContext from the registry. This is used as a fallback when no
-     * specific context ID is available.
-     *
-     * @return an AnvilContext instance if any exists, or null if registry is empty
-     */
-    public static AnvilContext getAnyContext() {
-        return CONTEXTS.values().stream().findFirst().orElse(null);
-    }
-
-    /**
      * Retrieves an AnvilContext by extracting the context ID from the JUnit TestPlan. This is a
      * convenience method for JUnit TestExecutionListener methods that need to access their specific
      * context.
