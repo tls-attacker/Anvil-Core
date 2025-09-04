@@ -36,7 +36,7 @@ public class AnvilContextRegistry {
     public static String createContext(
             AnvilTestConfig config, String configString, ParameterIdentifierProvider provider) {
         String contextId = "anvil-context-" + ID_COUNTER.incrementAndGet();
-        AnvilContext context = new AnvilContext(config, configString, provider);
+        AnvilContext context = new AnvilContext(config, configString, provider, contextId);
         CONTEXTS.put(contextId, context);
         return contextId;
     }

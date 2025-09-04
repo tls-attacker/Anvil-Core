@@ -30,7 +30,8 @@ public class AnvilContext {
     private final String configString;
     private final AnvilJsonMapper mapper;
     private static final MetadataFetcher metadataFetcher = new MetadataFetcher();
-    ;
+    private final String contextId;
+
     private AnvilListener listener;
 
     private final ParameterIdentifierProvider parameterIdentifierProvider;
@@ -71,11 +72,15 @@ public class AnvilContext {
     private boolean aborted = false;
 
     AnvilContext(
-            AnvilTestConfig config, String configString, ParameterIdentifierProvider provider) {
+            AnvilTestConfig config,
+            String configString,
+            ParameterIdentifierProvider provider,
+            String contextId) {
         this.parameterIdentifierProvider = provider;
         this.config = config;
         this.configString = configString;
         this.mapper = new AnvilJsonMapper(config);
+        this.contextId = contextId;
     }
 
     public void abortRemainingTests() {
@@ -223,5 +228,9 @@ public class AnvilContext {
 
     public String getConfigString() {
         return configString;
+    }
+
+    public String getContextId() {
+        return contextId;
     }
 }
