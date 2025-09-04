@@ -21,12 +21,14 @@ public abstract class ParameterIdentifierProvider {
     public static List<ParameterIdentifier> getAllParameterIdentifiers(AnvilContext context) {
         if (allParameterIdentifiers == null) {
             allParameterIdentifiers =
-                    context.getParameterIdentifierProvider().generateAllParameterIdentifiers();
+                    context.getParameterIdentifierProvider()
+                            .generateAllParameterIdentifiers(context.getContextId());
         }
         return allParameterIdentifiers;
     }
 
-    public abstract List<ParameterIdentifier> generateAllParameterIdentifiers();
+    public abstract List<ParameterIdentifier> generateAllParameterIdentifiers(
+            String anvilContextId);
 
     public List<ParameterIdentifier> getModelParameterIdentifiers(DerivationScope derivationScope) {
         String modelType = derivationScope.getModelType();
