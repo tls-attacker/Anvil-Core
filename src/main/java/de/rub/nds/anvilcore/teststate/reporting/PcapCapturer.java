@@ -58,9 +58,8 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
      */
     public PcapCapturer(AnvilTestCase testCase)
             throws PcapNativeException, NotOpenException, IOException {
-
-        final PcapNetworkInterface device = getNetworkInterface();
         this.testCase = testCase;
+        final PcapNetworkInterface device = getNetworkInterface();
         this.pcapHandle =
                 device.openLive(
                         SNAPSHOT_LENGTH_BYTES, PromiscuousMode.NONPROMISCUOUS, READ_TIMEOUT_MILLIS);
