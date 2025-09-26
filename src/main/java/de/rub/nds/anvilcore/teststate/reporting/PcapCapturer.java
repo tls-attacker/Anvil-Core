@@ -43,6 +43,8 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
     private final PcapDumper pcapDumper;
     private final Thread captureThread;
     private final AnvilTestCase testCase;
+    private final String generalFilter;
+    private final String interfaceName;
 
     private static final int SNAPSHOT_LENGTH_BYTES = 65_535;
     private static final int READ_TIMEOUT_MILLIS = 50;
@@ -59,6 +61,10 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
     public PcapCapturer(AnvilTestCase testCase)
             throws PcapNativeException, NotOpenException, IOException {
         this.testCase = testCase;
+        interfaceName =
+                AnvilContextRegistry.byExtensionContext(testCase.getExtensionContext())
+                        .getConfig()
+                        .getNetworkInterface();
         final PcapNetworkInterface device = getNetworkInterface();
         this.pcapHandle =
                 device.openLive(
@@ -66,12 +72,12 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
         this.tmpFilepath = getTemporaryFilePath();
 
         this.pcapDumper = this.pcapHandle.dumpOpen(tmpFilepath);
-        String filter =
+        generalFilter =
                 AnvilContextRegistry.byExtensionContext(testCase.getExtensionContext())
                         .getConfig()
                         .getGeneralPcapFilter();
-        if (filter != null && !filter.isEmpty()) {
-            this.pcapHandle.setFilter(filter, BpfCompileMode.OPTIMIZE);
+        if (generalFilter != null && !generalFilter.isEmpty()) {
+            this.pcapHandle.setFilter(generalFilter, BpfCompileMode.OPTIMIZE);
         }
 
         this.captureThread = new Thread(this, "pcap-capture");
@@ -94,10 +100,6 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
     }
 
     private PcapNetworkInterface getNetworkInterface() {
-        String interfaceName =
-                AnvilContextRegistry.byExtensionContext(testCase.getExtensionContext())
-                        .getConfig()
-                        .getNetworkInterface();
         if (System.getProperty("os.name").toLowerCase().contains("win")
                 && interfaceName.equals("any")) {
             LOGGER.error(
@@ -197,10 +199,12 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
                 pcapHandle.setFilter(testCase.getCaseSpecificPcapFilter(), BpfCompileMode.OPTIMIZE);
             }
             PcapDumper pcapDumper = pcapHandle.dumpOpen(finalPcapPath.toString());
+            boolean foundAnyPacket = false;
             while (true) {
                 try {
                     Packet incomingPacket = pcapHandle.getNextPacketEx();
                     if (incomingPacket != null) {
+                        foundAnyPacket = true;
                         pcapDumper.dump(incomingPacket, pcapHandle.getTimestamp());
                     }
                 } catch (EOFException e) {
@@ -209,6 +213,13 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
                 } catch (TimeoutException e) {
                     LOGGER.error("Error during filtering of pcap files: ", e);
                 }
+            }
+            if (!foundAnyPacket) {
+                LOGGER.warn(
+                        "TCP dump failed to identify any packets on interface '{}' using general filter '{}'' and test case filter '{}'",
+                        interfaceName,
+                        generalFilter,
+                        testCase.getCaseSpecificPcapFilter());
             }
             pcapDumper.close();
         } catch (PcapNativeException | NotOpenException e) {
