@@ -23,7 +23,7 @@ public class AnvilContextRegistry {
     private static final AtomicLong ID_COUNTER = new AtomicLong(0);
     private static final ConcurrentHashMap<String, AnvilContext> CONTEXTS =
             new ConcurrentHashMap<>();
-    private static final String CONTEXT_ID_PARAMETER = "anvil.context.id";
+    public static final String CONTEXT_ID_PARAMETER = "anvil.context.id";
 
     /**
      * Creates a new AnvilContext instance with a unique ID.
