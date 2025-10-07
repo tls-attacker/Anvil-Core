@@ -23,7 +23,8 @@ public class AnvilContextRegistry {
     private static final AtomicLong ID_COUNTER = new AtomicLong(0);
     private static final ConcurrentHashMap<String, AnvilContext> CONTEXTS =
             new ConcurrentHashMap<>();
-    private static final String CONTEXT_ID_PARAMETER = "anvil.context.id";
+    public static final String CONTEXT_ID_PARAMETER = "anvil.context.id";
+    public static final String CONTEXT_ID_PREFIX = "anvil-context-";
 
     /**
      * Creates a new AnvilContext instance with a unique ID.
@@ -35,7 +36,7 @@ public class AnvilContextRegistry {
      */
     public static String createContext(
             AnvilTestConfig config, String configString, ParameterIdentifierProvider provider) {
-        String contextId = "anvil-context-" + ID_COUNTER.incrementAndGet();
+        String contextId = CONTEXT_ID_PREFIX + ID_COUNTER.incrementAndGet();
         AnvilContext context = new AnvilContext(config, configString, provider, contextId);
         CONTEXTS.put(contextId, context);
         return contextId;
@@ -88,7 +89,7 @@ public class AnvilContextRegistry {
         String contextId =
                 testPlan.getConfigurationParameters().get(CONTEXT_ID_PARAMETER).orElse(null);
         if (contextId == null) {
-            return null;
+            return getSingleContextOrNull();
         }
         return getContext(contextId);
     }
@@ -104,7 +105,7 @@ public class AnvilContextRegistry {
     public static AnvilContext byExtensionContext(ExtensionContext extensionContext) {
         String contextId = getContextIdFromExtensionContext(extensionContext);
         if (contextId == null) {
-            return null;
+            return getSingleContextOrNull();
         }
         return getContext(contextId);
     }
@@ -123,6 +124,19 @@ public class AnvilContextRegistry {
                 return contextId;
             }
             current = current.getParent().orElse(null);
+        }
+        return null;
+    }
+
+    /**
+     * Fallback method to return the single AnvilContext instance if the map holds exactly one
+     * entry. Requied to run tests through the IDE as the reference property will not be set.
+     *
+     * @return The single AnvilContext registered or null
+     */
+    private static AnvilContext getSingleContextOrNull() {
+        if (CONTEXTS.size() == 1) {
+            return CONTEXTS.values().iterator().next();
         }
         return null;
     }

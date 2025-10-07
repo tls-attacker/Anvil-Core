@@ -41,7 +41,6 @@ import org.junit.platform.launcher.core.LauncherFactory;
  * as a callback before or after test execution.
  */
 public class TestRunner {
-    public static final String CONTEXT_ID_PROPERTY = "anvil.context.id";
     private static final Logger LOGGER = LogManager.getLogger();
 
     private final AnvilTestConfig config;
@@ -104,7 +103,8 @@ public class TestRunner {
                         .configurationParameter(
                                 "junit.jupiter.execution.parallel.config.fixed.parallelism",
                                 String.valueOf(config.getParallelTests()))
-                        .configurationParameter(CONTEXT_ID_PROPERTY, contextId);
+                        .configurationParameter(
+                                AnvilContextRegistry.CONTEXT_ID_PARAMETER, contextId);
 
         if (!config.getTags().isEmpty()) {
             builder.filters(TagFilter.includeTags(config.getTags()));
