@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apache.logging.log4j.LogManager;
@@ -247,18 +248,18 @@ public class PcapCapturer implements AutoCloseable, Runnable, PacketListener {
 
     @Override
     public void close() throws PcapNativeException {
-        // Break the `pcap_loop` call in the capture thread.
-        Executors.newSingleThreadScheduledExecutor()
-                .schedule(
-                        () -> {
-                            try {
-                                this.pcapHandle.breakLoop();
-                            } catch (NotOpenException err) {
-                                LOGGER.error("Failed to break PCAP capture loop (handle not open)");
-                                throw new RuntimeException();
-                            }
-                        },
-                        WAITING_TIME_AFTER_CLOSE_MILLI,
-                        TimeUnit.MILLISECONDS);
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.schedule(
+                () -> {
+                    try {
+                        this.pcapHandle.breakLoop();
+                    } catch (NotOpenException err) {
+                        LOGGER.error("Failed to break PCAP capture loop (handle not open)", err);
+                    } finally {
+                        scheduler.shutdown();
+                    }
+                },
+                WAITING_TIME_AFTER_CLOSE_MILLI,
+                TimeUnit.MILLISECONDS);
     }
 }
