@@ -55,11 +55,11 @@ public class FlexibleConditionalConstraint extends ConditionalConstraint {
 
         setRequiredParameters(dynamicParameters);
         List<String> dynamicParameterNames = new ArrayList<>();
+        if (!staticTarget) {
+            dynamicParameterNames.add(target.getParameterIdentifier().name());
+        }
         for (ParameterIdentifier parameterIdentifier : dynamicParameters) {
             dynamicParameterNames.add(parameterIdentifier.name());
-        }
-        if (!staticTarget || dynamicParameterNames.isEmpty()) {
-            dynamicParameterNames.add(target.getParameterIdentifier().name());
         }
         Constraint constraint =
                 new Constraint(constraintName, dynamicParameterNames, this::predicateAdapter);
